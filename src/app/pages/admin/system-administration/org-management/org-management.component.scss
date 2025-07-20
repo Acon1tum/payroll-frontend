@@ -1,0 +1,159 @@
+// Organization Management Component Styles
+
+// Card hover effects
+.bg-white {
+  transition: all 0.3s ease;
+  
+  &:hover {
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  }
+}
+
+// Table row hover effects
+tbody tr {
+  transition: all 0.2s ease;
+  
+  &:hover {
+    background-color: #f9fafb;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  }
+}
+
+// Button hover effects
+button {
+  transition: all 0.2s ease;
+  
+  &:hover {
+    transform: translateY(-1px);
+  }
+  
+  &:active {
+    transform: translateY(0);
+  }
+}
+
+// Form input focus effects
+input, select, textarea {
+  transition: all 0.2s ease;
+  
+  &:focus {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.1), 0 2px 4px -1px rgba(59, 130, 246, 0.06);
+  }
+}
+
+// Status badge animations
+span.inline-flex {
+  transition: all 0.2s ease;
+  
+  &:hover {
+    transform: scale(1.05);
+  }
+}
+
+// Action buttons hover effects
+.action-button {
+  transition: all 0.2s ease;
+  
+  &:hover {
+    transform: scale(1.1);
+  }
+}
+
+// Loading spinner animation
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+// Responsive design improvements
+@media (max-width: 768px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .flex-col {
+    flex-direction: column;
+  }
+  
+  .space-x-2 > * + * {
+    margin-left: 0;
+    margin-top: 0.5rem;
+  }
+}
+
+// Custom scrollbar for table
+.overflow-x-auto {
+  &::-webkit-scrollbar {
+    height: 6px;
+  }
+  
+  &::-webkit-scrollbar-track {
+    background: #f1f5f9;
+    border-radius: 3px;
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 3px;
+    
+    &:hover {
+      background: #94a3b8;
+    }
+  }
+}
+
+// Form validation styles
+.ng-invalid.ng-touched {
+  border-color: #ef4444;
+  
+  &:focus {
+    border-color: #ef4444;
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+  }
+}
+
+// Success message styles
+.success-message {
+  background-color: #f0fdf4;
+  border-color: #bbf7d0;
+  color: #166534;
+}
+
+// Error message styles
+.error-message {
+  background-color: #fef2f2;
+  border-color: #fecaca;
+  color: #dc2626;
+}
+
+// Organization icon styles
+.organization-icon {
+  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+  color: white;
+  
+  &:hover {
+    background: linear-gradient(135deg, #2563eb, #1e40af);
+  }
+}
+
+// Search input enhancements
+.search-input {
+  background-image: linear-gradient(45deg, transparent 50%, #3b82f6 50%);
+  background-position: calc(100% - 20px) calc(1em + 2px);
+  background-size: 5px 5px;
+  background-repeat: no-repeat;
+  
+  &:focus {
+    background-image: linear-gradient(45deg, transparent 50%, #1d4ed8 50%);
+  }
+}
