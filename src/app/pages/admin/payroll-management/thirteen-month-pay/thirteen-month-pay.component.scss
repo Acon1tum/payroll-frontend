@@ -1,0 +1,339 @@
+// 13th Month Pay Component Styles
+
+// Custom scrollbar for tables
+.overflow-x-auto {
+  &::-webkit-scrollbar {
+    height: 8px;
+  }
+  
+  &::-webkit-scrollbar-track {
+    background: #f1f5f9;
+    border-radius: 4px;
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 4px;
+    
+    &:hover {
+      background: #94a3b8;
+    }
+  }
+}
+
+// Table styles
+table {
+  border-collapse: separate;
+  border-spacing: 0;
+  
+  th {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: #f9fafb;
+    border-bottom: 1px solid #e5e7eb;
+    
+    &:first-child {
+      border-top-left-radius: 8px;
+    }
+    
+    &:last-child {
+      border-top-right-radius: 8px;
+    }
+  }
+  
+  td {
+    border-bottom: 1px solid #f3f4f6;
+    transition: background-color 0.2s ease;
+    
+    &:hover {
+      background-color: #f9fafb;
+    }
+  }
+  
+  tr:last-child td {
+    border-bottom: none;
+  }
+}
+
+// Status badges
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  
+  &:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  }
+  
+  .material-icons {
+    font-size: 0.875rem;
+    margin-right: 0.25rem;
+  }
+}
+
+// Employee selection cards
+.employee-card {
+  transition: all 0.3s ease;
+  cursor: pointer;
+  
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+  }
+  
+  &.selected {
+    border-color: #3b82f6;
+    background-color: #eff6ff;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  }
+}
+
+// Modal animations
+.modal-overlay {
+  animation: fadeIn 0.3s ease-out;
+}
+
+.modal-content {
+  animation: slideIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+// Button styles
+.btn {
+  transition: all 0.2s ease;
+  
+  &:hover {
+    transform: translateY(-1px);
+  }
+  
+  &:active {
+    transform: translateY(0);
+  }
+  
+  &.btn-primary {
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    
+    &:hover {
+      background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+    }
+  }
+  
+  &.btn-success {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    
+    &:hover {
+      background: linear-gradient(135deg, #059669 0%, #047857 100%);
+    }
+  }
+  
+  &.btn-secondary {
+    background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
+    
+    &:hover {
+      background: linear-gradient(135deg, #4b5563 0%, #374151 100%);
+    }
+  }
+}
+
+// Form styles
+.form-input {
+  transition: all 0.2s ease;
+  
+  &:focus {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+  }
+}
+
+// Checkbox styles
+input[type="checkbox"] {
+  transition: all 0.2s ease;
+  
+  &:checked {
+    transform: scale(1.1);
+  }
+  
+  &:hover {
+    transform: scale(1.05);
+  }
+}
+
+// Loading spinner
+.spinner {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+// Status summary cards
+.status-card {
+  transition: all 0.3s ease;
+  
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+  }
+  
+  .material-icons {
+    transition: all 0.3s ease;
+  }
+  
+  &:hover .material-icons {
+    transform: scale(1.2);
+  }
+}
+
+// Tab styles
+.tab-nav {
+  .tab-button {
+    position: relative;
+    transition: all 0.3s ease;
+    
+    &::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 0;
+      height: 2px;
+      background: #3b82f6;
+      transition: width 0.3s ease;
+    }
+    
+    &.active::after {
+      width: 100%;
+    }
+    
+    &:hover::after {
+      width: 100%;
+    }
+  }
+}
+
+// Responsive design
+@media (max-width: 768px) {
+  .grid {
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  }
+  
+  .status-summary {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .employee-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .status-summary {
+    grid-template-columns: 1fr;
+  }
+  
+  .modal-content {
+    width: 95%;
+    margin: 1rem;
+  }
+}
+
+// Print styles
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  
+  .print-break {
+    page-break-before: always;
+  }
+  
+  table {
+    page-break-inside: avoid;
+  }
+}
+
+// High contrast mode support
+@media (prefers-contrast: high) {
+  .status-badge {
+    border: 2px solid currentColor;
+  }
+  
+  .employee-card {
+    border: 2px solid #000;
+  }
+  
+  .btn {
+    border: 2px solid currentColor;
+  }
+}
+
+// Reduced motion support
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+// Focus styles for accessibility
+.btn:focus,
+.form-input:focus,
+input[type="checkbox"]:focus {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+// Dark mode support (if needed in the future)
+@media (prefers-color-scheme: dark) {
+  // Dark mode styles can be added here
+}
+
+// Custom utility classes
+.text-gradient {
+  background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.shadow-glow {
+  box-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
+}
+
+.border-gradient {
+  border: 2px solid transparent;
+  background: linear-gradient(white, white) padding-box,
+              linear-gradient(135deg, #3b82f6, #8b5cf6) border-box;
+}

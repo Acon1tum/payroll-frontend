@@ -1,1 +1,589 @@
-<p>thirteen-month-pay works!</p>
+<div class="min-h-screen bg-gray-50">
+  <app-header></app-header>
+  
+  <div class="flex">
+    <app-sidebar></app-sidebar>
+    
+    <main class="flex-1 p-6">
+      
+
+      <!-- Header -->
+      <div class="mb-8">
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+          <div class="flex items-center justify-between">
+            <div>
+              <h1 class="text-2xl font-bold text-gray-900">13th Month Pay Management</h1>
+              <p class="text-gray-600 mt-2">
+                Automatically compute pro-rated or full 13th month pay per employee. 
+                Manage computation settings, track approval workflows, and release payments 
+                with comprehensive audit trails and DOLE compliance features.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Action Buttons - Outside Container -->
+      <div class="mb-6 flex items-center justify-end space-x-3">
+        <button
+          (click)="openComputationModal()"
+          class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors duration-200"
+        >
+          <span class="material-icons text-sm mr-1">calculate</span>
+          Compute 13th Month Pay
+        </button>
+        <button
+        (click)="openSettingsModal()"
+        class="bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-colors duration-200"
+      >
+        <span class="material-icons text-sm mr-1">settings</span>
+        Settings
+      </button>
+      </div>
+
+      <!-- Tabs -->
+      <div class="bg-white rounded-lg shadow-sm border border-gray-200 mb-6">
+        <div class="border-b border-gray-200">
+          <nav class="flex space-x-8 px-6">
+            <button
+              (click)="activeTab = 'compute'"
+              [class]="activeTab === 'compute' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
+              class="py-4 px-1 border-b-2 font-medium text-sm transition-colors duration-200"
+            >
+              Compute 13th Month Pay
+            </button>
+            <button
+              (click)="activeTab = 'history'"
+              [class]="activeTab === 'history' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
+              class="py-4 px-1 border-b-2 font-medium text-sm transition-colors duration-200"
+            >
+              Computation History
+            </button>
+          </nav>
+        </div>
+
+        <!-- Tab Content -->
+        <div class="p-6">
+          <!-- Compute Tab -->
+          <div *ngIf="activeTab === 'compute'" class="space-y-6">
+            <!-- Employee Selection -->
+            <div class="bg-gray-50 rounded-lg p-6">
+              <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-medium text-gray-900">Select Employees for Computation</h3>
+                <div class="flex items-center space-x-3">
+                  <button
+                    (click)="selectAllEmployees()"
+                    class="text-sm text-blue-600 hover:text-blue-800 transition-colors duration-200"
+                  >
+                    Select All Active
+                  </button>
+                  <button
+                    (click)="deselectAllEmployees()"
+                    class="text-sm text-gray-600 hover:text-gray-800 transition-colors duration-200"
+                  >
+                    Deselect All
+                  </button>
+                </div>
+              </div>
+
+              <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div
+                  *ngFor="let employee of employees"
+                  (click)="toggleEmployeeSelection(employee.id)"
+                  [class]="isEmployeeSelected(employee.id) ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:border-gray-300'"
+                  class="border rounded-lg p-4 cursor-pointer transition-all duration-200"
+                >
+                  <div class="flex items-start space-x-3">
+                    <input
+                      type="checkbox"
+                      [checked]="isEmployeeSelected(employee.id)"
+                      (click)="$event.stopPropagation()"
+                      (change)="toggleEmployeeSelection(employee.id)"
+                      class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded mt-1"
+                    >
+                    <div class="flex-1">
+                      <h4 class="text-sm font-medium text-gray-900">{{ employee.name }}</h4>
+                      <p class="text-xs text-gray-500">{{ employee.employeeId }} • {{ employee.department }}</p>
+                      <p class="text-xs text-gray-500">{{ employee.position }}</p>
+                      <div class="mt-2 flex items-center justify-between">
+                        <span class="text-sm font-medium text-gray-900">{{ formatCurrency(employee.basicSalary) }}</span>
+                        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                          {{ employee.employmentStatus }}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div *ngIf="selectedEmployees.length > 0" class="mt-4 p-4 bg-blue-50 rounded-lg">
+                <p class="text-sm text-blue-800">
+                  <span class="font-medium">{{ selectedEmployees.length }}</span> employee(s) selected for 13th month pay computation
+                </p>
+              </div>
+            </div>
+
+            <!-- Computation Summary -->
+            <div *ngIf="selectedEmployees.length > 0" class="bg-white rounded-lg shadow-sm border border-gray-200">
+              <div class="px-6 py-4 border-b border-gray-200">
+                <h3 class="text-lg font-medium text-gray-900">Computation Summary</h3>
+              </div>
+              <div class="p-6">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div class="text-center">
+                    <div class="text-2xl font-bold text-blue-600">{{ selectedEmployees.length }}</div>
+                    <div class="text-sm text-gray-600">Employees Selected</div>
+                  </div>
+                  <div class="text-center">
+                    <div class="text-2xl font-bold text-green-600">{{ computeForm.get('year')?.value }}</div>
+                    <div class="text-sm text-gray-600">Computation Year</div>
+                  </div>
+                  <div class="text-center">
+                    <div class="text-2xl font-bold text-purple-600">
+                      {{ computeForm.get('proRataBasis')?.value ? 'Pro-Rata' : 'Full Year' }}
+                    </div>
+                    <div class="text-sm text-gray-600">Computation Basis</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- History Tab -->
+          <div *ngIf="activeTab === 'history'" class="space-y-6">
+            <!-- Status Summary -->
+            <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
+              <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+                <div class="flex items-center">
+                  <div class="flex-shrink-0">
+                    <span class="material-icons text-yellow-500">schedule</span>
+                  </div>
+                  <div class="ml-3">
+                    <p class="text-sm font-medium text-gray-500">Pending</p>
+                    <p class="text-lg font-semibold text-gray-900">{{ getThirteenMonthPayCountByStatus('pending') }}</p>
+                  </div>
+                </div>
+              </div>
+              <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+                <div class="flex items-center">
+                  <div class="flex-shrink-0">
+                    <span class="material-icons text-blue-500">calculate</span>
+                  </div>
+                  <div class="ml-3">
+                    <p class="text-sm font-medium text-gray-500">Computed</p>
+                    <p class="text-lg font-semibold text-gray-900">{{ getThirteenMonthPayCountByStatus('computed') }}</p>
+                  </div>
+                </div>
+              </div>
+              <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+                <div class="flex items-center">
+                  <div class="flex-shrink-0">
+                    <span class="material-icons text-green-500">check_circle</span>
+                  </div>
+                  <div class="ml-3">
+                    <p class="text-sm font-medium text-gray-500">Approved</p>
+                    <p class="text-lg font-semibold text-gray-900">{{ getThirteenMonthPayCountByStatus('approved') }}</p>
+                  </div>
+                </div>
+              </div>
+              <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+                <div class="flex items-center">
+                  <div class="flex-shrink-0">
+                    <span class="material-icons text-purple-500">payment</span>
+                  </div>
+                  <div class="ml-3">
+                    <p class="text-sm font-medium text-gray-500">Released</p>
+                    <p class="text-lg font-semibold text-gray-900">{{ getThirteenMonthPayCountByStatus('released') }}</p>
+                  </div>
+                </div>
+              </div>
+              <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+                <div class="flex items-center">
+                  <div class="flex-shrink-0">
+                    <span class="material-icons text-red-500">cancel</span>
+                  </div>
+                  <div class="ml-3">
+                    <p class="text-sm font-medium text-gray-500">Cancelled</p>
+                    <p class="text-lg font-semibold text-gray-900">{{ getThirteenMonthPayCountByStatus('cancelled') }}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex items-center justify-between">
+              <div class="flex items-center space-x-3">
+                <button
+                  (click)="selectAllThirteenMonthPays()"
+                  class="text-sm text-blue-600 hover:text-blue-800 transition-colors duration-200"
+                >
+                  Select All Approved
+                </button>
+                <button
+                  (click)="deselectAllThirteenMonthPays()"
+                  class="text-sm text-gray-600 hover:text-gray-800 transition-colors duration-200"
+                >
+                  Deselect All
+                </button>
+              </div>
+              <button
+                (click)="openReleaseModal()"
+                [disabled]="selectedThirteenMonthPays.length === 0"
+                class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+              >
+                <span class="material-icons text-sm mr-1">payment</span>
+                Release Selected ({{ selectedThirteenMonthPays.length }})
+              </button>
+            </div>
+
+            <!-- 13th Month Pay Table -->
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+              <div class="px-6 py-4 border-b border-gray-200">
+                <h3 class="text-lg font-medium text-gray-900">13th Month Pay Records</h3>
+              </div>
+              <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                  <thead class="bg-gray-50">
+                    <tr>
+                      <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <input
+                          type="checkbox"
+                          (change)="selectedThirteenMonthPays.length === getThirteenMonthPaysByStatus('approved').length ? deselectAllThirteenMonthPays() : selectAllThirteenMonthPays()"
+                          [checked]="selectedThirteenMonthPays.length === getThirteenMonthPaysByStatus('approved').length && getThirteenMonthPaysByStatus('approved').length > 0"
+                          class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                        >
+                      </th>
+                      <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Employee</th>
+                      <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Year</th>
+                      <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Basic Salary</th>
+                      <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Months Worked</th>
+                      <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">13th Month Pay</th>
+                      <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                      <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody class="bg-white divide-y divide-gray-200">
+                    <tr *ngFor="let pay of thirteenMonthPays">
+                      <td class="px-6 py-4 whitespace-nowrap">
+                        <input
+                          type="checkbox"
+                          [checked]="isThirteenMonthPaySelected(pay.id)"
+                          (change)="toggleThirteenMonthPaySelection(pay.id)"
+                          [disabled]="pay.status !== 'approved'"
+                          class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                        >
+                      </td>
+                      <td class="px-6 py-4 whitespace-nowrap">
+                        <div>
+                          <div class="text-sm font-medium text-gray-900">{{ pay.employeeName }}</div>
+                          <div class="text-sm text-gray-500">{{ pay.employeeId }} • {{ pay.department }}</div>
+                        </div>
+                      </td>
+                      <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {{ pay.year }}
+                      </td>
+                      <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {{ formatCurrency(pay.basicSalary) }}
+                      </td>
+                      <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {{ pay.monthsWorked }} months
+                      </td>
+                      <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                        {{ formatCurrency(pay.thirteenthMonthPay) }}
+                      </td>
+                      <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ getStatusColor(pay.status) }}">
+                          <span class="material-icons text-xs mr-1">{{ getStatusIcon(pay.status) }}</span>
+                          {{ pay.status }}
+                        </span>
+                      </td>
+                      <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        <div class="flex items-center space-x-2">
+                          <button
+                            *ngIf="pay.status === 'computed'"
+                            (click)="approveThirteenMonthPay(pay.id)"
+                            class="text-green-600 hover:text-green-900 transition-colors duration-200"
+                            title="Approve"
+                          >
+                            <span class="material-icons text-sm">check_circle</span>
+                          </button>
+                          <button
+                            *ngIf="pay.status === 'approved'"
+                            (click)="openReleaseModal()"
+                            class="text-purple-600 hover:text-purple-900 transition-colors duration-200"
+                            title="Release"
+                          >
+                            <span class="material-icons text-sm">payment</span>
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- Computation Modal -->
+<div *ngIf="showComputationModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+  <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+    <div class="mt-3">
+      <h3 class="text-lg font-medium text-gray-900 mb-4">Compute 13th Month Pay</h3>
+      <form [formGroup]="computeForm" class="space-y-4">
+        <div>
+          <label for="year" class="block text-sm font-medium text-gray-700 mb-1">Computation Year</label>
+          <input
+            type="number"
+            id="year"
+            formControlName="year"
+            class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+          >
+        </div>
+        
+        <div class="space-y-2">
+          <div class="flex items-center">
+            <input
+              type="checkbox"
+              id="includeOvertime"
+              formControlName="includeOvertime"
+              class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+            >
+            <label for="includeOvertime" class="ml-2 block text-sm text-gray-900">
+              Include Overtime Pay
+            </label>
+          </div>
+          <div class="flex items-center">
+            <input
+              type="checkbox"
+              id="includeAllowances"
+              formControlName="includeAllowances"
+              class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+            >
+            <label for="includeAllowances" class="ml-2 block text-sm text-gray-900">
+              Include Allowances
+            </label>
+          </div>
+          <div class="flex items-center">
+            <input
+              type="checkbox"
+              id="includeBonuses"
+              formControlName="includeBonuses"
+              class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+            >
+            <label for="includeBonuses" class="ml-2 block text-sm text-gray-900">
+              Include Bonuses
+            </label>
+          </div>
+          <div class="flex items-center">
+            <input
+              type="checkbox"
+              id="proRataBasis"
+              formControlName="proRataBasis"
+              class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+            >
+            <label for="proRataBasis" class="ml-2 block text-sm text-gray-900">
+              Pro-Rata Basis
+            </label>
+          </div>
+        </div>
+
+        <div class="flex justify-end space-x-3 pt-4">
+          <button
+            type="button"
+            (click)="closeComputationModal()"
+            class="bg-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-colors duration-200"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            (click)="computeThirteenMonthPay()"
+            [disabled]="!computeForm.valid || computationInProgress || selectedEmployees.length === 0"
+            class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+          >
+            <span *ngIf="computationInProgress" class="material-icons text-sm mr-1 animate-spin">hourglass_empty</span>
+            <span *ngIf="!computationInProgress" class="material-icons text-sm mr-1">calculate</span>
+            {{ computationInProgress ? 'Computing...' : 'Compute' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Release Modal -->
+<div *ngIf="showReleaseModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+  <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+    <div class="mt-3">
+      <h3 class="text-lg font-medium text-gray-900 mb-4">Release 13th Month Pay</h3>
+      <form [formGroup]="releaseForm" class="space-y-4">
+        <div>
+          <label for="releaseDate" class="block text-sm font-medium text-gray-700 mb-1">Release Date</label>
+          <input
+            type="date"
+            id="releaseDate"
+            formControlName="releaseDate"
+            class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+          >
+        </div>
+        
+        <div>
+          <label for="paymentMethod" class="block text-sm font-medium text-gray-700 mb-1">Payment Method</label>
+          <select
+            id="paymentMethod"
+            formControlName="paymentMethod"
+            class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+          >
+            <option value="bank_transfer">Bank Transfer</option>
+            <option value="check">Check</option>
+            <option value="cash">Cash</option>
+          </select>
+        </div>
+
+        <div>
+          <label for="remarks" class="block text-sm font-medium text-gray-700 mb-1">Remarks (Optional)</label>
+          <textarea
+            id="remarks"
+            formControlName="remarks"
+            rows="3"
+            class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+            placeholder="Add any additional notes..."
+          ></textarea>
+        </div>
+
+        <div class="flex justify-end space-x-3 pt-4">
+          <button
+            type="button"
+            (click)="closeReleaseModal()"
+            class="bg-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-colors duration-200"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            (click)="releaseThirteenMonthPay()"
+            [disabled]="!releaseForm.valid || releaseInProgress"
+            class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+          >
+            <span *ngIf="releaseInProgress" class="material-icons text-sm mr-1 animate-spin">hourglass_empty</span>
+            <span *ngIf="!releaseInProgress" class="material-icons text-sm mr-1">payment</span>
+            {{ releaseInProgress ? 'Releasing...' : 'Release' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Settings Modal -->
+<div *ngIf="showSettingsModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+  <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+    <div class="mt-3">
+      <h3 class="text-lg font-medium text-gray-900 mb-4">Computation Settings</h3>
+      <form [formGroup]="settingsForm" class="space-y-4">
+        <div>
+          <label for="settingsYear" class="block text-sm font-medium text-gray-700 mb-1">Default Year</label>
+          <input
+            type="number"
+            id="settingsYear"
+            formControlName="year"
+            class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+          >
+        </div>
+        
+        <div>
+          <label for="minimumMonthsWorked" class="block text-sm font-medium text-gray-700 mb-1">Minimum Months Worked</label>
+          <input
+            type="number"
+            id="minimumMonthsWorked"
+            formControlName="minimumMonthsWorked"
+            min="1"
+            max="12"
+            class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+          >
+        </div>
+
+        <div>
+          <label for="taxExemptionLimit" class="block text-sm font-medium text-gray-700 mb-1">Tax Exemption Limit (PHP)</label>
+          <input
+            type="number"
+            id="taxExemptionLimit"
+            formControlName="taxExemptionLimit"
+            min="0"
+            class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+          >
+        </div>
+
+        <div class="space-y-2">
+          <div class="flex items-center">
+            <input
+              type="checkbox"
+              id="settingsIncludeOvertime"
+              formControlName="includeOvertime"
+              class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+            >
+            <label for="settingsIncludeOvertime" class="ml-2 block text-sm text-gray-900">
+              Include Overtime Pay (Default)
+            </label>
+          </div>
+          <div class="flex items-center">
+            <input
+              type="checkbox"
+              id="settingsIncludeAllowances"
+              formControlName="includeAllowances"
+              class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+            >
+            <label for="settingsIncludeAllowances" class="ml-2 block text-sm text-gray-900">
+              Include Allowances (Default)
+            </label>
+          </div>
+          <div class="flex items-center">
+            <input
+              type="checkbox"
+              id="settingsIncludeBonuses"
+              formControlName="includeBonuses"
+              class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+            >
+            <label for="settingsIncludeBonuses" class="ml-2 block text-sm text-gray-900">
+              Include Bonuses (Default)
+            </label>
+          </div>
+          <div class="flex items-center">
+            <input
+              type="checkbox"
+              id="settingsProRataBasis"
+              formControlName="proRataBasis"
+              class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+            >
+            <label for="settingsProRataBasis" class="ml-2 block text-sm text-gray-900">
+              Pro-Rata Basis (Default)
+            </label>
+          </div>
+        </div>
+
+        <div class="flex justify-end space-x-3 pt-4">
+          <button
+            type="button"
+            (click)="closeSettingsModal()"
+            class="bg-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-colors duration-200"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            (click)="saveSettings()"
+            [disabled]="!settingsForm.valid"
+            class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+          >
+            Save Settings
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
