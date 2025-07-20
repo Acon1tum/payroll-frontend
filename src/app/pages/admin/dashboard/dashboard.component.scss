@@ -1,0 +1,202 @@
+// Dashboard Component Styles
+.dashboard-container {
+  // Smooth transitions for all interactive elements
+  * {
+    transition: all 0.2s ease-in-out;
+  }
+
+  // Metric cards hover effects
+  .metric-card {
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+    
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    }
+  }
+
+  // Quick action cards
+  .quick-action-card {
+    transition: all 0.2s ease-in-out;
+    
+    &:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+  }
+
+  // Notification items
+  .notification-item {
+    transition: background-color 0.2s ease-in-out;
+    
+    &:hover {
+      background-color: #f8fafc;
+    }
+    
+    &.unread {
+      background-color: #eff6ff;
+      
+      &:hover {
+        background-color: #dbeafe;
+      }
+    }
+  }
+
+  // Activity feed items
+  .activity-item {
+    transition: background-color 0.2s ease-in-out;
+    
+    &:hover {
+      background-color: #f8fafc;
+    }
+  }
+
+  // Scrollbar styling for overflow containers
+  .overflow-y-auto {
+    &::-webkit-scrollbar {
+      width: 6px;
+    }
+    
+    &::-webkit-scrollbar-track {
+      background: #f1f5f9;
+      border-radius: 3px;
+    }
+    
+    &::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 3px;
+      
+      &:hover {
+        background: #94a3b8;
+      }
+    }
+  }
+
+  // Badge animations
+  .badge {
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.8;
+    }
+  }
+
+  // Loading states
+  .loading {
+    position: relative;
+    overflow: hidden;
+    
+    &::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+      animation: loading 1.5s infinite;
+    }
+  }
+
+  @keyframes loading {
+    0% {
+      left: -100%;
+    }
+    100% {
+      left: 100%;
+    }
+  }
+
+  // Responsive adjustments
+  @media (max-width: 1024px) {
+    .lg\\:grid-cols-3 {
+      grid-template-columns: repeat(1, minmax(0, 1fr));
+    }
+    
+    .lg\\:col-span-1 {
+      grid-column: span 1;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .md\\:grid-cols-2 {
+      grid-template-columns: repeat(1, minmax(0, 1fr));
+    }
+    
+    .md\\:grid-cols-3 {
+      grid-template-columns: repeat(1, minmax(0, 1fr));
+    }
+  }
+
+  // Material Icons optimization
+  .material-icons {
+    font-display: swap;
+    font-feature-settings: 'liga';
+  }
+
+  // Focus states for accessibility
+  button:focus,
+  .cursor-pointer:focus {
+    outline: 2px solid #3b82f6;
+    outline-offset: 2px;
+  }
+
+  // Print styles
+  @media print {
+    .no-print {
+      display: none !important;
+    }
+    
+    .print-break {
+      page-break-before: always;
+    }
+  }
+
+  // Dark mode support (if needed in future)
+  @media (prefers-color-scheme: dark) {
+    // Dark mode styles can be added here
+  }
+
+  // High contrast mode support
+  @media (prefers-contrast: high) {
+    .bg-gray-50 {
+      background-color: #ffffff;
+      border: 1px solid #000000;
+    }
+    
+    .text-gray-600 {
+      color: #000000;
+    }
+  }
+
+  // Reduced motion support
+  @media (prefers-reduced-motion: reduce) {
+    * {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
+
+// Custom utility classes
+.text-gradient {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.shadow-soft {
+  box-shadow: 0 2px 15px rgba(0, 0, 0, 0.08);
+}
+
+.border-gradient {
+  border: 2px solid;
+  border-image: linear-gradient(135deg, #667eea 0%, #764ba2 100%) 1;
+}

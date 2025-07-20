@@ -1,1 +1,285 @@
-<p>dashboard works!</p>
+<div class="flex h-screen bg-gray-50">
+  <!-- Sidebar -->
+  <app-sidebar></app-sidebar>
+
+  <!-- Main Content -->
+  <div class="flex-1 flex flex-col overflow-hidden">
+    <!-- Header -->
+    <app-header></app-header>
+
+    <!-- Dashboard Content -->
+    <main class="flex-1 overflow-x-hidden overflow-y-auto bg-gray-50 p-6">
+      <div class="max-w-7xl mx-auto">
+        <!-- Page Header -->
+        <div class="mb-8">
+          <div class="bg-white rounded-lg shadow-lg border border-gray-200 p-6">
+            <h1 class="text-3xl font-bold text-gray-900 mb-4">Dashboard</h1>
+            <p class="text-gray-600 mt-2">High-level overview and system insights</p>
+          </div>
+        </div>
+
+        <!-- Overview Metrics -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <!-- Total Employees -->
+          <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <div class="flex items-center">
+              <div class="flex-shrink-0">
+                <div class="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center">
+                  <span class="material-icons text-white text-lg">people</span>
+                </div>
+              </div>
+              <div class="ml-4 flex-1">
+                <p class="text-sm font-medium text-gray-600">Total Employees</p>
+                <p class="text-2xl font-bold text-gray-900">{{ metrics.totalEmployees }}</p>
+              </div>
+            </div>
+            <div class="mt-4 flex items-center text-sm">
+              <span class="text-green-600 font-medium">{{ metrics.activeEmployees }} active</span>
+              <span class="text-gray-400 mx-2">•</span>
+              <span class="text-orange-600">{{ metrics.onLeaveEmployees }} on leave</span>
+            </div>
+          </div>
+
+          <!-- Payroll Cutoff -->
+          <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <div class="flex items-center">
+              <div class="flex-shrink-0">
+                <div class="w-8 h-8 bg-green-500 rounded-lg flex items-center justify-center">
+                  <span class="material-icons text-white text-lg">schedule</span>
+                </div>
+              </div>
+              <div class="ml-4 flex-1">
+                <p class="text-sm font-medium text-gray-600">Payroll Cutoff</p>
+                <p class="text-2xl font-bold text-gray-900">{{ metrics.currentPayrollCutoff | date:'MMM dd' }}</p>
+              </div>
+            </div>
+            <div class="mt-4 flex items-center text-sm">
+              <span class="text-gray-600">Next: {{ metrics.nextPayrollDate | date:'MMM dd' }}</span>
+            </div>
+          </div>
+
+          <!-- Leave Requests -->
+          <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <div class="flex items-center">
+              <div class="flex-shrink-0">
+                <div class="w-8 h-8 bg-orange-500 rounded-lg flex items-center justify-center">
+                  <span class="material-icons text-white text-lg">event_note</span>
+                </div>
+              </div>
+              <div class="ml-4 flex-1">
+                <p class="text-sm font-medium text-gray-600">Leave Requests</p>
+                <p class="text-2xl font-bold text-gray-900">{{ metrics.totalLeaveRequests }}</p>
+              </div>
+            </div>
+            <div class="mt-4 flex items-center text-sm">
+              <span class="text-orange-600 font-medium">{{ metrics.pendingApprovals }} pending</span>
+            </div>
+          </div>
+
+          <!-- Total Payroll -->
+          <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <div class="flex items-center">
+              <div class="flex-shrink-0">
+                <div class="w-8 h-8 bg-purple-500 rounded-lg flex items-center justify-center">
+                  <span class="material-icons text-white text-lg">payments</span>
+                </div>
+              </div>
+              <div class="ml-4 flex-1">
+                <p class="text-sm font-medium text-gray-600">Total Payroll</p>
+                <p class="text-2xl font-bold text-gray-900">{{ formatCurrency(metrics.totalPayrollAmount) }}</p>
+              </div>
+            </div>
+            <div class="mt-4 flex items-center text-sm">
+              <span class="text-gray-600">Avg: {{ formatCurrency(metrics.averageSalary) }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Main Dashboard Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <!-- Quick Actions -->
+          <div class="lg:col-span-1">
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+              <div class="px-6 py-4 border-b border-gray-200">
+                <h3 class="text-lg font-medium text-gray-900">Quick Actions</h3>
+                <p class="text-sm text-gray-600 mt-1">Shortcut buttons for common tasks</p>
+              </div>
+              <div class="p-6">
+                <div class="grid grid-cols-2 gap-4">
+                  <div 
+                    *ngFor="let action of quickActions" 
+                    (click)="navigateToAction(action)"
+                    class="group cursor-pointer"
+                  >
+                    <div class="relative bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition-colors duration-200">
+                      <div class="flex items-center justify-between mb-2">
+                        <div class="w-10 h-10 rounded-lg flex items-center justify-center text-white {{ action.color }}">
+                          <span class="material-icons text-lg">{{ action.icon }}</span>
+                        </div>
+                        <div *ngIf="action.badge" class="flex items-center">
+                          <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                            {{ action.badge }}
+                          </span>
+                        </div>
+                      </div>
+                      <h4 class="text-sm font-medium text-gray-900 group-hover:text-blue-600 transition-colors duration-200">
+                        {{ action.title }}
+                      </h4>
+                      <p class="text-xs text-gray-600 mt-1">{{ action.description }}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Notifications -->
+          <div class="lg:col-span-1">
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+              <div class="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+                <div>
+                  <h3 class="text-lg font-medium text-gray-900">Notifications</h3>
+                  <p class="text-sm text-gray-600 mt-1">Alerts and system messages</p>
+                </div>
+                <div class="flex items-center space-x-2">
+                  <span *ngIf="unreadNotifications > 0" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                    {{ unreadNotifications }}
+                  </span>
+                  <button 
+                    (click)="markAllNotificationsAsRead()"
+                    class="text-sm text-blue-600 hover:text-blue-800 transition-colors duration-200"
+                  >
+                    Mark all read
+                  </button>
+                </div>
+              </div>
+              <div class="p-6">
+                <div class="space-y-4 max-h-96 overflow-y-auto">
+                  <div 
+                    *ngFor="let notification of notifications" 
+                    (click)="markNotificationAsRead(notification)"
+                    class="cursor-pointer"
+                  >
+                    <div class="flex items-start space-x-3 p-3 rounded-lg hover:bg-gray-50 transition-colors duration-200"
+                         [class.bg-blue-50]="!notification.isRead">
+                      <div class="flex-shrink-0">
+                        <div class="w-8 h-8 rounded-lg flex items-center justify-center {{ getNotificationColor(notification.type) }}">
+                          <span class="material-icons text-sm">{{ getNotificationIcon(notification.type) }}</span>
+                        </div>
+                      </div>
+                      <div class="flex-1 min-w-0">
+                        <div class="flex items-center justify-between">
+                          <p class="text-sm font-medium text-gray-900" [class.font-semibold]="!notification.isRead">
+                            {{ notification.title }}
+                          </p>
+                          <div class="flex items-center space-x-2">
+                            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium {{ getPriorityColor(notification.priority) }}">
+                              {{ notification.priority }}
+                            </span>
+                            <span class="text-xs text-gray-500">{{ getTimeAgo(notification.timestamp) }}</span>
+                          </div>
+                        </div>
+                        <p class="text-sm text-gray-600 mt-1">{{ notification.message }}</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Activity Feed -->
+          <div class="lg:col-span-1">
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+              <div class="px-6 py-4 border-b border-gray-200">
+                <h3 class="text-lg font-medium text-gray-900">Activity Feed</h3>
+                <p class="text-sm text-gray-600 mt-1">Recent system actions</p>
+              </div>
+              <div class="p-6">
+                <div class="space-y-4 max-h-96 overflow-y-auto">
+                  <div *ngFor="let activity of recentActivity" class="flex items-start space-x-3">
+                    <div class="flex-shrink-0">
+                      <div class="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center">
+                        <span class="material-icons text-sm {{ activity.color }}">{{ activity.icon }}</span>
+                      </div>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                      <div class="flex items-center justify-between">
+                        <p class="text-sm font-medium text-gray-900">{{ activity.action }}</p>
+                        <span class="text-xs text-gray-500">{{ getTimeAgo(activity.timestamp) }}</span>
+                      </div>
+                      <p class="text-sm text-gray-600">{{ activity.user }}</p>
+                      <p class="text-xs text-gray-500 mt-1">{{ activity.details }}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Additional Metrics Row -->
+        <div class="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6">
+          <!-- Department Overview -->
+          <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <h3 class="text-lg font-medium text-gray-900 mb-4">Department Overview</h3>
+            <div class="space-y-3">
+              <div class="flex items-center justify-between">
+                <span class="text-sm text-gray-600">Total Departments</span>
+                <span class="text-sm font-medium text-gray-900">{{ metrics.totalDepartments }}</span>
+              </div>
+              <div class="flex items-center justify-between">
+                <span class="text-sm text-gray-600">Active Employees</span>
+                <span class="text-sm font-medium text-green-600">{{ metrics.activeEmployees }}</span>
+              </div>
+              <div class="flex items-center justify-between">
+                <span class="text-sm text-gray-600">On Leave</span>
+                <span class="text-sm font-medium text-orange-600">{{ metrics.onLeaveEmployees }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Payroll Summary -->
+          <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <h3 class="text-lg font-medium text-gray-900 mb-4">Payroll Summary</h3>
+            <div class="space-y-3">
+              <div class="flex items-center justify-between">
+                <span class="text-sm text-gray-600">Total Amount</span>
+                <span class="text-sm font-medium text-gray-900">{{ formatCurrency(metrics.totalPayrollAmount) }}</span>
+              </div>
+              <div class="flex items-center justify-between">
+                <span class="text-sm text-gray-600">Average Salary</span>
+                <span class="text-sm font-medium text-gray-900">{{ formatCurrency(metrics.averageSalary) }}</span>
+              </div>
+              <div class="flex items-center justify-between">
+                <span class="text-sm text-gray-600">Next Payroll</span>
+                <span class="text-sm font-medium text-blue-600">{{ metrics.nextPayrollDate | date:'MMM dd' }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- System Status -->
+          <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <h3 class="text-lg font-medium text-gray-900 mb-4">System Status</h3>
+            <div class="space-y-3">
+              <div class="flex items-center justify-between">
+                <span class="text-sm text-gray-600">System Status</span>
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                  Online
+                </span>
+              </div>
+              <div class="flex items-center justify-between">
+                <span class="text-sm text-gray-600">Last Backup</span>
+                <span class="text-sm font-medium text-gray-900">2 hours ago</span>
+              </div>
+              <div class="flex items-center justify-between">
+                <span class="text-sm text-gray-600">Uptime</span>
+                <span class="text-sm font-medium text-gray-900">99.9%</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>

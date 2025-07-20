@@ -7,6 +7,11 @@ import { DepartmentManagementComponent } from './pages/admin/system-administrati
 import { UserManagementComponent } from './pages/admin/system-administration/user-management/user-management.component';
 import { OrgManagementComponent } from './pages/admin/system-administration/org-management/org-management.component';
 import { EmployeeManagementComponent } from './pages/admin/employee-management/employee-management.component';
+import { FinalPayProcessComponent } from './pages/admin/payroll-management/final-pay-process/final-pay-process.component';
+import { PayslipCenterComponent } from './pages/admin/payroll-management/payslip-center/payslip-center.component';
+import { RunPayrollComponent } from './pages/admin/payroll-management/run-payroll/run-payroll.component';
+import { ThirteenMonthPayComponent } from './pages/admin/payroll-management/thirteen-month-pay/thirteen-month-pay.component';
+import { PayrollManagementComponent } from './pages/admin/payroll-management/payroll-management.component';
 
 export const routes: Routes = [
   { path: '', component: LandingComponent },
@@ -18,5 +23,10 @@ export const routes: Routes = [
   { path: 'user-management', component: UserManagementComponent },
   { path: 'org-management', component: OrgManagementComponent },
   { path: 'employee-management', component: EmployeeManagementComponent },
+  { path: 'final-pay-process', component: FinalPayProcessComponent },
+  { path: 'payslip-center', component: PayslipCenterComponent },
+  { path: 'run-payroll', component: RunPayrollComponent },
+  { path: 'thirteen-month-pay', component: ThirteenMonthPayComponent },
+  { path: 'payroll-management', component: PayrollManagementComponent },
   { path: '**', redirectTo: '' },
 ];
