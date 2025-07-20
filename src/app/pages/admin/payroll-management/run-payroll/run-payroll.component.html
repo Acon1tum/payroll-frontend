@@ -1,1 +1,556 @@
-<p>run-payroll works!</p>
+<div class="flex h-screen bg-gray-50">
+  <!-- Sidebar -->
+  <app-sidebar></app-sidebar>
+
+  <!-- Main Content -->
+  <div class="flex-1 flex flex-col overflow-hidden">
+    <!-- Header -->
+    <app-header></app-header>
+
+    <!-- Run Payroll Content -->
+    <main class="flex-1 overflow-x-hidden overflow-y-auto bg-gray-50 p-6">
+      <div class="max-w-7xl mx-auto">
+        <!-- Page Header -->
+        <div class="mb-8">
+          <div class="bg-white rounded-lg shadow-lg border border-gray-200 p-6">
+            <h1 class="text-3xl font-bold text-gray-900 mb-4">Run Payroll</h1>
+            <p class="text-gray-600 leading-relaxed">
+              Comprehensive payroll processing system for creating new payroll runs, managing payroll history, and ensuring proper approval workflows. 
+              Select cutoff dates, preview employee calculations, validate deductions and overtime, and maintain complete audit trails for all payroll operations.
+            </p>
+          </div>
+        </div>
+
+        <!-- Tab Navigation -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 mb-6">
+          <div class="border-b border-gray-200">
+            <nav class="flex space-x-8 px-6" aria-label="Tabs">
+              <button
+                (click)="activeTab = 'new-run'"
+                [class]="activeTab === 'new-run' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
+                class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors duration-200"
+              >
+                New Payroll Run
+              </button>
+              <button
+                (click)="activeTab = 'history'"
+                [class]="activeTab === 'history' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
+                class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors duration-200"
+              >
+                Payroll History
+              </button>
+              <button
+                (click)="activeTab = 'preview'"
+                [class]="activeTab === 'preview' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
+                class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors duration-200"
+              >
+                Preview & Approval
+              </button>
+            </nav>
+          </div>
+        </div>
+
+        <!-- New Payroll Run Tab -->
+        <div *ngIf="activeTab === 'new-run'" class="space-y-6">
+          <!-- Payroll Configuration -->
+          <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+            <div class="px-6 py-4 border-b border-gray-200">
+              <h3 class="text-lg font-medium text-gray-900">Payroll Configuration</h3>
+              <p class="text-sm text-gray-600 mt-1">Set cutoff dates and payroll parameters</p>
+            </div>
+            <div class="p-6">
+              <form [formGroup]="payrollForm" class="space-y-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label for="cutoffStart" class="block text-sm font-medium text-gray-700 mb-2">
+                      Cutoff Start Date
+                    </label>
+                    <input
+                      type="date"
+                      id="cutoffStart"
+                      formControlName="cutoffStart"
+                      class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                    >
+                  </div>
+                  <div>
+                    <label for="cutoffEnd" class="block text-sm font-medium text-gray-700 mb-2">
+                      Cutoff End Date
+                    </label>
+                    <input
+                      type="date"
+                      id="cutoffEnd"
+                      formControlName="cutoffEnd"
+                      class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                    >
+                  </div>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div class="flex items-center">
+                    <input
+                      type="checkbox"
+                      id="includeOvertime"
+                      formControlName="includeOvertime"
+                      class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                    >
+                    <label for="includeOvertime" class="ml-2 block text-sm text-gray-900">
+                      Include Overtime Hours
+                    </label>
+                  </div>
+                  <div class="flex items-center">
+                    <input
+                      type="checkbox"
+                      id="includeDeductions"
+                      formControlName="includeDeductions"
+                      class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                    >
+                    <label for="includeDeductions" class="ml-2 block text-sm text-gray-900">
+                      Include Deductions
+                    </label>
+                  </div>
+                </div>
+
+                <div>
+                  <label for="notes" class="block text-sm font-medium text-gray-700 mb-2">
+                    Notes
+                  </label>
+                  <textarea
+                    id="notes"
+                    formControlName="notes"
+                    rows="3"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="Additional notes for this payroll run..."
+                  ></textarea>
+                </div>
+              </form>
+            </div>
+          </div>
+
+          <!-- Payroll Summary -->
+          <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+            <div class="px-6 py-4 border-b border-gray-200">
+              <h3 class="text-lg font-medium text-gray-900">Payroll Summary</h3>
+              <p class="text-sm text-gray-600 mt-1">Overview of current payroll calculations</p>
+            </div>
+            <div class="p-6">
+              <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div class="bg-blue-50 rounded-lg p-4">
+                  <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                      <div class="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center">
+                        <span class="material-icons text-white text-lg">people</span>
+                      </div>
+                    </div>
+                    <div class="ml-4">
+                      <p class="text-sm font-medium text-blue-600">Total Employees</p>
+                      <p class="text-2xl font-bold text-blue-900">{{ payrollSummary.totalEmployees }}</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="bg-green-50 rounded-lg p-4">
+                  <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                      <div class="w-8 h-8 bg-green-500 rounded-lg flex items-center justify-center">
+                        <span class="material-icons text-white text-lg">payments</span>
+                      </div>
+                    </div>
+                    <div class="ml-4">
+                      <p class="text-sm font-medium text-green-600">Gross Pay</p>
+                      <p class="text-2xl font-bold text-green-900">{{ formatCurrency(payrollSummary.totalGrossPay) }}</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="bg-purple-50 rounded-lg p-4">
+                  <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                      <div class="w-8 h-8 bg-purple-500 rounded-lg flex items-center justify-center">
+                        <span class="material-icons text-white text-lg">account_balance_wallet</span>
+                      </div>
+                    </div>
+                    <div class="ml-4">
+                      <p class="text-sm font-medium text-purple-600">Net Pay</p>
+                      <p class="text-2xl font-bold text-purple-900">{{ formatCurrency(payrollSummary.totalNetPay) }}</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="bg-orange-50 rounded-lg p-4">
+                  <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                      <div class="w-8 h-8 bg-orange-500 rounded-lg flex items-center justify-center">
+                        <span class="material-icons text-white text-lg">schedule</span>
+                      </div>
+                    </div>
+                    <div class="ml-4">
+                      <p class="text-sm font-medium text-orange-600">Overtime</p>
+                      <p class="text-2xl font-bold text-orange-900">{{ formatCurrency(payrollSummary.totalOvertime) }}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Detailed Breakdown -->
+              <div class="mt-6 grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="bg-gray-50 rounded-lg p-4">
+                  <h4 class="text-sm font-medium text-gray-900 mb-3">Deductions Breakdown</h4>
+                  <div class="space-y-2">
+                    <div class="flex justify-between text-sm">
+                      <span class="text-gray-600">Tax</span>
+                      <span class="font-medium">{{ formatCurrency(payrollSummary.totalTax) }}</span>
+                    </div>
+                    <div class="flex justify-between text-sm">
+                      <span class="text-gray-600">Insurance</span>
+                      <span class="font-medium">{{ formatCurrency(payrollSummary.totalInsurance) }}</span>
+                    </div>
+                    <div class="flex justify-between text-sm">
+                      <span class="text-gray-600">Retirement</span>
+                      <span class="font-medium">{{ formatCurrency(payrollSummary.totalRetirement) }}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Employee List -->
+          <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+            <div class="px-6 py-4 border-b border-gray-200">
+              <h3 class="text-lg font-medium text-gray-900">Employee Payroll Details</h3>
+              <p class="text-sm text-gray-600 mt-1">Review and adjust employee payroll calculations</p>
+            </div>
+            <div class="overflow-x-auto">
+              <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                  <tr>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Employee
+                    </th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Department
+                    </th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Hours
+                    </th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Gross Pay
+                    </th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Deductions
+                    </th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Net Pay
+                    </th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Status
+                    </th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Actions
+                    </th>
+                  </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                  <tr *ngFor="let employee of selectedEmployees">
+                    <td class="px-6 py-4 whitespace-nowrap">
+                      <div>
+                        <div class="text-sm font-medium text-gray-900">{{ employee.name }}</div>
+                        <div class="text-sm text-gray-500">{{ employee.employeeId }}</div>
+                      </div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                      <div class="text-sm text-gray-900">{{ employee.department }}</div>
+                      <div class="text-sm text-gray-500">{{ employee.position }}</div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                      <div class="text-sm text-gray-900">{{ employee.hoursWorked }}h</div>
+                      <div class="text-sm text-orange-600" *ngIf="employee.overtimeHours > 0">
+                        +{{ employee.overtimeHours }}h OT
+                      </div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                      {{ formatCurrency(employee.grossPay) }}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {{ formatCurrency(employee.deductions.tax + employee.deductions.insurance + employee.deductions.retirement + employee.deductions.other) }}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                      {{ formatCurrency(employee.netPay) }}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                      <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ getEmployeeStatusColor(employee.status) }}">
+                        {{ employee.status }}
+                      </span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                      <button
+                        (click)="toggleEmployeeStatus(employee)"
+                        [class]="employee.status === 'included' ? 'text-red-600 hover:text-red-900' : 'text-green-600 hover:text-green-900'"
+                        class="transition-colors duration-200"
+                      >
+                        {{ employee.status === 'included' ? 'Exclude' : 'Include' }}
+                      </button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Action Buttons -->
+          <div class="flex justify-end space-x-4">
+            <button
+              (click)="createNewPayrollRun()"
+              [disabled]="!payrollForm.valid"
+              class="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+            >
+              Create Payroll Run
+            </button>
+          </div>
+        </div>
+
+        <!-- Payroll History Tab -->
+        <div *ngIf="activeTab === 'history'" class="space-y-6">
+          <!-- Filter Controls -->
+          <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <div class="flex flex-wrap items-center space-x-4">
+              <span class="text-sm font-medium text-gray-700">Filter by Status:</span>
+              <button
+                (click)="filterHistory('all')"
+                [class]="historyFilter === 'all' ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'"
+                class="px-3 py-1 rounded-full text-sm font-medium transition-colors duration-200"
+              >
+                All
+              </button>
+              <button
+                (click)="filterHistory('draft')"
+                [class]="historyFilter === 'draft' ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'"
+                class="px-3 py-1 rounded-full text-sm font-medium transition-colors duration-200"
+              >
+                Draft
+              </button>
+              <button
+                (click)="filterHistory('pending')"
+                [class]="historyFilter === 'pending' ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'"
+                class="px-3 py-1 rounded-full text-sm font-medium transition-colors duration-200"
+              >
+                Pending
+              </button>
+              <button
+                (click)="filterHistory('approved')"
+                [class]="historyFilter === 'approved' ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'"
+                class="px-3 py-1 rounded-full text-sm font-medium transition-colors duration-200"
+              >
+                Approved
+              </button>
+              <button
+                (click)="filterHistory('released')"
+                [class]="historyFilter === 'released' ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'"
+                class="px-3 py-1 rounded-full text-sm font-medium transition-colors duration-200"
+              >
+                Released
+              </button>
+            </div>
+          </div>
+
+          <!-- Payroll History Table -->
+          <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+            <div class="px-6 py-4 border-b border-gray-200">
+              <h3 class="text-lg font-medium text-gray-900">Payroll History</h3>
+              <p class="text-sm text-gray-600 mt-1">Track all payroll runs and their status</p>
+            </div>
+            <div class="overflow-x-auto">
+              <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                  <tr>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Payroll Period
+                    </th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Employees
+                    </th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Gross Pay
+                    </th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Net Pay
+                    </th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Status
+                    </th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Created
+                    </th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Actions
+                    </th>
+                  </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                  <tr *ngFor="let payroll of filteredHistory">
+                    <td class="px-6 py-4 whitespace-nowrap">
+                      <div class="text-sm font-medium text-gray-900">
+                        {{ formatDate(payroll.cutoffStart) }} - {{ formatDate(payroll.cutoffEnd) }}
+                      </div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {{ payroll.totalEmployees }}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                      {{ formatCurrency(payroll.grossPay) }}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                      {{ formatCurrency(payroll.netPay) }}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                      <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ getStatusColor(payroll.status) }}">
+                        {{ payroll.status }}
+                      </span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {{ formatDate(payroll.createdAt) }}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                      <button
+                        (click)="currentPayrollRun = payroll; activeTab = 'preview'"
+                        class="text-blue-600 hover:text-blue-900 transition-colors duration-200"
+                      >
+                        View Details
+                      </button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Preview & Approval Tab -->
+        <div *ngIf="activeTab === 'preview' && currentPayrollRun" class="space-y-6">
+          <!-- Payroll Preview -->
+          <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+            <div class="px-6 py-4 border-b border-gray-200">
+              <h3 class="text-lg font-medium text-gray-900">Payroll Preview</h3>
+              <p class="text-sm text-gray-600 mt-1">Review payroll details before approval</p>
+            </div>
+            <div class="p-6">
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <div>
+                  <h4 class="text-sm font-medium text-gray-900 mb-2">Payroll Period</h4>
+                  <p class="text-sm text-gray-600">
+                    {{ formatDate(currentPayrollRun.cutoffStart) }} - {{ formatDate(currentPayrollRun.cutoffEnd) }}
+                  </p>
+                </div>
+                <div>
+                  <h4 class="text-sm font-medium text-gray-900 mb-2">Status</h4>
+                  <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ getStatusColor(currentPayrollRun.status) }}">
+                    {{ currentPayrollRun.status }}
+                  </span>
+                </div>
+              </div>
+
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                <div class="bg-blue-50 rounded-lg p-4">
+                  <p class="text-sm font-medium text-blue-600">Total Employees</p>
+                  <p class="text-2xl font-bold text-blue-900">{{ currentPayrollRun.totalEmployees }}</p>
+                </div>
+                <div class="bg-green-50 rounded-lg p-4">
+                  <p class="text-sm font-medium text-green-600">Gross Pay</p>
+                  <p class="text-2xl font-bold text-green-900">{{ formatCurrency(currentPayrollRun.grossPay) }}</p>
+                </div>
+                <div class="bg-purple-50 rounded-lg p-4">
+                  <p class="text-sm font-medium text-purple-600">Net Pay</p>
+                  <p class="text-2xl font-bold text-purple-900">{{ formatCurrency(currentPayrollRun.netPay) }}</p>
+                </div>
+              </div>
+
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="bg-gray-50 rounded-lg p-4">
+                  <h4 class="text-sm font-medium text-gray-900 mb-3">Deductions Summary</h4>
+                  <div class="space-y-2">
+                    <div class="flex justify-between text-sm">
+                      <span class="text-gray-600">Total Deductions</span>
+                      <span class="font-medium">{{ formatCurrency(currentPayrollRun.totalDeductions) }}</span>
+                    </div>
+                    <div class="flex justify-between text-sm">
+                      <span class="text-gray-600">Overtime</span>
+                      <span class="font-medium">{{ formatCurrency(currentPayrollRun.totalOvertime) }}</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="bg-gray-50 rounded-lg p-4">
+                  <h4 class="text-sm font-medium text-gray-900 mb-3">Timeline</h4>
+                  <div class="space-y-2">
+                    <div class="flex justify-between text-sm">
+                      <span class="text-gray-600">Created</span>
+                      <span class="font-medium">{{ formatDate(currentPayrollRun.createdAt) }}</span>
+                    </div>
+                    <div class="flex justify-between text-sm" *ngIf="currentPayrollRun.approvedAt">
+                      <span class="text-gray-600">Approved</span>
+                      <span class="font-medium">{{ formatDate(currentPayrollRun.approvedAt) }}</span>
+                    </div>
+                    <div class="flex justify-between text-sm" *ngIf="currentPayrollRun.releasedAt">
+                      <span class="text-gray-600">Released</span>
+                      <span class="font-medium">{{ formatDate(currentPayrollRun.releasedAt) }}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div *ngIf="currentPayrollRun.notes" class="mt-6">
+                <h4 class="text-sm font-medium text-gray-900 mb-2">Notes</h4>
+                <p class="text-sm text-gray-600 bg-gray-50 rounded-lg p-3">{{ currentPayrollRun.notes }}</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Approval Actions -->
+          <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+            <div class="px-6 py-4 border-b border-gray-200">
+              <h3 class="text-lg font-medium text-gray-900">Approval Actions</h3>
+              <p class="text-sm text-gray-600 mt-1">Review and approve the payroll run</p>
+            </div>
+            <div class="p-6">
+              <div class="mb-6">
+                <label for="approvalNotes" class="block text-sm font-medium text-gray-700 mb-2">
+                  Approval Notes
+                </label>
+                <textarea
+                  id="approvalNotes"
+                  [(ngModel)]="approvalNotes"
+                  rows="3"
+                  class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="Add notes for this approval..."
+                ></textarea>
+              </div>
+
+              <div class="flex justify-end space-x-4">
+                <button
+                  (click)="cancelPayrollRun()"
+                  *ngIf="currentPayrollRun.status === 'draft' || currentPayrollRun.status === 'pending'"
+                  class="bg-red-600 text-white px-6 py-2 rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-colors duration-200"
+                >
+                  Cancel Payroll
+                </button>
+                <button
+                  (click)="approvePayrollRun()"
+                  *ngIf="currentPayrollRun.status === 'draft' || currentPayrollRun.status === 'pending'"
+                  class="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors duration-200"
+                >
+                  Approve Payroll
+                </button>
+                <button
+                  (click)="releasePayrollRun()"
+                  *ngIf="currentPayrollRun.status === 'approved'"
+                  class="bg-green-600 text-white px-6 py-2 rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-colors duration-200"
+                >
+                  Release Payroll
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>

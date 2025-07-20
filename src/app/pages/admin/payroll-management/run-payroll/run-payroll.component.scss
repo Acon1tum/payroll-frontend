@@ -1,0 +1,312 @@
+// Run Payroll Component Styles
+.run-payroll-container {
+  // Smooth transitions for all interactive elements
+  * {
+    transition: all 0.2s ease-in-out;
+  }
+
+  // Tab navigation styling
+  .tab-navigation {
+    .tab-button {
+      position: relative;
+      
+      &.active {
+        &::after {
+          content: '';
+          position: absolute;
+          bottom: -1px;
+          left: 0;
+          right: 0;
+          height: 2px;
+          background-color: #3b82f6;
+          border-radius: 1px;
+        }
+      }
+    }
+  }
+
+  // Form styling enhancements
+  .form-input {
+    &:focus {
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+  }
+
+  // Card hover effects
+  .metric-card {
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+    
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    }
+  }
+
+  // Table styling
+  .payroll-table {
+    .table-row {
+      transition: background-color 0.2s ease-in-out;
+      
+      &:hover {
+        background-color: #f8fafc;
+      }
+    }
+  }
+
+  // Status badges
+  .status-badge {
+    &.draft {
+      background-color: #f3f4f6;
+      color: #374151;
+    }
+    
+    &.pending {
+      background-color: #fef3c7;
+      color: #92400e;
+    }
+    
+    &.approved {
+      background-color: #dbeafe;
+      color: #1e40af;
+    }
+    
+    &.released {
+      background-color: #d1fae5;
+      color: #065f46;
+    }
+    
+    &.cancelled {
+      background-color: #fee2e2;
+      color: #991b1b;
+    }
+  }
+
+  // Employee status indicators
+  .employee-status {
+    &.included {
+      background-color: #d1fae5;
+      color: #065f46;
+    }
+    
+    &.excluded {
+      background-color: #fee2e2;
+      color: #991b1b;
+    }
+    
+    &.pending {
+      background-color: #fef3c7;
+      color: #92400e;
+    }
+  }
+
+  // Button styling
+  .action-button {
+    transition: all 0.2s ease-in-out;
+    
+    &:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+    
+    &:active {
+      transform: translateY(0);
+    }
+  }
+
+  // Summary cards
+  .summary-card {
+    &.blue {
+      background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+    }
+    
+    &.green {
+      background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+    }
+    
+    &.purple {
+      background: linear-gradient(135deg, #e9d5ff 0%, #c4b5fd 100%);
+    }
+    
+    &.orange {
+      background: linear-gradient(135deg, #fed7aa 0%, #fdba74 100%);
+    }
+  }
+
+  // Loading states
+  .loading {
+    position: relative;
+    overflow: hidden;
+    
+    &::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+      animation: loading 1.5s infinite;
+    }
+  }
+
+  @keyframes loading {
+    0% {
+      left: -100%;
+    }
+    100% {
+      left: 100%;
+    }
+  }
+
+  // Responsive adjustments
+  @media (max-width: 1024px) {
+    .lg\\:grid-cols-4 {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    
+    .lg\\:grid-cols-3 {
+      grid-template-columns: repeat(1, minmax(0, 1fr));
+    }
+  }
+
+  @media (max-width: 768px) {
+    .md\\:grid-cols-2 {
+      grid-template-columns: repeat(1, minmax(0, 1fr));
+    }
+    
+    .md\\:grid-cols-3 {
+      grid-template-columns: repeat(1, minmax(0, 1fr));
+    }
+    
+    .tab-navigation {
+      .tab-button {
+        font-size: 0.875rem;
+        padding: 0.75rem 0.5rem;
+      }
+    }
+  }
+
+  // Scrollbar styling
+  .overflow-x-auto {
+    &::-webkit-scrollbar {
+      height: 6px;
+    }
+    
+    &::-webkit-scrollbar-track {
+      background: #f1f5f9;
+      border-radius: 3px;
+    }
+    
+    &::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 3px;
+      
+      &:hover {
+        background: #94a3b8;
+      }
+    }
+  }
+
+  // Focus states for accessibility
+  button:focus,
+  input:focus,
+  textarea:focus {
+    outline: 2px solid #3b82f6;
+    outline-offset: 2px;
+  }
+
+  // Print styles
+  @media print {
+    .no-print {
+      display: none !important;
+    }
+    
+    .print-break {
+      page-break-before: always;
+    }
+  }
+
+  // Dark mode support (if needed in future)
+  @media (prefers-color-scheme: dark) {
+    // Dark mode styles can be added here
+  }
+
+  // High contrast mode support
+  @media (prefers-contrast: high) {
+    .bg-gray-50 {
+      background-color: #ffffff;
+      border: 1px solid #000000;
+    }
+    
+    .text-gray-600 {
+      color: #000000;
+    }
+  }
+
+  // Reduced motion support
+  @media (prefers-reduced-motion: reduce) {
+    * {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
+
+// Custom utility classes
+.text-gradient {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.shadow-soft {
+  box-shadow: 0 2px 15px rgba(0, 0, 0, 0.08);
+}
+
+.border-gradient {
+  border: 2px solid;
+  border-image: linear-gradient(135deg, #667eea 0%, #764ba2 100%) 1;
+}
+
+// Payroll specific animations
+.payroll-processing {
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.8;
+  }
+}
+
+// Status transitions
+.status-transition {
+  transition: all 0.3s ease-in-out;
+  
+  &.approving {
+    background-color: #fef3c7;
+    border-color: #f59e0b;
+  }
+  
+  &.releasing {
+    background-color: #d1fae5;
+    border-color: #10b981;
+  }
+}
+
+// Currency formatting
+.currency-amount {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+}
+
+// Date formatting
+.date-display {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+}
