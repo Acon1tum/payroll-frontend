@@ -6,6 +6,7 @@ import { EmployeeDashboardComponent } from './pages/employee/employee-dashboard/
 import { DepartmentManagementComponent } from './pages/admin/system-administration/department-management/department-management.component';
 import { UserManagementComponent } from './pages/admin/system-administration/user-management/user-management.component';
 import { OrgManagementComponent } from './pages/admin/system-administration/org-management/org-management.component';
+import { EmployeeManagementComponent } from './pages/admin/employee-management/employee-management.component';
 
 export const routes: Routes = [
   { path: '', component: LandingComponent },
@@ -16,5 +17,6 @@ export const routes: Routes = [
   { path: 'department-management', component: DepartmentManagementComponent },
   { path: 'user-management', component: UserManagementComponent },
   { path: 'org-management', component: OrgManagementComponent },
+  { path: 'employee-management', component: EmployeeManagementComponent },
   { path: '**', redirectTo: '' },
 ];
