@@ -1,1 +1,408 @@
-<p>payslip-center works!</p>
+<div class="flex h-screen bg-gray-50">
+  <!-- Sidebar -->
+  <app-sidebar></app-sidebar>
+
+  <!-- Main Content -->
+  <div class="flex-1 flex flex-col overflow-hidden">
+    <!-- Header -->
+    <app-header></app-header>
+
+    <!-- Payslip Center Content -->
+    <main class="flex-1 overflow-x-hidden overflow-y-auto bg-gray-50 p-6">
+      <div class="max-w-7xl mx-auto">
+        <!-- Page Header -->
+        <div class="mb-8">
+          <div class="bg-white rounded-lg shadow-lg border border-gray-200 p-6">
+            <h1 class="text-3xl font-bold text-gray-900 mb-4">Payslip Center</h1>
+            <p class="text-gray-600 leading-relaxed">
+              Comprehensive payslip management system for viewing, downloading, and distributing DOLE-compliant payslips. 
+              Access downloadable payslips for each payroll cutoff, track delivery status, and resend payslips via email to employees.
+            </p>
+          </div>
+        </div>
+
+        <!-- Tab Navigation -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 mb-6">
+          <div class="border-b border-gray-200">
+            <nav class="flex space-x-8 px-6" aria-label="Tabs">
+              <button
+                (click)="activeTab = 'view-download'"
+                [class]="activeTab === 'view-download' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
+                class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors duration-200"
+              >
+                View/Download Payslips
+              </button>
+              <button
+                (click)="activeTab = 'resend'"
+                [class]="activeTab === 'resend' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
+                class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors duration-200"
+              >
+                Resend Payslip
+              </button>
+            </nav>
+          </div>
+        </div>
+
+        <!-- View/Download Payslips Tab -->
+        <div *ngIf="activeTab === 'view-download'" class="space-y-6">
+          <!-- Filters -->
+          <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+            <div class="px-6 py-4 border-b border-gray-200">
+              <h3 class="text-lg font-medium text-gray-900">Filters</h3>
+              <p class="text-sm text-gray-600 mt-1">Filter payslips by various criteria</p>
+            </div>
+            <div class="p-6">
+              <form [formGroup]="filterForm" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div>
+                  <label for="payrollPeriod" class="block text-sm font-medium text-gray-700 mb-2">
+                    Payroll Period
+                  </label>
+                  <select
+                    id="payrollPeriod"
+                    formControlName="payrollPeriod"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                  >
+                    <option value="">All Periods</option>
+                    <option *ngFor="let period of availablePayrollPeriods" [value]="period">
+                      {{ period }}
+                    </option>
+                  </select>
+                </div>
+
+                <div>
+                  <label for="department" class="block text-sm font-medium text-gray-700 mb-2">
+                    Department
+                  </label>
+                  <select
+                    id="department"
+                    formControlName="department"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                  >
+                    <option value="">All Departments</option>
+                    <option *ngFor="let dept of availableDepartments" [value]="dept">
+                      {{ dept }}
+                    </option>
+                  </select>
+                </div>
+
+                <div>
+                  <label for="status" class="block text-sm font-medium text-gray-700 mb-2">
+                    Status
+                  </label>
+                  <select
+                    id="status"
+                    formControlName="status"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                  >
+                    <option value="">All Statuses</option>
+                    <option value="generated">Generated</option>
+                    <option value="sent">Sent</option>
+                    <option value="downloaded">Downloaded</option>
+                    <option value="failed">Failed</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label for="employeeName" class="block text-sm font-medium text-gray-700 mb-2">
+                    Employee Name
+                  </label>
+                  <input
+                    type="text"
+                    id="employeeName"
+                    formControlName="employeeName"
+                    placeholder="Search by name..."
+                    class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                  >
+                </div>
+              </form>
+            </div>
+          </div>
+
+          <!-- Bulk Actions -->
+          <div *ngIf="showBulkActions" class="bg-blue-50 rounded-lg border border-blue-200 p-4">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center space-x-4">
+                <span class="text-sm font-medium text-blue-900">
+                  {{ selectedPayslips.length }} payslip(s) selected
+                </span>
+                <button
+                  (click)="selectedPayslips = []; updateBulkSelection()"
+                  class="text-sm text-blue-600 hover:text-blue-800 transition-colors duration-200"
+                >
+                  Clear Selection
+                </button>
+              </div>
+              <div class="flex items-center space-x-3">
+                <button
+                  (click)="downloadSelectedPayslips()"
+                  class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors duration-200"
+                >
+                  <span class="material-icons text-sm mr-1">download</span>
+                  Download Selected
+                </button>
+                <button
+                  (click)="resendSelectedPayslips()"
+                  class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-colors duration-200"
+                >
+                  <span class="material-icons text-sm mr-1">email</span>
+                  Resend Selected
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Payslips Table -->
+          <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+            <div class="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+              <div>
+                <h3 class="text-lg font-medium text-gray-900">Payslips</h3>
+                <p class="text-sm text-gray-600 mt-1">{{ filteredPayslips.length }} payslip(s) found</p>
+              </div>
+              <div class="flex items-center space-x-3">
+                <button
+                  (click)="downloadAllPayslips()"
+                  class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors duration-200"
+                >
+                  <span class="material-icons text-sm mr-1">download</span>
+                  Download All
+                </button>
+              </div>
+            </div>
+            <div class="overflow-x-auto">
+              <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                  <tr>
+                    <th class="px-6 py-3 text-left">
+                      <input
+                        type="checkbox"
+                        [checked]="allSelected"
+                        (change)="toggleAllPayslips()"
+                        class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                      >
+                    </th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Employee
+                    </th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Payroll Period
+                    </th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Net Pay
+                    </th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Status
+                    </th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Generated
+                    </th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Actions
+                    </th>
+                  </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                  <tr *ngFor="let payslip of filteredPayslips" class="hover:bg-gray-50 transition-colors duration-200">
+                    <td class="px-6 py-4 whitespace-nowrap">
+                      <input
+                        type="checkbox"
+                        [checked]="selectedPayslips.includes(payslip.id)"
+                        (change)="togglePayslipSelection(payslip.id)"
+                        class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                      >
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                      <div>
+                        <div class="text-sm font-medium text-gray-900">{{ payslip.employeeName }}</div>
+                        <div class="text-sm text-gray-500">{{ payslip.employeeId }} • {{ payslip.department }}</div>
+                      </div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {{ formatDate(payslip.payrollPeriod.start) }} - {{ formatDate(payslip.payrollPeriod.end) }}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                      {{ formatCurrency(payslip.netPay) }}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                      <div class="flex items-center">
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ getStatusColor(payslip.status) }}">
+                          <span class="material-icons text-xs mr-1">{{ getStatusIcon(payslip.status) }}</span>
+                          {{ payslip.status }}
+                        </span>
+                        <div *ngIf="payslip.doleCompliant" class="ml-2">
+                          <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                            DOLE
+                          </span>
+                        </div>
+                      </div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {{ formatDateTime(payslip.generatedAt) }}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                      <div class="flex items-center space-x-2">
+                        <button
+                          (click)="viewPayslip(payslip)"
+                          class="text-blue-600 hover:text-blue-900 transition-colors duration-200"
+                          title="View Payslip"
+                        >
+                          <span class="material-icons text-sm">visibility</span>
+                        </button>
+                        <button
+                          (click)="downloadPayslip(payslip)"
+                          class="text-green-600 hover:text-green-900 transition-colors duration-200"
+                          title="Download Payslip"
+                        >
+                          <span class="material-icons text-sm">download</span>
+                        </button>
+                        <button
+                          (click)="resendPayslip(payslip)"
+                          class="text-orange-600 hover:text-orange-900 transition-colors duration-200"
+                          title="Resend Payslip"
+                        >
+                          <span class="material-icons text-sm">email</span>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Resend Payslip Tab -->
+        <div *ngIf="activeTab === 'resend'" class="space-y-6">
+          <!-- Resend Configuration -->
+          <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+            <div class="px-6 py-4 border-b border-gray-200">
+              <h3 class="text-lg font-medium text-gray-900">Resend Payslips</h3>
+              <p class="text-sm text-gray-600 mt-1">Configure email settings and resend payslips to employees</p>
+            </div>
+            <div class="p-6">
+              <form [formGroup]="resendForm" class="space-y-6">
+                <!-- Selected Payslips -->
+                <div *ngIf="selectedPayslipsForResend.length > 0">
+                  <h4 class="text-sm font-medium text-gray-900 mb-3">Selected Payslips ({{ selectedPayslipsForResend.length }})</h4>
+                  <div class="bg-gray-50 rounded-lg p-4">
+                    <div class="space-y-2">
+                      <div *ngFor="let payslip of selectedPayslipsForResend" class="flex items-center justify-between text-sm">
+                        <span class="text-gray-900">{{ payslip.employeeName }} - {{ payslip.employeeId }}</span>
+                        <span class="text-gray-600">{{ formatDate(payslip.payrollPeriod.start) }} - {{ formatDate(payslip.payrollPeriod.end) }}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Email Template -->
+                <div>
+                  <label for="emailTemplate" class="block text-sm font-medium text-gray-700 mb-2">
+                    Email Template
+                  </label>
+                  <select
+                    id="emailTemplate"
+                    formControlName="emailTemplate"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                  >
+                    <option value="default">Default Template</option>
+                    <option value="custom">Custom Template</option>
+                    <option value="simple">Simple Template</option>
+                  </select>
+                </div>
+
+                <!-- Custom Message -->
+                <div>
+                  <label for="customMessage" class="block text-sm font-medium text-gray-700 mb-2">
+                    Custom Message (Optional)
+                  </label>
+                  <textarea
+                    id="customMessage"
+                    formControlName="customMessage"
+                    rows="4"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="Add a custom message to include in the email..."
+                  ></textarea>
+                </div>
+
+                <!-- Email Options -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div class="flex items-center">
+                    <input
+                      type="checkbox"
+                      id="includeAttachment"
+                      formControlName="includeAttachment"
+                      class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                    >
+                    <label for="includeAttachment" class="ml-2 block text-sm text-gray-900">
+                      Include Payslip as Attachment
+                    </label>
+                  </div>
+                  <div class="flex items-center">
+                    <input
+                      type="checkbox"
+                      id="sendCopyToHR"
+                      formControlName="sendCopyToHR"
+                      class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                    >
+                    <label for="sendCopyToHR" class="ml-2 block text-sm text-gray-900">
+                      Send Copy to HR
+                    </label>
+                  </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="flex justify-end space-x-4">
+                  <button
+                    (click)="activeTab = 'view-download'"
+                    class="bg-gray-300 text-gray-700 px-6 py-2 rounded-md hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-colors duration-200"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    (click)="sendPayslips()"
+                    [disabled]="!resendForm.valid || resendInProgress"
+                    class="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+                  >
+                    <span *ngIf="resendInProgress" class="material-icons text-sm mr-1 animate-spin">hourglass_empty</span>
+                    <span *ngIf="!resendInProgress" class="material-icons text-sm mr-1">send</span>
+                    {{ resendInProgress ? 'Sending...' : 'Send Payslips' }}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+
+          <!-- Email Preview -->
+          <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+            <div class="px-6 py-4 border-b border-gray-200">
+              <h3 class="text-lg font-medium text-gray-900">Email Preview</h3>
+              <p class="text-sm text-gray-600 mt-1">Preview of the email that will be sent</p>
+            </div>
+            <div class="p-6">
+              <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                <div class="space-y-3">
+                  <div>
+                    <span class="text-sm font-medium text-gray-700">To:</span>
+                    <span class="text-sm text-gray-900 ml-2">employee&#64;company.com</span>
+                  </div>
+                  <div>
+                    <span class="text-sm font-medium text-gray-700">Subject:</span>
+                    <span class="text-sm text-gray-900 ml-2">Your Payslip for January 2024</span>
+                  </div>
+                  <div>
+                    <span class="text-sm font-medium text-gray-700">Message:</span>
+                    <div class="text-sm text-gray-900 mt-1 bg-white p-3 rounded border">
+                      <p>Dear Employee,</p>
+                      <p class="mt-2">Please find attached your payslip for the current payroll period.</p>
+                      <p class="mt-2">If you have any questions, please contact the HR department.</p>
+                      <p class="mt-2">Best regards,<br>HR Team</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
