@@ -1,0 +1,87 @@
+// Department Management Component Styles
+
+.department-card {
+  transition: all 0.3s ease;
+  
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  }
+}
+
+.status-badge {
+  &.active {
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: white;
+  }
+  
+  &.inactive {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    color: white;
+  }
+}
+
+.action-button {
+  transition: all 0.2s ease;
+  
+  &:hover {
+    transform: scale(1.1);
+  }
+}
+
+.form-section {
+  animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.table-row {
+  transition: background-color 0.2s ease;
+  
+  &:hover {
+    background-color: #f9fafb;
+  }
+}
+
+.search-input {
+  &:focus {
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  }
+}
+
+.loading-spinner {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+// Responsive adjustments
+@media (max-width: 768px) {
+  .table-container {
+    overflow-x: auto;
+    
+    table {
+      min-width: 800px;
+    }
+  }
+  
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+}
