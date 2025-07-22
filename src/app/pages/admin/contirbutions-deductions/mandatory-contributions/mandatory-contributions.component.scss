@@ -1,0 +1,16 @@
+/* Custom styles for active tab underline if needed */
+.tabs button.active {
+  border-bottom: 2px solid #2563eb; /* blue-600 */
+  color: #2563eb;
+}
+
+/* Responsive tweaks for tables */
+@media (max-width: 640px) {
+  table {
+    font-size: 0.85rem;
+  }
+  th, td {
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+  }
+}

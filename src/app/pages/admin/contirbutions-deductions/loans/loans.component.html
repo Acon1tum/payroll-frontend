@@ -1,0 +1,105 @@
+<div class="flex h-screen bg-gray-50">
+    <!-- Sidebar -->
+    <app-sidebar></app-sidebar>
+  
+    <!-- Main Content -->
+    <div class="flex-1 flex flex-col overflow-hidden">
+      <!-- Header -->
+      <app-header></app-header>
+
+    <main class="flex-1 p-6">
+        
+<div class="bg-white rounded-lg shadow-sm border border-gray-200 mb-6">
+  <div class="border-b border-gray-200">
+    <nav class="flex space-x-8 px-6">
+      <button
+        (click)="selectedTab = 'register'"
+        [class]="selectedTab === 'register' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
+        class="py-4 px-1 border-b-2 font-medium text-sm transition-colors duration-200"
+      >
+        Register New Loan
+      </button>
+      <button
+        (click)="selectedTab = 'track'"
+        [class]="selectedTab === 'track' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
+        class="py-4 px-1 border-b-2 font-medium text-sm transition-colors duration-200"
+      >
+        Track Repayment
+      </button>
+    </nav>
+  </div>
+
+  <!-- Register New Loan Tab -->
+  <div *ngIf="selectedTab === 'register'" class="p-6 space-y-6">
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="text-lg font-semibold text-gray-900">Loans</h2>
+      <button class="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 transition-colors">Add Loan</button>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="min-w-full divide-y divide-gray-200">
+        <thead class="bg-gray-100">
+          <tr>
+            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Employee ID</th>
+            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Loan Type</th>
+            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Principal</th>
+            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Interest Rate (%)</th>
+            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Term (Months)</th>
+            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Start Date</th>
+            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Payment Schedule</th>
+            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Auto-Deduct</th>
+            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Remarks</th>
+            <th class="px-4 py-2"></th>
+          </tr>
+        </thead>
+        <tbody class="bg-white divide-y divide-gray-200">
+          <tr *ngFor="let loan of loans; let i = index">
+            <td class="px-4 py-2">{{ loan.employeeId }}</td>
+            <td class="px-4 py-2">{{ loan.loanType }}</td>
+            <td class="px-4 py-2">{{ loan.principal }}</td>
+            <td class="px-4 py-2">{{ loan.interestRate }}</td>
+            <td class="px-4 py-2">{{ loan.termMonths }}</td>
+            <td class="px-4 py-2">{{ loan.startDate | date:'shortDate' }}</td>
+            <td class="px-4 py-2">{{ loan.paymentSchedule }}</td>
+            <td class="px-4 py-2">{{ loan.autoDeduct ? 'Yes' : 'No' }}</td>
+            <td class="px-4 py-2">{{ loan.remarks }}</td>
+            <td class="px-4 py-2 text-right">
+              <button class="text-blue-600 hover:underline mr-2">Edit</button>
+              <button class="text-red-600 hover:underline">Delete</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Track Repayment Tab -->
+  <div *ngIf="selectedTab === 'track'" class="p-6 space-y-6">
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="text-lg font-semibold text-gray-900">Loan Repayment Progress</h2>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="min-w-full divide-y divide-gray-200">
+        <thead class="bg-gray-100">
+          <tr>
+            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Loan ID</th>
+            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Cutoff</th>
+            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Amount Paid</th>
+            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Balance</th>
+            <th class="px-4 py-2"></th>
+          </tr>
+        </thead>
+        <tbody class="bg-white divide-y divide-gray-200">
+          <tr *ngFor="let repayment of repayments; let i = index">
+            <td class="px-4 py-2">{{ repayment.loanId }}</td>
+            <td class="px-4 py-2">{{ repayment.cutoff }}</td>
+            <td class="px-4 py-2">{{ repayment.amountPaid }}</td>
+            <td class="px-4 py-2">{{ repayment.balance }}</td>
+            <td class="px-4 py-2 text-right">
+              <button class="text-blue-600 hover:underline">Details</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

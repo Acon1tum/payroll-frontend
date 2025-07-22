@@ -12,6 +12,10 @@ import { PayslipCenterComponent } from './pages/admin/payroll-management/payslip
 import { RunPayrollComponent } from './pages/admin/payroll-management/run-payroll/run-payroll.component';
 import { ThirteenMonthPayComponent } from './pages/admin/payroll-management/thirteen-month-pay/thirteen-month-pay.component';
 import { PayrollManagementComponent } from './pages/admin/payroll-management/payroll-management.component';
+import { ContirbutionsDeductionsComponent } from './pages/admin/contirbutions-deductions/contirbutions-deductions.component';
+import { MandatoryContributionsComponent } from './pages/admin/contirbutions-deductions/mandatory-contributions/mandatory-contributions.component';
+import { DeductionsComponent } from './pages/admin/contirbutions-deductions/deductions/deductions.component';
+import { LoansComponent } from './pages/admin/contirbutions-deductions/loans/loans.component';
 
 export const routes: Routes = [
   { path: '', component: LandingComponent },
@@ -28,5 +32,9 @@ export const routes: Routes = [
   { path: 'run-payroll', component: RunPayrollComponent },
   { path: 'thirteen-month-pay', component: ThirteenMonthPayComponent },
   { path: 'payroll-management', component: PayrollManagementComponent },
+  { path: 'contributions-deductions', component: ContirbutionsDeductionsComponent },
+  { path: 'mandatory-contributions', component: MandatoryContributionsComponent }, 
+  { path: 'deductions', component: DeductionsComponent },
+  { path: 'loans', component: LoansComponent },
   { path: '**', redirectTo: '' },
 ];

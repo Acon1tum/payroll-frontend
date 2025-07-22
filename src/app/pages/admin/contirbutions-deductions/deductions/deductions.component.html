@@ -1,0 +1,99 @@
+<div class="flex h-screen bg-gray-50">
+    <!-- Sidebar -->
+    <app-sidebar></app-sidebar>
+  
+    <!-- Main Content -->
+    <div class="flex-1 flex flex-col overflow-hidden">
+      <!-- Header -->
+      <app-header></app-header>
+
+<main class="flex-1 p-6">
+
+<div class="bg-white rounded-lg shadow-sm border border-gray-200 mb-6">
+  <div class="border-b border-gray-200">
+    <nav class="flex space-x-8 px-6">
+      <button
+        (click)="selectedTab = 'manage'"
+        [class]="selectedTab === 'manage' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
+        class="py-4 px-1 border-b-2 font-medium text-sm transition-colors duration-200"
+      >
+        Manage Deductions
+      </button>
+      <button
+        (click)="selectedTab = 'assign'"
+        [class]="selectedTab === 'assign' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
+        class="py-4 px-1 border-b-2 font-medium text-sm transition-colors duration-200"
+      >
+        Assign to Employees
+      </button>
+    </nav>
+  </div>
+
+  <!-- Manage Deductions Tab -->
+  <div *ngIf="selectedTab === 'manage'" class="p-6 space-y-6">
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="text-lg font-semibold text-gray-900">Custom Deductions</h2>
+      <button class="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 transition-colors">Add Deduction</button>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="min-w-full divide-y divide-gray-200">
+        <thead class="bg-gray-100">
+          <tr>
+            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
+            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Type</th>
+            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Amount</th>
+            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Description</th>
+            <th class="px-4 py-2"></th>
+          </tr>
+        </thead>
+        <tbody class="bg-white divide-y divide-gray-200">
+          <tr *ngFor="let deduction of deductions; let i = index">
+            <td class="px-4 py-2">{{ deduction.name }}</td>
+            <td class="px-4 py-2">{{ deduction.type }}</td>
+            <td class="px-4 py-2">{{ deduction.amount }}</td>
+            <td class="px-4 py-2">{{ deduction.description }}</td>
+            <td class="px-4 py-2 text-right">
+              <button class="text-blue-600 hover:underline mr-2">Edit</button>
+              <button class="text-red-600 hover:underline">Delete</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Assign to Employees Tab -->
+  <div *ngIf="selectedTab === 'assign'" class="p-6 space-y-6">
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="text-lg font-semibold text-gray-900">Assign Deductions to Employees</h2>
+      <button class="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 transition-colors">Assign Deduction</button>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="min-w-full divide-y divide-gray-200">
+        <thead class="bg-gray-100">
+          <tr>
+            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Employee ID</th>
+            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Deduction</th>
+            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Schedule</th>
+            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Start Date</th>
+            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">End Date</th>
+            <th class="px-4 py-2"></th>
+          </tr>
+        </thead>
+        <tbody class="bg-white divide-y divide-gray-200">
+          <tr *ngFor="let assignment of assignments; let i = index">
+            <td class="px-4 py-2">{{ assignment.employeeId }}</td>
+            <td class="px-4 py-2">{{ assignment.deductionId }}</td>
+            <td class="px-4 py-2">{{ assignment.schedule }}</td>
+            <td class="px-4 py-2">{{ assignment.startDate | date:'shortDate' }}</td>
+            <td class="px-4 py-2">{{ assignment.endDate | date:'shortDate' }}</td>
+            <td class="px-4 py-2 text-right">
+              <button class="text-blue-600 hover:underline mr-2">Edit</button>
+              <button class="text-red-600 hover:underline">Delete</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
