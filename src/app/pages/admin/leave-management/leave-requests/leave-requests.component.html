@@ -1,0 +1,73 @@
+<div class="flex h-screen bg-gray-50">
+    <!-- Sidebar -->
+    <app-sidebar></app-sidebar>
+  
+    <!-- Main Content -->
+    <div class="flex-1 flex flex-col overflow-hidden">
+      <!-- Header -->
+      <app-header></app-header>
+    
+    <main class="flex-1 p-6">
+
+<div class="bg-white rounded-lg shadow-sm border border-gray-200 mb-6 p-6">
+  <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-6 gap-4">
+    <div class="flex flex-col md:flex-row gap-4">
+      <div>
+        <label class="block text-xs font-medium text-gray-500 uppercase mb-1">Employee</label>
+        <input type="text" [(ngModel)]="filter.employee" placeholder="Search by name or ID" class="px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" />
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-gray-500 uppercase mb-1">Department</label>
+        <input type="text" [(ngModel)]="filter.department" placeholder="Search by department" class="px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" />
+      </div>
+    </div>
+    <button class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors" (click)="filterRequests()">Filter</button>
+  </div>
+
+  <div class="overflow-x-auto">
+    <table class="min-w-full divide-y divide-gray-200">
+      <thead class="bg-gray-100">
+        <tr>
+          <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Employee</th>
+          <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Department</th>
+          <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Leave Type</th>
+          <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Start</th>
+          <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">End</th>
+          <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+          <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Reason</th>
+          <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Document</th>
+          <th class="px-4 py-2"></th>
+        </tr>
+      </thead>
+      <tbody class="bg-white divide-y divide-gray-200">
+        <tr *ngFor="let request of leaveRequests">
+          <td class="px-4 py-2">{{ request.employeeName }}<br><span class="text-xs text-gray-400">{{ request.employeeId }}</span></td>
+          <td class="px-4 py-2">{{ request.department }}</td>
+          <td class="px-4 py-2">{{ request.leaveType }}</td>
+          <td class="px-4 py-2">{{ request.startDate | date:'shortDate' }}</td>
+          <td class="px-4 py-2">{{ request.endDate | date:'shortDate' }}</td>
+          <td class="px-4 py-2">
+            <span [ngClass]="{
+              'text-yellow-600': request.status === 'pending',
+              'text-green-600': request.status === 'approved',
+              'text-red-600': request.status === 'rejected'
+            }">{{ request.status | titlecase }}</span>
+          </td>
+          <td class="px-4 py-2">{{ request.reason }}</td>
+          <td class="px-4 py-2">
+            <a *ngIf="request.documentUrl" [href]="request.documentUrl" target="_blank" class="text-blue-600 hover:underline">View</a>
+            <span *ngIf="!request.documentUrl" class="text-gray-400">None</span>
+          </td>
+          <td class="px-4 py-2 text-right">
+            <button *ngIf="request.status === 'pending'" class="bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700 mr-2" (click)="approveRequest(request)">Approve</button>
+            <button *ngIf="request.status === 'pending'" class="bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700" (click)="rejectRequest(request)">Reject</button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+    </main>
+  </div>
+</div>

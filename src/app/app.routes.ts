@@ -16,6 +16,10 @@ import { ContirbutionsDeductionsComponent } from './pages/admin/contirbutions-de
 import { MandatoryContributionsComponent } from './pages/admin/contirbutions-deductions/mandatory-contributions/mandatory-contributions.component';
 import { DeductionsComponent } from './pages/admin/contirbutions-deductions/deductions/deductions.component';
 import { LoansComponent } from './pages/admin/contirbutions-deductions/loans/loans.component';
+import { LeaveRequestsComponent } from './pages/admin/leave-management/leave-requests/leave-requests.component';
+import { LeaveSettingsComponent } from './pages/admin/leave-management/leave-settings/leave-settings.component';
+import { LeaveReportsComponent } from './pages/admin/leave-management/leave-reports/leave-reports.component';
+
 
 export const routes: Routes = [
   { path: '', component: LandingComponent },
@@ -36,5 +40,8 @@ export const routes: Routes = [
   { path: 'mandatory-contributions', component: MandatoryContributionsComponent }, 
   { path: 'deductions', component: DeductionsComponent },
   { path: 'loans', component: LoansComponent },
+  { path: 'leave-requests', component: LeaveRequestsComponent },
+  { path: 'leave-settings', component: LeaveSettingsComponent },
+  { path: 'leave-reports', component: LeaveReportsComponent },
   { path: '**', redirectTo: '' },
 ];
