@@ -60,7 +60,8 @@ export class SidebarComponent implements OnInit, OnDestroy {
         { name: 'Payroll Summary', icon: 'account_circle', path: '/payroll-summary' },
         { name: 'Govt Reports', icon: 'schedule', path: '/govt-reports' },
         { name: 'Loans, leaves, Contributions Summary', icon: 'schedule', path: '/llc-summary' }
-      ] }
+      ] },
+        { name: 'Bank File Generation', icon: 'account_circle', path: '/bank-file-generation' }
     ],
     employee: [
       { name: 'Dashboard', icon: 'dashboard', path: '/dashboard' },

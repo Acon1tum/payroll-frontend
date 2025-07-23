@@ -23,6 +23,7 @@ import { ReportsRemittancesComponent } from './pages/admin/reports-remittances/r
 import { PayrollSummaryComponent } from './pages/admin/reports-remittances/payroll-summary/payroll-summary.component';
 import { LlcSummaryComponent } from './pages/admin/reports-remittances/llc-summary/llc-summary.component';
 import { GovtReportsComponent } from './pages/admin/reports-remittances/govt-reports/govt-reports.component';
+import { BankFileGenerationComponent } from './pages/admin/bank-file-generation/bank-file-generation.component';
 
 
 export const routes: Routes = [
@@ -51,5 +52,6 @@ export const routes: Routes = [
   { path: 'payroll-summary', component: PayrollSummaryComponent },
   { path: 'llc-summary', component: LlcSummaryComponent },
   { path: 'govt-reports', component: GovtReportsComponent },
+  { path: 'bank-file-generation', component: BankFileGenerationComponent },
   { path: '**', redirectTo: '' },
 ];

@@ -1,0 +1,51 @@
+<div class="flex h-screen bg-gray-50">
+    <!-- Sidebar -->
+    <app-sidebar></app-sidebar>
+  
+    <!-- Main Content -->
+    <div class="flex-1 flex flex-col overflow-hidden">
+      <!-- Header -->
+      <app-header></app-header>
+    
+    <main class="flex-1 p-6">
+<div class="bg-white rounded-lg shadow-sm border border-gray-200 mb-6 p-6">
+  <div class="mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+    <div class="flex flex-col md:flex-row gap-4">
+      <div>
+        <label class="block text-xs font-medium text-gray-500 uppercase mb-1">Bank</label>
+        <select [(ngModel)]="selectedBank" class="px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+          <option value="BDO">BDO</option>
+          <option value="Metrobank">Metrobank</option>
+          <option value="Landbank">Landbank</option>
+        </select>
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-gray-500 uppercase mb-1">Period</label>
+        <input type="text" [(ngModel)]="period" placeholder="e.g. 2024-07" class="px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" />
+      </div>
+    </div>
+    <button class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors" (click)="previewDisbursement()">Preview</button>
+    <button class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition-colors ml-2" (click)="generateBankFile()">Generate & Download</button>
+  </div>
+
+  <div class="overflow-x-auto">
+    <table class="min-w-full divide-y divide-gray-200">
+      <thead class="bg-gray-100">
+        <tr>
+          <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Employee</th>
+          <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Account Number</th>
+          <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Amount</th>
+          <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Bank</th>
+        </tr>
+      </thead>
+      <tbody class="bg-white divide-y divide-gray-200">
+        <tr *ngFor="let d of disbursements">
+          <td class="px-4 py-2">{{ d.employeeName }}<br><span class="text-xs text-gray-400">{{ d.employeeId }}</span></td>
+          <td class="px-4 py-2">{{ d.accountNumber }}</td>
+          <td class="px-4 py-2">{{ d.amount | number:'1.2-2' }}</td>
+          <td class="px-4 py-2">{{ d.bank }}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
