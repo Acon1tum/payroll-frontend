@@ -55,6 +55,11 @@ export class SidebarComponent implements OnInit, OnDestroy {
         { name: 'Leave Requests', icon: 'account_circle', path: '/leave-requests' },
         { name: 'Leave Settings', icon: 'schedule', path: '/leave-settings' },
         { name: 'Leave Reports', icon: 'schedule', path: '/leave-reports' }
+      ] },
+      { name: 'Reports & Remittances', icon: 'person', children: [
+        { name: 'Payroll Summary', icon: 'account_circle', path: '/payroll-summary' },
+        { name: 'Govt Reports', icon: 'schedule', path: '/govt-reports' },
+        { name: 'Loans, leaves, Contributions Summary', icon: 'schedule', path: '/llc-summary' }
       ] }
     ],
     employee: [

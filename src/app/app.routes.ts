@@ -19,6 +19,10 @@ import { LoansComponent } from './pages/admin/contirbutions-deductions/loans/loa
 import { LeaveRequestsComponent } from './pages/admin/leave-management/leave-requests/leave-requests.component';
 import { LeaveSettingsComponent } from './pages/admin/leave-management/leave-settings/leave-settings.component';
 import { LeaveReportsComponent } from './pages/admin/leave-management/leave-reports/leave-reports.component';
+import { ReportsRemittancesComponent } from './pages/admin/reports-remittances/reports-remittances.component';
+import { PayrollSummaryComponent } from './pages/admin/reports-remittances/payroll-summary/payroll-summary.component';
+import { LlcSummaryComponent } from './pages/admin/reports-remittances/llc-summary/llc-summary.component';
+import { GovtReportsComponent } from './pages/admin/reports-remittances/govt-reports/govt-reports.component';
 
 
 export const routes: Routes = [
@@ -43,5 +47,9 @@ export const routes: Routes = [
   { path: 'leave-requests', component: LeaveRequestsComponent },
   { path: 'leave-settings', component: LeaveSettingsComponent },
   { path: 'leave-reports', component: LeaveReportsComponent },
+  { path: 'reports-remittances', component: ReportsRemittancesComponent },
+  { path: 'payroll-summary', component: PayrollSummaryComponent },
+  { path: 'llc-summary', component: LlcSummaryComponent },
+  { path: 'govt-reports', component: GovtReportsComponent },
   { path: '**', redirectTo: '' },
 ];

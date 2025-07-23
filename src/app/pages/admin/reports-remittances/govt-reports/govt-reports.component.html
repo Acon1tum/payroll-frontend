@@ -1,0 +1,53 @@
+<div class="flex h-screen bg-gray-50">
+    <!-- Sidebar -->
+    <app-sidebar></app-sidebar>
+  
+    <!-- Main Content -->
+    <div class="flex-1 flex flex-col overflow-hidden">
+      <!-- Header -->
+      <app-header></app-header>
+    
+    <main class="flex-1 p-6">
+        
+<div class="bg-white rounded-lg shadow-sm border border-gray-200 mb-6 p-6">
+  <div class="mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+    <div class="flex flex-col md:flex-row gap-4">
+      <div>
+        <label class="block text-xs font-medium text-gray-500 uppercase mb-1">Report Type</label>
+        <select [(ngModel)]="selectedReport" class="px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+          <option value="bir2316">BIR 2316</option>
+          <option value="sssR3">SSS R3</option>
+          <option value="sssR5">SSS R5</option>
+          <option value="rf1">PhilHealth RF-1</option>
+          <option value="m11">Pag-IBIG M1-1</option>
+        </select>
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-gray-500 uppercase mb-1">Period</label>
+        <input type="text" [(ngModel)]="period" placeholder="e.g. 2024 or 2024-07" class="px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" />
+      </div>
+    </div>
+    <button class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition-colors" (click)="exportReport()">Export</button>
+  </div>
+
+  <div *ngIf="selectedReport === 'bir2316'">
+    <h2 class="text-lg font-semibold text-gray-900 mb-2">BIR 2316</h2>
+    <p class="text-gray-600 mb-4">Export-ready format for BIR 2316 annual income tax return.</p>
+  </div>
+  <div *ngIf="selectedReport === 'sssR3'">
+    <h2 class="text-lg font-semibold text-gray-900 mb-2">SSS R3</h2>
+    <p class="text-gray-600 mb-4">Export-ready format for SSS R3 monthly contributions.</p>
+  </div>
+  <div *ngIf="selectedReport === 'sssR5'">
+    <h2 class="text-lg font-semibold text-gray-900 mb-2">SSS R5</h2>
+    <p class="text-gray-600 mb-4">Export-ready format for SSS R5 payment return.</p>
+  </div>
+  <div *ngIf="selectedReport === 'rf1'">
+    <h2 class="text-lg font-semibold text-gray-900 mb-2">PhilHealth RF-1</h2>
+    <p class="text-gray-600 mb-4">Export-ready format for PhilHealth RF-1 monthly remittance.</p>
+  </div>
+  <div *ngIf="selectedReport === 'm11'">
+    <h2 class="text-lg font-semibold text-gray-900 mb-2">Pag-IBIG M1-1</h2>
+    <p class="text-gray-600 mb-4">Export-ready format for Pag-IBIG M1-1 monthly remittance.</p>
+  </div>
+</div>
