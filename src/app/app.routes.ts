@@ -24,7 +24,9 @@ import { PayrollSummaryComponent } from './pages/admin/reports-remittances/payro
 import { LlcSummaryComponent } from './pages/admin/reports-remittances/llc-summary/llc-summary.component';
 import { GovtReportsComponent } from './pages/admin/reports-remittances/govt-reports/govt-reports.component';
 import { BankFileGenerationComponent } from './pages/admin/bank-file-generation/bank-file-generation.component';
-
+import { AuditTrailComponent } from './pages/admin/audit-trail/audit-trail.component';
+import { ActivityLogsComponent } from './pages/admin/audit-trail/activity-logs/activity-logs.component';
+import { AccessLogsComponent } from './pages/admin/audit-trail/access-logs/access-logs.component';
 
 export const routes: Routes = [
   { path: '', component: LandingComponent },
@@ -53,5 +55,8 @@ export const routes: Routes = [
   { path: 'llc-summary', component: LlcSummaryComponent },
   { path: 'govt-reports', component: GovtReportsComponent },
   { path: 'bank-file-generation', component: BankFileGenerationComponent },
+  { path: 'audit-trail', component: AuditTrailComponent },
+  { path: 'activity-logs', component: ActivityLogsComponent },
+  { path: 'access-logs', component: AccessLogsComponent },
   { path: '**', redirectTo: '' },
 ];
