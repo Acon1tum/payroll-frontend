@@ -1,1 +1,103 @@
-<p>reports-remittances works!</p>
+<div class="flex h-screen bg-gray-50">
+  <!-- Sidebar -->
+  <app-sidebar></app-sidebar>
+
+  <!-- Main Content -->
+  <div class="flex-1 flex flex-col overflow-hidden">
+    <!-- Header -->
+    <app-header></app-header>
+
+    <main class="flex-1 overflow-x-hidden overflow-y-auto bg-gray-50 p-6">
+      <div class="space-y-6">
+        <!-- Header Card -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+          <div class="px-6 py-4 border-b border-gray-200">
+            <h3 class="text-lg font-medium text-gray-900">Reports & Remittances</h3>
+            <p class="text-sm text-gray-600 mt-1">Overview of payroll totals and government remittances.</p>
+          </div>
+        </div>
+
+        <!-- Summary Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+            <div class="text-sm text-gray-500">Payrolls Processed</div>
+            <div class="text-2xl font-semibold">{{ totals.payrollsProcessed }}</div>
+          </div>
+          <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+            <div class="text-sm text-gray-500">Total Net Paid</div>
+            <div class="text-2xl font-semibold">{{ formatCurrency(totals.totalNetPaid) }}</div>
+          </div>
+          <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+            <div class="text-sm text-gray-500">Total Deductions</div>
+            <div class="text-2xl font-semibold">{{ formatCurrency(totals.totalDeductions) }}</div>
+          </div>
+          <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+            <div class="text-sm text-gray-500">Govt Remitted</div>
+            <div class="text-2xl font-semibold">{{ formatCurrency(totals.govtRemitted) }}</div>
+          </div>
+        </div>
+
+        <!-- Export Sections -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <section class="bg-white rounded-lg shadow-sm border border-gray-200">
+            <div class="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+              <h4 class="text-md font-medium text-gray-900">Payroll Summary</h4>
+              <button (click)="exportPayrollSummary()" class="px-3 py-2 rounded bg-blue-600 text-white text-sm">Export CSV</button>
+            </div>
+            <div class="p-6 space-y-2 text-sm text-gray-700">
+              <div class="flex items-center justify-between">
+                <span>Runs</span>
+                <span class="font-medium">{{ totals.payrollsProcessed }}</span>
+              </div>
+              <div class="flex items-center justify-between">
+                <span>Total Net Paid</span>
+                <span class="font-medium">{{ formatCurrency(totals.totalNetPaid) }}</span>
+              </div>
+              <div class="flex items-center justify-between">
+                <span>Total Deductions</span>
+                <span class="font-medium">{{ formatCurrency(totals.totalDeductions) }}</span>
+              </div>
+            </div>
+          </section>
+
+          <section class="bg-white rounded-lg shadow-sm border border-gray-200">
+            <div class="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+              <h4 class="text-md font-medium text-gray-900">Government Remittances</h4>
+              <button (click)="exportGovtReports()" class="px-3 py-2 rounded bg-blue-600 text-white text-sm">Export CSV</button>
+            </div>
+            <div class="p-6 space-y-3 text-sm text-gray-700">
+              <div>
+                <div class="font-medium">SSS - {{ sss.month }}</div>
+                <div class="grid grid-cols-3 gap-4 mt-1">
+                  <div>Employee: {{ formatCurrency(sss.employeeShare) }}</div>
+                  <div>Employer: {{ formatCurrency(sss.employerShare) }}</div>
+                  <div>Employees: {{ sss.count }}</div>
+                </div>
+              </div>
+              <div>
+                <div class="font-medium">PhilHealth - {{ philhealth.month }}</div>
+                <div class="grid grid-cols-3 gap-4 mt-1">
+                  <div>Employee: {{ formatCurrency(philhealth.employeeShare) }}</div>
+                  <div>Employer: {{ formatCurrency(philhealth.employerShare) }}</div>
+                  <div>Employees: {{ philhealth.count }}</div>
+                </div>
+              </div>
+              <div>
+                <div class="font-medium">Pag-IBIG - {{ pagibig.month }}</div>
+                <div class="grid grid-cols-3 gap-4 mt-1">
+                  <div>Employee: {{ formatCurrency(pagibig.employeeShare) }}</div>
+                  <div>Employer: {{ formatCurrency(pagibig.employerShare) }}</div>
+                  <div>Employees: {{ pagibig.count }}</div>
+                </div>
+              </div>
+              <div>
+                <div class="font-medium">BIR - {{ bir.period }}</div>
+                <div class="mt-1">Withheld Tax: {{ formatCurrency(bir.withheldTax) }}</div>
+              </div>
+            </div>
+          </section>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>

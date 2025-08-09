@@ -7,9 +7,14 @@
       <!-- Header -->
       <app-header></app-header>
     
-    <main class="flex-1 p-6">
+    <main class="flex-1 overflow-x-hidden overflow-y-auto bg-gray-50 p-6">
 
-<div class="bg-white rounded-lg shadow-sm border border-gray-200 mb-6 p-6">
+<div class="bg-white rounded-lg shadow-sm border border-gray-200 mb-6">
+  <div class="px-6 py-4 border-b border-gray-200">
+    <h3 class="text-lg font-medium text-gray-900">Loans, Leaves, Contributions Summary</h3>
+    <p class="text-sm text-gray-600 mt-1">Combined view of employee loans, leaves, and government contributions.</p>
+  </div>
+  <div class="p-6">
   <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-6 gap-4">
     <div class="flex flex-col md:flex-row gap-4">
       <div>
@@ -37,7 +42,7 @@
         </tr>
       </thead>
       <tbody class="bg-white divide-y divide-gray-200">
-        <tr *ngFor="let summary of summaries">
+        <tr *ngFor="let summary of filtered">
           <td class="px-4 py-2">{{ summary.employeeName }}<br><span class="text-xs text-gray-400">{{ summary.employeeId }}</span></td>
           <td class="px-4 py-2">{{ summary.period }}</td>
           <td class="px-4 py-2">{{ summary.totalLoans | number:'1.2-2' }}</td>
