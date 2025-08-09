@@ -1,1 +1,146 @@
-<p>profile works!</p>
+<div class="flex h-screen bg-gray-50">
+  <!-- Sidebar -->
+  <app-sidebar></app-sidebar>
+
+  <!-- Main Content -->
+  <div class="flex-1 flex flex-col overflow-hidden">
+    <!-- Header -->
+    <app-header></app-header>
+
+    <!-- Content -->
+    <main class="flex-1 overflow-x-hidden overflow-y-auto bg-gray-50 p-6">
+      <div class="space-y-6">
+        <!-- Header Card -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+          <div class="px-6 py-4 border-b border-gray-200">
+            <h3 class="text-lg font-medium text-gray-900">My Profile</h3>
+            <p class="text-sm text-gray-600 mt-1">Personal account and employment info.</p>
+          </div>
+        </div>
+
+        <!-- Top Section: Personal Info and Photo -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <!-- Personal Info -->
+          <div class="lg:col-span-2 bg-white rounded-lg shadow-sm border border-gray-200">
+            <div class="px-6 py-4 border-b border-gray-200">
+              <h4 class="text-md font-medium text-gray-900">View Personal Info</h4>
+            </div>
+            <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+              <div>
+                <p class="text-gray-500">Full Name</p>
+                <p class="text-gray-900 font-medium">{{ personalInfo.fullName }}</p>
+              </div>
+              <div>
+                <p class="text-gray-500">Email</p>
+                <p class="text-gray-900 font-medium">{{ personalInfo.email }}</p>
+              </div>
+              <div>
+                <p class="text-gray-500">Phone</p>
+                <p class="text-gray-900 font-medium">{{ personalInfo.phone }}</p>
+              </div>
+              <div>
+                <p class="text-gray-500">TIN</p>
+                <p class="text-gray-900 font-medium">{{ personalInfo.tin }}</p>
+              </div>
+              <div>
+                <p class="text-gray-500">SSS</p>
+                <p class="text-gray-900 font-medium">{{ personalInfo.sss }}</p>
+              </div>
+              <div>
+                <p class="text-gray-500">PhilHealth</p>
+                <p class="text-gray-900 font-medium">{{ personalInfo.philHealth }}</p>
+              </div>
+              <div>
+                <p class="text-gray-500">Pag-IBIG</p>
+                <p class="text-gray-900 font-medium">{{ personalInfo.pagibig }}</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Update Photo -->
+          <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+            <div class="px-6 py-4 border-b border-gray-200">
+              <h4 class="text-md font-medium text-gray-900">Update Photo</h4>
+            </div>
+            <div class="p-6 space-y-4">
+              <div class="flex items-center space-x-4">
+                <div class="h-20 w-20 rounded-full bg-gray-200 overflow-hidden flex items-center justify-center">
+                  <img *ngIf="photoPreview" [src]="photoPreview" class="h-full w-full object-cover" />
+                  <span *ngIf="!photoPreview" class="material-icons text-gray-400">person</span>
+                </div>
+                <div>
+                  <label class="cursor-pointer inline-flex items-center px-3 py-2 border border-gray-300 text-sm rounded-md shadow-sm bg-white hover:bg-gray-50">
+                    <input type="file" class="hidden" accept="image/*" (change)="onPhotoSelected($event)" />
+                    <span class="material-icons mr-2 text-gray-600">upload</span>
+                    Choose Photo
+                  </label>
+                </div>
+              </div>
+              <div class="flex space-x-3">
+                <button (click)="savePhoto()" class="inline-flex items-center px-3 py-2 text-sm rounded-md bg-blue-600 text-white hover:bg-blue-700">
+                  Save Photo
+                </button>
+                <span class="text-sm" [ngClass]="{'text-green-600': photoMessage?.includes('success'), 'text-gray-600': !photoMessage}">{{ photoMessage }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Employment Details -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+          <div class="px-6 py-4 border-b border-gray-200">
+            <h4 class="text-md font-medium text-gray-900">Employment Details</h4>
+          </div>
+          <div class="p-6 grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+            <div>
+              <p class="text-gray-500">Job Title</p>
+              <p class="text-gray-900 font-medium">{{ employment.jobTitle }}</p>
+            </div>
+            <div>
+              <p class="text-gray-500">Department</p>
+              <p class="text-gray-900 font-medium">{{ employment.department }}</p>
+            </div>
+            <div>
+              <p class="text-gray-500">Organization</p>
+              <p class="text-gray-900 font-medium">{{ employment.organization }}</p>
+            </div>
+            <div>
+              <p class="text-gray-500">Start Date</p>
+              <p class="text-gray-900 font-medium">{{ employment.startDate }}</p>
+            </div>
+            <div>
+              <p class="text-gray-500">Salary</p>
+              <p class="text-gray-900 font-medium">{{ employment.salary }}</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Update Password -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+          <div class="px-6 py-4 border-b border-gray-200">
+            <h4 class="text-md font-medium text-gray-900">Update Password</h4>
+          </div>
+          <div class="p-6 grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+            <div class="md:col-span-1">
+              <label class="block text-gray-700 mb-1">Current Password</label>
+              <input type="password" [(ngModel)]="passwordForm.current" class="w-full border rounded-md px-3 py-2" placeholder="••••••••" />
+            </div>
+            <div>
+              <label class="block text-gray-700 mb-1">New Password</label>
+              <input type="password" [(ngModel)]="passwordForm.new" class="w-full border rounded-md px-3 py-2" placeholder="At least 8 characters" />
+            </div>
+            <div>
+              <label class="block text-gray-700 mb-1">Confirm New Password</label>
+              <input type="password" [(ngModel)]="passwordForm.confirm" class="w-full border rounded-md px-3 py-2" placeholder="Re-enter new password" />
+            </div>
+            <div class="md:col-span-3 flex items-center space-x-3 mt-2">
+              <button (click)="changePassword()" class="inline-flex items-center px-3 py-2 text-sm rounded-md bg-blue-600 text-white hover:bg-blue-700">Update Password</button>
+              <span *ngIf="passwordError" class="text-sm text-red-600">{{ passwordError }}</span>
+              <span *ngIf="passwordSuccess" class="text-sm text-green-600">{{ passwordSuccess }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>

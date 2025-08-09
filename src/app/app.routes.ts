@@ -28,6 +28,7 @@ import { AuditTrailComponent } from './pages/admin/audit-trail/audit-trail.compo
 import { ActivityLogsComponent } from './pages/admin/audit-trail/activity-logs/activity-logs.component';
 import { AccessLogsComponent } from './pages/admin/audit-trail/access-logs/access-logs.component';
 import { RequestLoanComponent } from './pages/employee/request-loan/request-loan.component';
+import { ProfileComponent } from './pages/employee/profile/profile.component';
 
 export const routes: Routes = [
   { path: '', component: LandingComponent },
@@ -60,5 +61,6 @@ export const routes: Routes = [
   { path: 'activity-logs', component: ActivityLogsComponent },
   { path: 'access-logs', component: AccessLogsComponent },
   { path: 'request-loan', component: RequestLoanComponent },
+  { path: 'employee/profile', component: ProfileComponent },
   { path: '**', redirectTo: '' },
 ];

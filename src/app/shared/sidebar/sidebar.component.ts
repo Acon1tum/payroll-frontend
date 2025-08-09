@@ -2,6 +2,7 @@ import { Component, Input, Output, EventEmitter, OnInit, HostListener, OnDestroy
 import { CommonModule } from '@angular/common';
 import { Router, NavigationEnd, RouterLink, RouterLinkActive } from '@angular/router';
 import { Subscription } from 'rxjs';
+import { AuthService } from '../../services/auth.service';
 
 interface MenuItem {
   name: string;
@@ -19,7 +20,7 @@ interface MenuItem {
 })
 export class SidebarComponent implements OnInit, OnDestroy {
   @Input() isCollapsed = false;
-  @Input() userRole: string = 'admin'; // Default role, can be changed via input
+  @Input() userRole: string | undefined; // If not provided, derive from AuthService
   @Output() toggleCollapse = new EventEmitter<void>();
 
   menuItems: MenuItem[] = [];
@@ -80,12 +81,14 @@ export class SidebarComponent implements OnInit, OnDestroy {
   };
 
   get currentMenuItems(): MenuItem[] {
-    return this.menuItemsByRole[this.userRole] || [];
+    const role = this.userRole || this.auth.currentUser?.role || 'employee';
+    return this.menuItemsByRole[role] || [];
   }
 
   private routerSub: Subscription | undefined;
+  private authSub: Subscription | undefined;
 
-  constructor(private router: Router) {}
+  constructor(private router: Router, private auth: AuthService) {}
 
   @HostListener('window:resize', ['$event'])
   onResize() {
@@ -94,7 +97,11 @@ export class SidebarComponent implements OnInit, OnDestroy {
 
   ngOnInit() {
     this.updateMenuItems();
-    
+    // React to auth user changes and router navigation
+    this.authSub = this.auth.currentUser$.subscribe(() => {
+      this.updateMenuItems();
+    });
+
     this.routerSub = this.router.events.subscribe(event => {
       if (event instanceof NavigationEnd) {
         this.updateMenuItems();
@@ -104,6 +111,7 @@ export class SidebarComponent implements OnInit, OnDestroy {
 
   ngOnDestroy() {
     this.routerSub?.unsubscribe();
+    this.authSub?.unsubscribe();
   }
 
   private updateMenuItems() {

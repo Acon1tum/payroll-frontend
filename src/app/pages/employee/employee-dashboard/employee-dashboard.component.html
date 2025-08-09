@@ -1,1 +1,71 @@
-<p>employee-dashboard works!</p>
+<div class="flex h-screen bg-gray-50">
+    <!-- Sidebar -->
+    <app-sidebar></app-sidebar>
+  
+    <!-- Main Content -->
+    <div class="flex-1 flex flex-col overflow-hidden">
+      <!-- Header -->
+      <app-header></app-header>
+  
+      <!-- Dashboard Content -->
+      <main class="flex-1 overflow-x-hidden overflow-y-auto bg-gray-50 p-6">
+        <div class="space-y-6">
+          <!-- Header Card -->
+          <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+            <div class="px-6 py-4 border-b border-gray-200">
+              <h3 class="text-lg font-medium text-gray-900">Dashboard</h3>
+              <p class="text-sm text-gray-600 mt-1">Quick view of current employee status.</p>
+            </div>
+          </div>
+
+          <!-- Summary Grid -->
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+              <p class="text-sm text-gray-600">Latest Payslip Net Pay</p>
+              <p class="text-2xl font-bold text-gray-900 mt-1">{{ formatCurrency(metrics.latestNetPay) }}</p>
+              <p class="text-xs text-gray-500 mt-1">Payday: {{ formatDate(metrics.payday) }}</p>
+            </div>
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+              <p class="text-sm text-gray-600">Vacation Leave</p>
+              <p class="text-2xl font-bold text-blue-700 mt-1">{{ metrics.leave.vacation }} days</p>
+              <p class="text-xs text-gray-500 mt-1">Remaining</p>
+            </div>
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+              <p class="text-sm text-gray-600">Sick Leave</p>
+              <p class="text-2xl font-bold text-blue-700 mt-1">{{ metrics.leave.sick }} days</p>
+              <p class="text-xs text-gray-500 mt-1">Remaining</p>
+            </div>
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+              <p class="text-sm text-gray-600">Active Loan Balance</p>
+              <p class="text-2xl font-bold text-purple-700 mt-1">{{ formatCurrency(metrics.loanBalance) }}</p>
+              <p class="text-xs text-gray-500 mt-1">Across active loans</p>
+            </div>
+          </div>
+
+          <!-- Notifications -->
+          <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+            <div class="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+              <h3 class="text-lg font-medium text-gray-900">Notifications</h3>
+            </div>
+            <div class="p-6">
+              <div class="space-y-4">
+                <div *ngFor="let n of notifications" class="flex items-start space-x-3">
+                  <div class="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center">
+                    <span class="material-icons text-sm {{ n.color }}">{{ n.icon }}</span>
+                  </div>
+                  <div class="flex-1">
+                    <div class="flex items-center justify-between">
+                      <p class="text-sm font-medium text-gray-900">{{ n.title }}</p>
+                      <span class="text-xs text-gray-500">{{ n.timestamp | date:'short' }}</span>
+                    </div>
+                    <p class="text-sm text-gray-600">{{ n.message }}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+  
