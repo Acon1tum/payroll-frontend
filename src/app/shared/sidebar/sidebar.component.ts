@@ -71,9 +71,9 @@ export class SidebarComponent implements OnInit, OnDestroy {
         
     ],
     employee: [
-      { name: 'Dashboard', icon: 'dashboard', path: '/dashboard' },
-      { name: 'Employee Dashboard', icon: 'person', path: '/employee-dashboard' },
+      { name: 'Dashboard', icon: 'person', path: '/employee-dashboard' },
       { name: 'My Profile', icon: 'account_circle', path: '/employee/profile' },
+      { name: 'My Payslip', icon: 'account_circle', path: '/employee/payslip' },
       { name: 'Time Tracking', icon: 'schedule', path: '/employee/time-tracking' },
       { name: 'Request Loan', icon: 'request_page', path: '/request-loan' },
       { name: 'My Reports', icon: 'report', path: '/employee/reports' }
