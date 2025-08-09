@@ -44,7 +44,8 @@ export class SidebarComponent implements OnInit, OnDestroy {
       ] },
       { name: 'Employee Self-Service', icon: 'person', children: [
         { name: 'My Profile', icon: 'account_circle', path: '/employee/profile' },
-        { name: 'Time Tracking', icon: 'schedule', path: '/employee/time-tracking' }
+        { name: 'Time Tracking', icon: 'schedule', path: '/employee/time-tracking' },
+        { name: 'Request Loan', icon: 'request_page', path: '/request-loan' },
       ] },
       { name: 'Contributions & Deductions', icon: 'person', children: [
         { name: 'Mandatory Contirbutions', icon: 'account_circle', path: '/mandatory-contributions' },
@@ -73,7 +74,7 @@ export class SidebarComponent implements OnInit, OnDestroy {
       { name: 'Employee Dashboard', icon: 'person', path: '/employee-dashboard' },
       { name: 'My Profile', icon: 'account_circle', path: '/employee/profile' },
       { name: 'Time Tracking', icon: 'schedule', path: '/employee/time-tracking' },
-      { name: 'My Requests', icon: 'request_page', path: '/employee/requests' },
+      { name: 'Request Loan', icon: 'request_page', path: '/request-loan' },
       { name: 'My Reports', icon: 'report', path: '/employee/reports' }
     ]
   };

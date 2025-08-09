@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { BehaviorSubject, Observable, tap } from 'rxjs';
+import { BehaviorSubject, Observable, tap, map } from 'rxjs';
 import { Router } from '@angular/router';
 
 export interface User {
@@ -61,10 +61,14 @@ export class AuthService {
   }
 
   login(credentials: LoginRequest): Observable<LoginResponse> {
-    return this.http.post<LoginResponse>(`${this.API_URL}/auth/login`, credentials)
+    return this.http.post<any>(`${this.API_URL}/auth/login`, credentials)
       .pipe(
-        tap(response => {
-          this.setSession(response);
+        map((resp: any) => {
+          // Backend returns ApiResponse<{ user, token }>
+          const payload = resp?.data ?? resp;
+          const normalized: LoginResponse = { user: payload.user, token: payload.token };
+          this.setSession(normalized);
+          return normalized;
         })
       );
   }
@@ -84,14 +88,23 @@ export class AuthService {
 
   private loadStoredUser(): void {
     const storedUser = localStorage.getItem('current_user');
-    if (storedUser) {
-      try {
-        const user = JSON.parse(storedUser);
+    if (!storedUser || storedUser === 'undefined' || storedUser === 'null') {
+      // Clean up any invalid persisted value
+      localStorage.removeItem('current_user');
+      return;
+    }
+
+    try {
+      const user = JSON.parse(storedUser);
+      // Basic shape validation to avoid runtime issues
+      if (user && typeof user === 'object' && typeof user.email === 'string' && typeof user.role === 'string') {
         this.currentUserSubject.next(user);
-      } catch (error) {
-        console.error('Error parsing stored user:', error);
-        this.logout();
+      } else {
+        localStorage.removeItem('current_user');
       }
+    } catch (error) {
+      console.error('Error parsing stored user:', error);
+      localStorage.removeItem('current_user');
     }
   }
 

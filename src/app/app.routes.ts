@@ -27,6 +27,7 @@ import { BankFileGenerationComponent } from './pages/admin/bank-file-generation/
 import { AuditTrailComponent } from './pages/admin/audit-trail/audit-trail.component';
 import { ActivityLogsComponent } from './pages/admin/audit-trail/activity-logs/activity-logs.component';
 import { AccessLogsComponent } from './pages/admin/audit-trail/access-logs/access-logs.component';
+import { RequestLoanComponent } from './pages/employee/request-loan/request-loan.component';
 
 export const routes: Routes = [
   { path: '', component: LandingComponent },
@@ -58,5 +59,6 @@ export const routes: Routes = [
   { path: 'audit-trail', component: AuditTrailComponent },
   { path: 'activity-logs', component: ActivityLogsComponent },
   { path: 'access-logs', component: AccessLogsComponent },
+  { path: 'request-loan', component: RequestLoanComponent },
   { path: '**', redirectTo: '' },
 ];

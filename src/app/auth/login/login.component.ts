@@ -57,15 +57,12 @@ export class LoginComponent {
         console.log('Login successful', response);
         this.isLoading = false;
         
-        // Navigate based on user role
-        if (response.user.role === 'admin') {
-          this.router.navigate(['/admin/dashboard']);
-        } else if (response.user.role === 'hrStaff') {
-          this.router.navigate(['/admin/dashboard']);
-        } else if (response.user.role === 'payrollManager') {
-          this.router.navigate(['/admin/dashboard']);
+        // Navigate based on user role (routes defined in app.routes.ts)
+        const role = response?.user?.role;
+        if (role === 'admin' || role === 'hrStaff' || role === 'payrollManager') {
+          this.router.navigate(['/dashboard']);
         } else {
-          this.router.navigate(['/employee/dashboard']);
+          this.router.navigate(['/employee-dashboard']);
         }
       },
       error: (error) => {

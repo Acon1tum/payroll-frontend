@@ -33,7 +33,7 @@
   <div *ngIf="selectedTab === 'register'" class="p-6 space-y-6">
     <div class="flex items-center justify-between mb-4">
       <h2 class="text-lg font-semibold text-gray-900">Loans</h2>
-      <button class="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 transition-colors">Add Loan</button>
+      <button class="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 transition-colors" (click)="openAddLoan()">Add Loan</button>
     </div>
     <div class="overflow-x-auto">
       <table class="min-w-full divide-y divide-gray-200">
@@ -48,6 +48,7 @@
             <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Payment Schedule</th>
             <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Auto-Deduct</th>
             <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Remarks</th>
+            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
             <th class="px-4 py-2"></th>
           </tr>
         </thead>
@@ -62,9 +63,18 @@
             <td class="px-4 py-2">{{ loan.paymentSchedule }}</td>
             <td class="px-4 py-2">{{ loan.autoDeduct ? 'Yes' : 'No' }}</td>
             <td class="px-4 py-2">{{ loan.remarks }}</td>
+            <td class="px-4 py-2">
+              <span [ngClass]="{
+                'text-yellow-600': loan.status === 'pending',
+                'text-green-600': loan.status === 'approved',
+                'text-red-600': loan.status === 'rejected'
+              }">{{ (loan.status || 'pending') | titlecase }}</span>
+            </td>
             <td class="px-4 py-2 text-right">
-              <button class="text-blue-600 hover:underline mr-2">Edit</button>
-              <button class="text-red-600 hover:underline">Delete</button>
+              <button class="text-green-600 hover:underline mr-2" *ngIf="loan.status === 'pending'" (click)="approveLoan(i)">Approve</button>
+              <button class="text-red-600 hover:underline mr-2" *ngIf="loan.status === 'pending'" (click)="rejectLoan(i)">Reject</button>
+              <button class="text-blue-600 hover:underline mr-2" (click)="openEditLoan(i)">Edit</button>
+              <button class="text-red-600 hover:underline" (click)="confirmDeleteLoan(i)">Delete</button>
             </td>
           </tr>
         </tbody>
@@ -100,6 +110,95 @@
           </tr>
         </tbody>
       </table>
+    </div>
+  </div>
+</div>
+
+<!-- Loan Modal -->
+<div *ngIf="showLoanModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+  <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+    <div class="mt-3">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-lg font-medium text-gray-900">{{ loanEditIndex == null ? 'Add' : 'Edit' }} Loan</h3>
+        <button (click)="closeLoanModal()" class="text-gray-400 hover:text-gray-600 transition-colors duration-200">
+          <span class="material-icons">close</span>
+        </button>
+      </div>
+      <form class="space-y-4" (submit)="$event.preventDefault(); saveLoan()">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Employee ID</label>
+          <input type="text" [(ngModel)]="loanForm.employeeId" name="employeeId" class="w-full px-3 py-2 border border-gray-300 rounded-md" />
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Loan Type</label>
+            <select [(ngModel)]="loanForm.loanType" name="loanType" class="w-full px-3 py-2 border border-gray-300 rounded-md">
+              <option value="multiPurpose">Multi-purpose</option>
+              <option value="policy">Policy</option>
+              <option value="consolidated">Consolidated</option>
+              <option value="custom">Custom</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Payment Schedule</label>
+            <select [(ngModel)]="loanForm.paymentSchedule" name="paymentSchedule" class="w-full px-3 py-2 border border-gray-300 rounded-md">
+              <option value="monthly">Monthly</option>
+              <option value="semi-monthly">Semi-monthly</option>
+            </select>
+          </div>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Principal</label>
+            <input type="number" [(ngModel)]="loanForm.principal" name="principal" class="w-full px-3 py-2 border border-gray-300 rounded-md" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Interest Rate (%)</label>
+            <input type="number" [(ngModel)]="loanForm.interestRate" name="interestRate" class="w-full px-3 py-2 border border-gray-300 rounded-md" />
+          </div>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Term (Months)</label>
+            <input type="number" [(ngModel)]="loanForm.termMonths" name="termMonths" class="w-full px-3 py-2 border border-gray-300 rounded-md" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
+            <input type="date" [(ngModel)]="loanForm.startDate" name="startDate" class="w-full px-3 py-2 border border-gray-300 rounded-md" />
+          </div>
+        </div>
+        <div class="flex items-center">
+          <input type="checkbox" [(ngModel)]="loanForm.autoDeduct" name="autoDeduct" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded" />
+          <label class="ml-2 text-sm text-gray-900">Auto-Deduct</label>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Remarks</label>
+          <textarea [(ngModel)]="loanForm.remarks" name="remarks" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-md"></textarea>
+        </div>
+        <div class="flex justify-end space-x-3 pt-2">
+          <button type="button" (click)="closeLoanModal()" class="bg-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-400">Cancel</button>
+          <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">Save</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Confirmation Modal -->
+<div *ngIf="showConfirmModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+  <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+    <div class="mt-3">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-lg font-medium text-gray-900">{{ confirmTitle }}</h3>
+        <button (click)="confirmNo()" class="text-gray-400 hover:text-gray-600 transition-colors duration-200">
+          <span class="material-icons">close</span>
+        </button>
+      </div>
+      <p class="text-gray-700 mb-6">{{ confirmMessage }}</p>
+      <div class="flex justify-end space-x-3">
+        <button (click)="confirmNo()" class="bg-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-400">Cancel</button>
+        <button (click)="confirmYes()" class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">Proceed</button>
+      </div>
     </div>
   </div>
 </div>
