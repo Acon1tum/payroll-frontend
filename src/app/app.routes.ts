@@ -30,6 +30,7 @@ import { AccessLogsComponent } from './pages/admin/audit-trail/access-logs/acces
 import { RequestLoanComponent } from './pages/employee/request-loan/request-loan.component';
 import { ProfileComponent } from './pages/employee/profile/profile.component';
 import { PayslipComponent } from './pages/employee/payslip/payslip.component';
+import { EmployeeContributionsComponent } from './pages/employee/employee-contributions/employee-contributions.component';
 
 export const routes: Routes = [
   { path: '', component: LandingComponent },
@@ -64,5 +65,6 @@ export const routes: Routes = [
   { path: 'request-loan', component: RequestLoanComponent },
   { path: 'employee/profile', component: ProfileComponent },
   { path: 'employee/payslip', component: PayslipComponent },
+  { path: 'employee/contributions', component: EmployeeContributionsComponent },
   { path: '**', redirectTo: '' },
 ];

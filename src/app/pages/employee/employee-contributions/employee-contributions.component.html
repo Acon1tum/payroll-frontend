@@ -1,0 +1,111 @@
+<div class="flex h-screen bg-gray-50">
+  <!-- Sidebar -->
+  <app-sidebar></app-sidebar>
+
+  <!-- Main Content -->
+  <div class="flex-1 flex flex-col overflow-hidden">
+    <!-- Header -->
+    <app-header></app-header>
+
+    <!-- Content -->
+    <main class="flex-1 overflow-x-hidden overflow-y-auto bg-gray-50 p-6">
+      <div class="space-y-6">
+        <!-- Header Card -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+          <div class="px-6 py-4 border-b border-gray-200">
+            <h3 class="text-lg font-medium text-gray-900">Contributions</h3>
+            <p class="text-sm text-gray-600 mt-1">Track personal government deductions.</p>
+          </div>
+        </div>
+
+        <!-- Monthly Contributions View -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+          <div class="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+            <h4 class="text-md font-medium text-gray-900">Monthly Contributions View</h4>
+          </div>
+          <div class="p-6 overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+              <thead class="bg-gray-50">
+                <tr>
+                  <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Month</th>
+                  <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">SSS</th>
+                  <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">PhilHealth</th>
+                  <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Pag-IBIG</th>
+                  <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">BIR (WHT)</th>
+                  <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
+                </tr>
+              </thead>
+              <tbody class="bg-white divide-y divide-gray-200">
+                <tr *ngFor="let m of months">
+                  <td class="px-4 py-3 text-sm text-gray-900">{{ m.month }}</td>
+                  <td class="px-4 py-3 text-sm text-gray-900 text-right">{{ formatCurrency(m.sss) }}</td>
+                  <td class="px-4 py-3 text-sm text-gray-900 text-right">{{ formatCurrency(m.philHealth) }}</td>
+                  <td class="px-4 py-3 text-sm text-gray-900 text-right">{{ formatCurrency(m.pagibig) }}</td>
+                  <td class="px-4 py-3 text-sm text-gray-900 text-right">{{ formatCurrency(m.bir) }}</td>
+                  <td class="px-4 py-3 text-sm font-semibold text-gray-900 text-right">{{ formatCurrency(m.total) }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Yearly Summary -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+          <div class="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+            <h4 class="text-md font-medium text-gray-900">Yearly Summary</h4>
+          </div>
+          <div class="p-6 space-y-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <div class="flex items-center justify-between mb-1">
+                  <span class="text-sm text-gray-700">SSS</span>
+                  <span class="text-sm font-medium text-gray-900">{{ formatCurrency(yearTotals.sss) }}</span>
+                </div>
+                <div class="w-full h-2 bg-gray-100 rounded">
+                  <div class="h-2 bg-blue-600 rounded" [style.width]="barWidth(yearTotals.sss)"></div>
+                </div>
+              </div>
+              <div>
+                <div class="flex items-center justify-between mb-1">
+                  <span class="text-sm text-gray-700">PhilHealth</span>
+                  <span class="text-sm font-medium text-gray-900">{{ formatCurrency(yearTotals.philHealth) }}</span>
+                </div>
+                <div class="w-full h-2 bg-gray-100 rounded">
+                  <div class="h-2 bg-green-600 rounded" [style.width]="barWidth(yearTotals.philHealth)"></div>
+                </div>
+              </div>
+              <div>
+                <div class="flex items-center justify-between mb-1">
+                  <span class="text-sm text-gray-700">Pag-IBIG</span>
+                  <span class="text-sm font-medium text-gray-900">{{ formatCurrency(yearTotals.pagibig) }}</span>
+                </div>
+                <div class="w-full h-2 bg-gray-100 rounded">
+                  <div class="h-2 bg-purple-600 rounded" [style.width]="barWidth(yearTotals.pagibig)"></div>
+                </div>
+              </div>
+              <div>
+                <div class="flex items-center justify-between mb-1">
+                  <span class="text-sm text-gray-700">BIR (WHT)</span>
+                  <span class="text-sm font-medium text-gray-900">{{ formatCurrency(yearTotals.bir) }}</span>
+                </div>
+                <div class="w-full h-2 bg-gray-100 rounded">
+                  <div class="h-2 bg-red-600 rounded" [style.width]="barWidth(yearTotals.bir)"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Download BIR 2316 -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+          <div class="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+            <h4 class="text-md font-medium text-gray-900">BIR Documents</h4>
+          </div>
+          <div class="p-6">
+            <button (click)="downloadBIR2316()" class="px-4 py-2 rounded-md bg-blue-600 text-white hover:bg-blue-700 text-sm">Download BIR 2316</button>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
