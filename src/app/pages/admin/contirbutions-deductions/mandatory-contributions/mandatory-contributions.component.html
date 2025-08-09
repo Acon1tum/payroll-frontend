@@ -57,7 +57,7 @@
             <div class="bg-gray-50 rounded-lg p-6 border border-gray-100">
               <div class="flex items-center justify-between mb-4">
                 <h2 class="text-lg font-semibold text-gray-900">SSS Brackets</h2>
-                <button class="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 transition-colors">Add SSS Bracket</button>
+                <button class="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 transition-colors" (click)="openAddBracket('SSS')">Add SSS Bracket</button>
               </div>
               <div class="overflow-x-auto">
                 <table class="min-w-full divide-y divide-gray-200">
@@ -77,8 +77,8 @@
                       <td class="px-4 py-2">{{ bracket.employeeShare }}</td>
                       <td class="px-4 py-2">{{ bracket.employerShare }}</td>
                       <td class="px-4 py-2 text-right">
-                        <button class="text-blue-600 hover:underline mr-2">Edit</button>
-                        <button class="text-red-600 hover:underline">Delete</button>
+                        <button class="text-blue-600 hover:underline mr-2" (click)="openEditBracket('SSS', i)">Edit</button>
+                        <button class="text-red-600 hover:underline" (click)="confirmDeleteSSSBracket(i)">Delete</button>
                       </td>
                     </tr>
                   </tbody>
@@ -89,7 +89,7 @@
             <div class="bg-gray-50 rounded-lg p-6 border border-gray-100">
               <div class="flex items-center justify-between mb-4">
                 <h2 class="text-lg font-semibold text-gray-900">PhilHealth Brackets</h2>
-                <button class="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 transition-colors">Add PhilHealth Bracket</button>
+                <button class="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 transition-colors" (click)="openAddBracket('PhilHealth')">Add PhilHealth Bracket</button>
               </div>
               <div class="overflow-x-auto">
                 <table class="min-w-full divide-y divide-gray-200">
@@ -109,8 +109,8 @@
                       <td class="px-4 py-2">{{ bracket.employeeShare }}</td>
                       <td class="px-4 py-2">{{ bracket.employerShare }}</td>
                       <td class="px-4 py-2 text-right">
-                        <button class="text-blue-600 hover:underline mr-2">Edit</button>
-                        <button class="text-red-600 hover:underline">Delete</button>
+                        <button class="text-blue-600 hover:underline mr-2" (click)="openEditBracket('PhilHealth', i)">Edit</button>
+                        <button class="text-red-600 hover:underline" (click)="confirmDeletePhilHealthBracket(i)">Delete</button>
                       </td>
                     </tr>
                   </tbody>
@@ -121,7 +121,7 @@
             <div class="bg-gray-50 rounded-lg p-6 border border-gray-100">
               <div class="flex items-center justify-between mb-4">
                 <h2 class="text-lg font-semibold text-gray-900">Pag-IBIG Brackets</h2>
-                <button class="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 transition-colors">Add Pag-IBIG Bracket</button>
+                <button class="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 transition-colors" (click)="openAddBracket('Pag-IBIG')">Add Pag-IBIG Bracket</button>
               </div>
               <div class="overflow-x-auto">
                 <table class="min-w-full divide-y divide-gray-200">
@@ -141,8 +141,8 @@
                       <td class="px-4 py-2">{{ bracket.employeeShare }}</td>
                       <td class="px-4 py-2">{{ bracket.employerShare }}</td>
                       <td class="px-4 py-2 text-right">
-                        <button class="text-blue-600 hover:underline mr-2">Edit</button>
-                        <button class="text-red-600 hover:underline">Delete</button>
+                        <button class="text-blue-600 hover:underline mr-2" (click)="openEditBracket('Pag-IBIG', i)">Edit</button>
+                        <button class="text-red-600 hover:underline" (click)="confirmDeletePagibigBracket(i)">Delete</button>
                       </td>
                     </tr>
                   </tbody>
@@ -153,7 +153,7 @@
             <div class="bg-gray-50 rounded-lg p-6 border border-gray-100">
               <div class="flex items-center justify-between mb-4">
                 <h2 class="text-lg font-semibold text-gray-900">BIR Brackets</h2>
-                <button class="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 transition-colors">Add BIR Bracket</button>
+                <button class="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 transition-colors" (click)="openAddBracket('BIR')">Add BIR Bracket</button>
               </div>
               <div class="overflow-x-auto">
                 <table class="min-w-full divide-y divide-gray-200">
@@ -173,8 +173,8 @@
                       <td class="px-4 py-2">{{ bracket.taxRate }}</td>
                       <td class="px-4 py-2">{{ bracket.baseTax }}</td>
                       <td class="px-4 py-2 text-right">
-                        <button class="text-blue-600 hover:underline mr-2">Edit</button>
-                        <button class="text-red-600 hover:underline">Delete</button>
+                        <button class="text-blue-600 hover:underline mr-2" (click)="openEditBracket('BIR', i)">Edit</button>
+                        <button class="text-red-600 hover:underline" (click)="confirmDeleteBirBracket(i)">Delete</button>
                       </td>
                     </tr>
                   </tbody>
@@ -188,7 +188,7 @@
             <div class="bg-gray-50 rounded-lg p-6 border border-gray-100">
               <div class="flex items-center justify-between mb-4">
                 <h2 class="text-lg font-semibold text-gray-900">Contribution History</h2>
-                <button class="bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700 transition-colors">Export All</button>
+                <button class="bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700 transition-colors" (click)="confirmExportContributionHistoryAll()">Export All</button>
               </div>
               <div class="overflow-x-auto">
                 <table class="min-w-full divide-y divide-gray-200">
@@ -214,7 +214,7 @@
                       <td class="px-4 py-2">{{ record.pagibig }}</td>
                       <td class="px-4 py-2">{{ record.bir }}</td>
                       <td class="px-4 py-2 text-right">
-                        <button class="text-green-600 hover:underline">Export</button>
+                        <button class="text-green-600 hover:underline" (click)="confirmExportContributionRecord(record)">Export</button>
                       </td>
                     </tr>
                   </tbody>
@@ -229,13 +229,86 @@
               <h2 class="text-lg font-semibold text-gray-900 mb-4">Export Government Files</h2>
               <p class="text-gray-700 mb-6">Select period and generate files for SSS R3, PhilHealth RF-1, Pag-IBIG M1-1.</p>
               <div class="flex space-x-4">
-                <button class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors">Generate SSS R3</button>
-                <button class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition-colors">Generate PhilHealth RF-1</button>
-                <button class="bg-yellow-500 text-white px-4 py-2 rounded hover:bg-yellow-600 transition-colors">Generate Pag-IBIG M1-1</button>
+                <button class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors" (click)="confirmGenerateSSSR3()">Generate SSS R3</button>
+                <button class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition-colors" (click)="confirmGeneratePhilHealthRF1()">Generate PhilHealth RF-1</button>
+                <button class="bg-yellow-500 text-white px-4 py-2 rounded hover:bg-yellow-600 transition-colors" (click)="confirmGeneratePagibigM11()">Generate Pag-IBIG M1-1</button>
               </div>
             </div>
           </div>
         </div>
+
+<!-- Bracket Modal -->
+<div *ngIf="showBracketModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+  <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+    <div class="mt-3">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-lg font-medium text-gray-900">{{ bracketEditIndex == null ? 'Add' : 'Edit' }} {{ bracketFormType }} Bracket</h3>
+        <button (click)="closeBracketModal()" class="text-gray-400 hover:text-gray-600 transition-colors duration-200">
+          <span class="material-icons">close</span>
+        </button>
+      </div>
+
+      <form class="space-y-4" (submit)="$event.preventDefault(); saveBracket()">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Range From</label>
+          <input type="number" [(ngModel)]="bracketForm.rangeFrom" name="rangeFrom" class="w-full px-3 py-2 border border-gray-300 rounded-md" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Range To</label>
+          <input type="number" [(ngModel)]="bracketForm.rangeTo" name="rangeTo" class="w-full px-3 py-2 border border-gray-300 rounded-md" />
+        </div>
+
+        <!-- Non-BIR fields -->
+        <div *ngIf="bracketFormType !== 'BIR'" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Employee Share</label>
+            <input type="number" [(ngModel)]="bracketForm.employeeShare" name="employeeShare" class="w-full px-3 py-2 border border-gray-300 rounded-md" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Employer Share</label>
+            <input type="number" [(ngModel)]="bracketForm.employerShare" name="employerShare" class="w-full px-3 py-2 border border-gray-300 rounded-md" />
+          </div>
+        </div>
+
+        <!-- BIR fields -->
+        <div *ngIf="bracketFormType === 'BIR'" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Tax Rate (%)</label>
+            <input type="number" [(ngModel)]="bracketForm.taxRate" name="taxRate" class="w-full px-3 py-2 border border-gray-300 rounded-md" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Base Tax</label>
+            <input type="number" [(ngModel)]="bracketForm.baseTax" name="baseTax" class="w-full px-3 py-2 border border-gray-300 rounded-md" />
+          </div>
+        </div>
+
+        <div class="flex justify-end space-x-3 pt-2">
+          <button type="button" (click)="closeBracketModal()" class="bg-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-400">Cancel</button>
+          <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">Save</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Confirmation Modal -->
+<div *ngIf="showConfirmModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+  <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+    <div class="mt-3">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-lg font-medium text-gray-900">{{ confirmTitle }}</h3>
+        <button (click)="confirmNo()" class="text-gray-400 hover:text-gray-600 transition-colors duration-200">
+          <span class="material-icons">close</span>
+        </button>
+      </div>
+      <p class="text-gray-700 mb-6">{{ confirmMessage }}</p>
+      <div class="flex justify-end space-x-3">
+        <button (click)="confirmNo()" class="bg-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-400">Cancel</button>
+        <button (click)="confirmYes()" class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">Proceed</button>
+      </div>
+    </div>
+  </div>
+</div>
       </div>
     </main>
   </div>

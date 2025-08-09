@@ -1,6 +1,7 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
+import { AuthService, User } from '../../services/auth.service';
 
 interface Breadcrumb {
   label: string;
@@ -14,22 +15,25 @@ interface Breadcrumb {
   templateUrl: './header.component.html',
   styleUrl: './header.component.scss'
 })
-export class HeaderComponent {
+export class HeaderComponent implements OnInit {
   @Input() breadcrumbs: Breadcrumb[] = [];
   @Input() title: string = 'Dashboard';
   
   isProfileDropdownOpen = false;
   isMobileMenuOpen = false;
   
-  // Sample user data
-  currentUser = {
-    name: 'John Doe',
-    email: 'john.doe@company.com',
-    avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80',
-    role: 'Administrator'
-  };
+  currentUser: User | null = null;
 
-  constructor(private router: Router) {}
+  constructor(
+    private router: Router,
+    private authService: AuthService
+  ) {}
+
+  ngOnInit() {
+    this.authService.currentUser$.subscribe(user => {
+      this.currentUser = user;
+    });
+  }
 
   toggleProfileDropdown() {
     this.isProfileDropdownOpen = !this.isProfileDropdownOpen;
@@ -52,9 +56,7 @@ export class HeaderComponent {
         this.router.navigate(['/settings']);
         break;
       case 'logout':
-        // Handle logout logic
-        console.log('Logging out...');
-        this.router.navigate(['/login']);
+        this.authService.logout();
         break;
     }
     this.closeProfileDropdown();
@@ -63,6 +65,33 @@ export class HeaderComponent {
   navigateToBreadcrumb(breadcrumb: Breadcrumb) {
     if (breadcrumb.path && !breadcrumb.active) {
       this.router.navigate([breadcrumb.path]);
+    }
+  }
+
+  getUserDisplayName(): string {
+    if (!this.currentUser) return 'User';
+    
+    if (this.currentUser.employee) {
+      return `${this.currentUser.employee.firstName} ${this.currentUser.employee.lastName}`;
+    }
+    
+    return this.currentUser.email;
+  }
+
+  getUserRole(): string {
+    if (!this.currentUser) return 'User';
+    
+    switch (this.currentUser.role) {
+      case 'admin':
+        return 'System Administrator';
+      case 'hrStaff':
+        return 'HR Staff';
+      case 'payrollManager':
+        return 'Payroll Manager';
+      case 'employee':
+        return 'Employee';
+      default:
+        return 'User';
     }
   }
 }
