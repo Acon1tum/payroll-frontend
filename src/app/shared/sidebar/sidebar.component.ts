@@ -79,6 +79,7 @@ export class SidebarComponent implements OnInit, OnDestroy {
       { name: '13th Month & Final Pay', icon: 'receipt_long', path: '/employee/13th-final-pay' },
       { name: 'Time Tracking', icon: 'schedule', path: '/employee/time-tracking' },
       { name: 'Request Loan', icon: 'request_page', path: '/request-loan' },
+      { name: 'Settings', icon: 'settings', path: '/employee/settings' },
       { name: 'My Reports', icon: 'report', path: '/employee/reports' }
     ]
   };

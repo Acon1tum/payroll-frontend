@@ -1,0 +1,61 @@
+<div class="h-screen w-full flex overflow-hidden">
+  <app-sidebar></app-sidebar>
+  <div class="flex-1 flex flex-col">
+    <app-header></app-header>
+    <main class="flex-1 overflow-y-auto overflow-x-hidden bg-gray-50 p-6">
+      <div class="space-y-6">
+        <!-- Header Card -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+          <div class="px-6 py-4 border-b border-gray-200">
+            <h3 class="text-lg font-medium text-gray-900">My Reports</h3>
+            <p class="text-sm text-gray-600 mt-1">Export reports from across your employee self-service pages.</p>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <section class="bg-white rounded-lg shadow p-4">
+          <h2 class="text-lg font-semibold mb-2">Payslips</h2>
+          <p class="text-sm text-gray-600 mb-4">History of your payslips.</p>
+          <button (click)="exportPayslips()" class="rounded bg-blue-600 px-3 py-2 text-white text-sm">Download CSV</button>
+        </section>
+
+        <section class="bg-white rounded-lg shadow p-4">
+          <h2 class="text-lg font-semibold mb-2">Contributions</h2>
+          <p class="text-sm text-gray-600 mb-4">SSS, PhilHealth, Pag-IBIG, and BIR contributions.</p>
+          <button (click)="exportContributions()" class="rounded bg-blue-600 px-3 py-2 text-white text-sm">Download CSV</button>
+        </section>
+
+        <section class="bg-white rounded-lg shadow p-4">
+          <h2 class="text-lg font-semibold mb-2">Loans</h2>
+          <p class="text-sm text-gray-600 mb-4">Active loans and repayment history.</p>
+          <button (click)="exportLoans()" class="rounded bg-blue-600 px-3 py-2 text-white text-sm">Download CSV</button>
+        </section>
+
+        <section class="bg-white rounded-lg shadow p-4">
+          <h2 class="text-lg font-semibold mb-2">Leaves</h2>
+          <p class="text-sm text-gray-600 mb-4">Leave requests, status and balances.</p>
+          <button (click)="exportLeaves()" class="rounded bg-blue-600 px-3 py-2 text-white text-sm">Download CSV</button>
+        </section>
+
+        <section class="bg-white rounded-lg shadow p-4">
+          <h2 class="text-lg font-semibold mb-2">13th Month Pay</h2>
+          <p class="text-sm text-gray-600 mb-4">Yearly totals and monthly accruals.</p>
+          <button (click)="exportThirteenth()" class="rounded bg-blue-600 px-3 py-2 text-white text-sm">Download CSV</button>
+        </section>
+
+        <section class="bg-white rounded-lg shadow p-4">
+          <h2 class="text-lg font-semibold mb-2">Final Pay</h2>
+          <p class="text-sm text-gray-600 mb-4">Summary of final payout and deductions.</p>
+          <button (click)="exportFinalPay()" class="rounded bg-blue-600 px-3 py-2 text-white text-sm">Download CSV</button>
+        </section>
+
+        <section class="bg-white rounded-lg shadow p-4">
+          <h2 class="text-lg font-semibold mb-2">Security & Privacy</h2>
+          <p class="text-sm text-gray-600 mb-4">Terms consent and settings audit trail.</p>
+          <button (click)="exportSettingsAudit()" class="rounded bg-blue-600 px-3 py-2 text-white text-sm">Download CSV</button>
+        </section>
+      </div>
+      </div>
+    </main>
+  </div>
+</div>

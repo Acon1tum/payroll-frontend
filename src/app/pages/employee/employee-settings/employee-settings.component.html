@@ -1,0 +1,114 @@
+<div class="h-screen w-full flex overflow-hidden">
+  <app-sidebar></app-sidebar>
+  <div class="flex-1 flex flex-col">
+    <app-header></app-header>
+    <main class="flex-1 overflow-y-auto overflow-x-hidden bg-gray-50 p-6">
+      <div class="space-y-6">
+        <!-- Header Card -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+          <div class="px-6 py-4 border-b border-gray-200">
+            <h3 class="text-lg font-medium text-gray-900">Security & Privacy</h3>
+            <p class="text-sm text-gray-600 mt-1">Your data, your control.</p>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Terms & Conditions -->
+        <section class="col-span-1 bg-white rounded-lg shadow p-4">
+          <div class="flex items-center justify-between mb-3">
+            <h2 class="text-lg font-semibold">Terms and Conditions</h2>
+            <button (click)="openTerms()" class="rounded bg-blue-600 px-3 py-2 text-white text-sm">View</button>
+          </div>
+          <div class="text-sm text-gray-600">
+            <div>Current: {{ termsVersion }}</div>
+            <div>Updated: {{ termsUpdatedAt | date:'mediumDate' }}</div>
+          </div>
+        </section>
+
+        <!-- Consent History -->
+        <section class="col-span-1 lg:col-span-2 bg-white rounded-lg shadow p-4">
+          <h2 class="text-lg font-semibold mb-3">Consent History</h2>
+          <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+              <thead class="bg-gray-50">
+                <tr>
+                  <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Title</th>
+                  <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Version</th>
+                  <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                  <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                  <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Method</th>
+                </tr>
+              </thead>
+              <tbody class="bg-white divide-y divide-gray-200">
+                <tr *ngFor="let c of consentHistory">
+                  <td class="px-4 py-2">{{ c.title }}</td>
+                  <td class="px-4 py-2">{{ c.version }}</td>
+                  <td class="px-4 py-2">{{ formatDate(c.date) }}</td>
+                  <td class="px-4 py-2">
+                    <span class="px-2 py-1 text-xs rounded" [ngClass]="{
+                      'bg-green-100 text-green-700': c.status==='Accepted',
+                      'bg-gray-100 text-gray-700': c.status==='Withdrawn'
+                    }">{{ c.status }}</span>
+                  </td>
+                  <td class="px-4 py-2">{{ c.method }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </div>
+
+      <!-- Device Activity -->
+      <section class="bg-white rounded-lg shadow p-4">
+        <h2 class="text-lg font-semibold mb-3">Device Activity (optional)</h2>
+        <div class="overflow-x-auto">
+          <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+              <tr>
+                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Device</th>
+                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">IP</th>
+                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Location</th>
+                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Last Active</th>
+                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+              </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+              <tr *ngFor="let d of deviceActivity">
+                <td class="px-4 py-2">{{ d.device }}</td>
+                <td class="px-4 py-2">{{ d.ip }}</td>
+                <td class="px-4 py-2">{{ d.location }}</td>
+                <td class="px-4 py-2">{{ formatDate(d.lastActive) }}</td>
+                <td class="px-4 py-2">
+                  <span class="px-2 py-1 text-xs rounded" [ngClass]="{
+                    'bg-blue-100 text-blue-700': d.status==='Current',
+                    'bg-gray-100 text-gray-700': d.status==='Previous'
+                  }">{{ d.status }}</span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- Terms Modal -->
+      <div *ngIf="showTermsModal" class="fixed inset-0 z-50 flex items-center justify-center">
+        <div class="absolute inset-0 bg-black/40" (click)="closeTerms()"></div>
+        <div class="relative w-full max-w-3xl bg-white rounded-lg shadow-lg">
+          <div class="flex items-center justify-between px-5 py-3 border-b">
+            <h3 class="text-lg font-semibold">Terms and Conditions ({{ termsVersion }})</h3>
+            <button (click)="closeTerms()" class="text-gray-500 hover:text-gray-700">
+              <span class="material-icons">close</span>
+            </button>
+          </div>
+          <div class="p-5">
+            <pre class="whitespace-pre-wrap text-sm text-gray-700">{{ termsContent }}</pre>
+          </div>
+          <div class="px-5 py-3 border-t text-right">
+            <button (click)="closeTerms()" class="rounded bg-blue-600 px-4 py-2 text-white">Close</button>
+          </div>
+        </div>
+      </div>
+      </div>
+    </main>
+  </div>
+</div>

@@ -3,10 +3,14 @@
   <div class="flex-1 flex flex-col">
     <app-header></app-header>
     <main class="flex-1 overflow-y-auto overflow-x-hidden bg-gray-50 p-6">
-      <div class="mb-6">
-        <h1 class="text-2xl font-semibold text-gray-800">13th Month Pay & Final Pay</h1>
-        <p class="text-gray-600">View yearly 13th month earnings and, if applicable, your final pay summary.</p>
-      </div>
+      <div class="space-y-6">
+        <!-- Header Card -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+          <div class="px-6 py-4 border-b border-gray-200">
+            <h3 class="text-lg font-medium text-gray-900">13th Month Pay & Final Pay</h3>
+            <p class="text-sm text-gray-600 mt-1">View yearly 13th month earnings and, if applicable, your final pay summary.</p>
+          </div>
+        </div>
 
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <!-- 13th Month Pay Card -->
@@ -174,6 +178,7 @@
           </div>
         </div>
       </div>
+    </div>
     </main>
   </div>
 </div>
