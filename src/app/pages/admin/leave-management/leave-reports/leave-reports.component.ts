@@ -21,7 +21,10 @@ export interface LeaveReport {
   imports: [CommonModule, FormsModule, SidebarComponent, HeaderComponent]
 })
 export class LeaveReportsComponent {
-  reports: LeaveReport[] = [];
+  reports: LeaveReport[] = [
+    { employeeId: 'EMP-1001', employeeName: 'Juan Dela Cruz', department: 'Engineering', leaveType: 'Vacation Leave', period: '2025', totalUsed: 5, remaining: 10 },
+    { employeeId: 'EMP-1002', employeeName: 'Maria Santos', department: 'HR', leaveType: 'Sick Leave', period: '2025-06', totalUsed: 2, remaining: 8 },
+  ];
   filter: { employee?: string; department?: string; leaveType?: string; period?: string } = {};
 
   filterReports() {
@@ -29,6 +32,17 @@ export class LeaveReportsComponent {
   }
 
   exportReports() {
-    // Implement export logic here
+    const rows = [
+      ['Employee ID','Employee Name','Department','Leave Type','Period','Total Used','Remaining'],
+      ...this.reports.map(r => [r.employeeId, r.employeeName, r.department, r.leaveType, r.period, String(r.totalUsed), String(r.remaining)])
+    ];
+    const csv = rows.map(r => r.map(v => `"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'leave-reports.csv';
+    a.click();
+    URL.revokeObjectURL(url);
   }
 }

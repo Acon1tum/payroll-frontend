@@ -7,9 +7,13 @@
       <!-- Header -->
       <app-header></app-header>
     
-    <main class="flex-1 p-6">
+    <main class="flex-1 overflow-x-hidden overflow-y-auto bg-gray-50 p-6">
 
 <div class="bg-white rounded-lg shadow-sm border border-gray-200 mb-6">
+  <div class="px-6 py-4 border-b border-gray-200">
+    <h3 class="text-lg font-medium text-gray-900">Leave Settings</h3>
+    <p class="text-sm text-gray-600 mt-1">Configure leave types and default credits.</p>
+  </div>
   <div class="border-b border-gray-200">
     <nav class="flex space-x-8 px-6">
       <button
@@ -33,7 +37,7 @@
   <div *ngIf="selectedTab === 'types'" class="p-6 space-y-6">
     <div class="flex items-center justify-between mb-4">
       <h2 class="text-lg font-semibold text-gray-900">Custom Leave Types</h2>
-      <button class="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 transition-colors">Add Leave Type</button>
+      <button (click)="openAddType()" class="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 transition-colors">Add Leave Type</button>
     </div>
     <div class="overflow-x-auto">
       <table class="min-w-full divide-y divide-gray-200">
@@ -51,8 +55,8 @@
             <td class="px-4 py-2">{{ type.description }}</td>
             <td class="px-4 py-2">{{ type.isPaid ? 'Yes' : 'No' }}</td>
             <td class="px-4 py-2 text-right">
-              <button class="text-blue-600 hover:underline mr-2">Edit</button>
-              <button class="text-red-600 hover:underline">Delete</button>
+              <button (click)="openEditType(i)" class="text-blue-600 hover:underline mr-2">Edit</button>
+              <button (click)="requestDeleteType(i)" class="text-red-600 hover:underline">Delete</button>
             </td>
           </tr>
         </tbody>
@@ -64,7 +68,7 @@
   <div *ngIf="selectedTab === 'credits'" class="p-6 space-y-6">
     <div class="flex items-center justify-between mb-4">
       <h2 class="text-lg font-semibold text-gray-900">Default Leave Credits</h2>
-      <button class="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 transition-colors">Add Credit Setting</button>
+      <button (click)="openAddCredit()" class="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 transition-colors">Add Credit Setting</button>
     </div>
     <div class="overflow-x-auto">
       <table class="min-w-full divide-y divide-gray-200">
@@ -84,12 +88,106 @@
             <td class="px-4 py-2">{{ credit.annualCap }}</td>
             <td class="px-4 py-2">{{ credit.monthlyCap }}</td>
             <td class="px-4 py-2 text-right">
-              <button class="text-blue-600 hover:underline mr-2">Edit</button>
-              <button class="text-red-600 hover:underline">Delete</button>
+              <button (click)="openEditCredit(i)" class="text-blue-600 hover:underline mr-2">Edit</button>
+              <button (click)="requestDeleteCredit(i)" class="text-red-600 hover:underline">Delete</button>
             </td>
           </tr>
         </tbody>
       </table>
+    </div>
+  </div>
+
+  <!-- Leave Type Modal -->
+  <div *ngIf="showTypeModal" class="fixed inset-0 z-50 flex items-center justify-center">
+    <div class="absolute inset-0 bg-black/40" (click)="closeTypeModal()"></div>
+    <div class="relative w-full max-w-xl bg-white rounded-lg shadow-lg">
+      <div class="flex items-center justify-between px-5 py-3 border-b">
+        <h3 class="text-lg font-semibold">{{ editingTypeIndex === null ? 'Add Leave Type' : 'Edit Leave Type' }}</h3>
+        <button (click)="closeTypeModal()" class="text-gray-500 hover:text-gray-700">✕</button>
+      </div>
+      <form [formGroup]="typeForm" (ngSubmit)="saveType()" class="p-5 space-y-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">ID</label>
+            <input formControlName="id" class="w-full rounded border-gray-300" placeholder="e.g. VL" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Name</label>
+            <input formControlName="name" class="w-full rounded border-gray-300" placeholder="Vacation Leave" />
+          </div>
+          <div class="md:col-span-2">
+            <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+            <input formControlName="description" class="w-full rounded border-gray-300" placeholder="Short description" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Paid</label>
+            <select formControlName="isPaid" class="w-full rounded border-gray-300">
+              <option [ngValue]="true">Yes</option>
+              <option [ngValue]="false">No</option>
+            </select>
+          </div>
+        </div>
+        <div class="flex items-center justify-end gap-2 pt-2">
+          <button type="button" (click)="closeTypeModal()" class="rounded border px-4 py-2 text-gray-700">Cancel</button>
+          <button type="submit" class="rounded bg-blue-600 px-4 py-2 text-white">Save</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Credit Setting Modal -->
+  <div *ngIf="showCreditModal" class="fixed inset-0 z-50 flex items-center justify-center">
+    <div class="absolute inset-0 bg-black/40" (click)="closeCreditModal()"></div>
+    <div class="relative w-full max-w-xl bg-white rounded-lg shadow-lg">
+      <div class="flex items-center justify-between px-5 py-3 border-b">
+        <h3 class="text-lg font-semibold">{{ editingCreditIndex === null ? 'Add Credit Setting' : 'Edit Credit Setting' }}</h3>
+        <button (click)="closeCreditModal()" class="text-gray-500 hover:text-gray-700">✕</button>
+      </div>
+      <form [formGroup]="creditForm" (ngSubmit)="saveCredit()" class="p-5 space-y-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Leave Type</label>
+            <select formControlName="leaveTypeId" class="w-full rounded border-gray-300">
+              <option *ngFor="let t of leaveTypes" [value]="t.id">{{ t.name }} ({{ t.id }})</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Employment Type</label>
+            <select formControlName="employmentType" class="w-full rounded border-gray-300">
+              <option>Regular</option>
+              <option>Probationary</option>
+              <option>Contractual</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Annual Cap</label>
+            <input type="number" formControlName="annualCap" class="w-full rounded border-gray-300" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Monthly Cap</label>
+            <input type="number" formControlName="monthlyCap" class="w-full rounded border-gray-300" />
+          </div>
+        </div>
+        <div class="flex items-center justify-end gap-2 pt-2">
+          <button type="button" (click)="closeCreditModal()" class="rounded border px-4 py-2 text-gray-700">Cancel</button>
+          <button type="submit" class="rounded bg-blue-600 px-4 py-2 text-white">Save</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Confirm Modal -->
+  <div *ngIf="showConfirm" class="fixed inset-0 z-50 flex items-center justify-center">
+    <div class="absolute inset-0 bg-black/40" (click)="confirmNo()"></div>
+    <div class="relative w-full max-w-md bg-white rounded-lg shadow-lg">
+      <div class="px-5 py-4 border-b">
+        <h3 class="text-lg font-semibold">{{ confirmTitle }}</h3>
+      </div>
+      <div class="p-5 text-sm text-gray-700">{{ confirmMessage }}</div>
+      <div class="px-5 py-3 border-t text-right space-x-2">
+        <button (click)="confirmNo()" class="rounded border px-4 py-2 text-gray-700">Cancel</button>
+        <button (click)="confirmYes()" class="rounded bg-red-600 px-4 py-2 text-white">Confirm</button>
+      </div>
     </div>
   </div>
 </div>
