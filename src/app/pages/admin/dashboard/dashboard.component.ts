@@ -49,6 +49,12 @@ interface ActivityItem {
   color: string;
 }
 
+interface Breadcrumb {
+  label: string;
+  path?: string;
+  active?: boolean;
+}
+
 @Component({
   selector: 'app-dashboard',
   standalone: true,
@@ -57,6 +63,13 @@ interface ActivityItem {
   styleUrl: './dashboard.component.scss'
 })
 export class DashboardComponent implements OnInit, OnDestroy {
+
+
+  // Breadcrumbs for header
+  breadcrumbs: Breadcrumb[] = [
+    { label: 'Dashboard', active: true }
+  ];
+
   metrics: DashboardMetrics = {
     totalEmployees: 0,
     activeEmployees: 0,
