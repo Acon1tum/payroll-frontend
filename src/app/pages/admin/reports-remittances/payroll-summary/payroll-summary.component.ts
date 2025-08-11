@@ -16,6 +16,12 @@ export interface PayrollSummary {
   ytdNet: number;
 }
 
+interface Breadcrumb {
+  label: string;
+  path?: string;
+  active?: boolean;
+}
+
 @Component({
   selector: 'app-payroll-summary',
   templateUrl: './payroll-summary.component.html',
@@ -30,6 +36,13 @@ export class PayrollSummaryComponent {
   ];
   filtered: PayrollSummary[] = [...this.summaries];
   filter: { employee?: string; period?: string } = {};
+
+  // Breadcrumbs for header
+  breadcrumbs: Breadcrumb[] = [
+    { label: 'Dashboard', path: '/dashboard' },
+    { label: 'Reports & Remittances', path: '/admin/reports-remittances' },
+    { label: 'Payroll Summary', active: true }
+  ];
 
   filterSummaries() {
     const nameOrId = (this.filter.employee || '').toLowerCase().trim();

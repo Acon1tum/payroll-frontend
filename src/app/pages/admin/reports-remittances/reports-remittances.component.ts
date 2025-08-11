@@ -3,6 +3,13 @@ import { CommonModule } from '@angular/common';
 import { SidebarComponent } from '../../../shared/sidebar/sidebar.component';
 import { HeaderComponent } from '../../../shared/header/header.component';
 
+interface Breadcrumb {
+  label: string;
+  path?: string;
+  active?: boolean;
+}
+
+
 @Component({
   selector: 'app-reports-remittances',
   imports: [CommonModule, SidebarComponent, HeaderComponent],
@@ -17,6 +24,12 @@ export class ReportsRemittancesComponent {
     totalDeductions: 120000,
     govtRemitted: 80000,
   };
+
+  // Breadcrumbs for header
+  breadcrumbs: Breadcrumb[] = [
+    { label: 'Dashboard', path: '/dashboard' },
+    { label: 'Reports & Remittances', active: true }
+  ];
 
   // Dummy remittance summaries
   sss = { month: '2025-06', employeeShare: 30000, employerShare: 60000, count: 50 };

@@ -13,6 +13,12 @@ export interface LlcSummary {
   totalContributions: number;
 }
 
+interface Breadcrumb {
+  label: string;
+  path?: string;
+  active?: boolean;
+}
+
 @Component({
   selector: 'app-llc-summary',
   templateUrl: './llc-summary.component.html',
@@ -26,6 +32,13 @@ export class LlcSummaryComponent {
   ];
   filtered: LlcSummary[] = [...this.summaries];
   filter: { employee?: string; period?: string } = {};
+
+  // Breadcrumbs for header
+  breadcrumbs: Breadcrumb[] = [
+    { label: 'Dashboard', path: '/dashboard' },
+    { label: 'Reports & Remittances', path: '/admin/reports-remittances' },
+    { label: 'Loans, Leaves, Contributions Summary', active: true }
+  ];  
 
   filterSummaries() {
     const term = (this.filter.employee || '').toLowerCase().trim();
