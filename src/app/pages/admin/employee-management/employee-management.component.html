@@ -1,4 +1,4 @@
-<div class="min-h-screen bg-gray-50 flex">
+<div class="h-screen bg-gray-50 flex overflow-hidden">
   <!-- Sidebar -->
   <app-sidebar 
     [isCollapsed]="isSidebarCollapsed"
@@ -7,7 +7,7 @@
   ></app-sidebar>
 
   <!-- Main Content -->
-  <div class="flex-1 flex flex-col">
+  <div class="flex-1 flex flex-col overflow-hidden">
     <!-- Header -->
     <app-header 
       [breadcrumbs]="breadcrumbs"
@@ -15,7 +15,7 @@
     ></app-header>
 
     <!-- Page Content -->
-    <main class="flex-1 p-6">
+    <main class="flex-1 overflow-x-hidden overflow-y-auto bg-gray-50 p-6">
       <div class="max-w-7xl mx-auto">
         <!-- Page Header -->
         <div class="bg-white rounded-lg shadow-lg border border-gray-200 p-6 mb-6">
@@ -413,5 +413,314 @@
         </div>
       </div>
     </main>
+  </div>
+</div>
+
+<!-- Add/Edit Employee Modal -->
+<div *ngIf="isAddMode || isEditMode" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+  <div class="relative top-20 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded-md bg-white">
+    <div class="mt-3">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-lg font-medium text-gray-900">
+          {{ isAddMode ? 'Add New Employee' : 'Edit Employee' }}
+        </h3>
+        <button (click)="cancelEdit()" class="text-gray-400 hover:text-gray-600">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
+      </div>
+
+      <form (ngSubmit)="saveEmployee()" class="space-y-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700">Employee ID</label>
+            <input type="text" [(ngModel)]="employeeForm.employeeId" name="employeeId" required
+                   class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700">First Name</label>
+            <input type="text" [(ngModel)]="employeeForm.firstName" name="firstName" required
+                   class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700">Last Name</label>
+            <input type="text" [(ngModel)]="employeeForm.lastName" name="lastName" required
+                   class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700">Email</label>
+            <input type="email" [(ngModel)]="employeeForm.email" name="email" required
+                   class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700">Phone</label>
+            <input type="tel" [(ngModel)]="employeeForm.phone" name="phone" required
+                   class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700">Date of Birth</label>
+            <input type="date" [(ngModel)]="employeeForm.dateOfBirth" name="dateOfBirth" required
+                   class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700">Hire Date</label>
+            <input type="date" [(ngModel)]="employeeForm.hireDate" name="hireDate" required
+                   class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700">Department</label>
+            <select [(ngModel)]="employeeForm.departmentId" name="departmentId" required
+                    class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+              <option value="">Select Department</option>
+              <option *ngFor="let dept of departments" [value]="dept.id">{{ dept.name }}</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700">Position</label>
+            <input type="text" [(ngModel)]="employeeForm.position" name="position" required
+                   class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700">Salary</label>
+            <input type="number" [(ngModel)]="employeeForm.salary" name="salary" required
+                   class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700">Employment Status</label>
+            <select [(ngModel)]="employeeForm.employmentStatus" name="employmentStatus" required
+                    class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+              <option value="active">Active</option>
+              <option value="resigned">Resigned</option>
+              <option value="suspended">Suspended</option>
+              <option value="terminated">Terminated</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700">System Role</label>
+            <select [(ngModel)]="employeeForm.systemRole" name="systemRole" required
+                    class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+              <option *ngFor="let role of systemRoles" [value]="role.value">{{ role.label }}</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700">Manager</label>
+            <select [(ngModel)]="employeeForm.managerId" name="managerId"
+                    class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+              <option value="">No Manager</option>
+              <option *ngFor="let manager of getAvailableManagers()" [value]="manager.id">
+                {{ getFullName(manager) }}
+              </option>
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700">Address</label>
+          <textarea [(ngModel)]="employeeForm.address" name="address" rows="3" required
+                    class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"></textarea>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700">Emergency Contact Name</label>
+            <input type="text" [(ngModel)]="employeeForm.emergencyContactName" name="emergencyContactName" required
+                   class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700">Relationship</label>
+            <input type="text" [(ngModel)]="employeeForm.emergencyContactRelationship" name="emergencyContactRelationship" required
+                   class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700">Emergency Contact Phone</label>
+            <input type="tel" [(ngModel)]="employeeForm.emergencyContactPhone" name="emergencyContactPhone" required
+                   class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+          </div>
+        </div>
+
+        <div class="flex justify-end space-x-3 pt-4">
+          <button type="button" (click)="cancelEdit()"
+                  class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+            Cancel
+          </button>
+          <button type="submit"
+                  class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+            {{ isAddMode ? 'Add Employee' : 'Save Changes' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- View Employee Modal -->
+<div *ngIf="isViewMode && selectedEmployee" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+  <div class="relative top-20 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded-md bg-white">
+    <div class="mt-3">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-lg font-medium text-gray-900">Employee Profile</h3>
+        <button (click)="cancelEdit()" class="text-gray-400 hover:text-gray-600">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
+      </div>
+
+      <div class="space-y-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700">Employee ID</label>
+            <p class="mt-1 text-sm text-gray-900">{{ selectedEmployee.employeeId }}</p>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700">Full Name</label>
+            <p class="mt-1 text-sm text-gray-900">{{ getFullName(selectedEmployee) }}</p>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700">Email</label>
+            <p class="mt-1 text-sm text-gray-900">{{ selectedEmployee.email }}</p>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700">Phone</label>
+            <p class="mt-1 text-sm text-gray-900">{{ selectedEmployee.phone }}</p>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700">Department</label>
+            <p class="mt-1 text-sm text-gray-900">{{ selectedEmployee.departmentName }}</p>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700">Position</label>
+            <p class="mt-1 text-sm text-gray-900">{{ selectedEmployee.position }}</p>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700">Salary</label>
+            <p class="mt-1 text-sm text-gray-900">{{ formatCurrency(selectedEmployee.salary) }}</p>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700">Status</label>
+            <span [ngClass]="getStatusColor(selectedEmployee.employmentStatus)"
+                  class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium">
+              {{ selectedEmployee.employmentStatus | titlecase }}
+            </span>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700">Address</label>
+          <p class="mt-1 text-sm text-gray-900">{{ selectedEmployee.address }}</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700">Emergency Contact</label>
+            <p class="mt-1 text-sm text-gray-900">{{ selectedEmployee.emergencyContact.name }}</p>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700">Relationship</label>
+            <p class="mt-1 text-sm text-gray-900">{{ selectedEmployee.emergencyContact.relationship }}</p>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700">Phone</label>
+            <p class="mt-1 text-sm text-gray-900">{{ selectedEmployee.emergencyContact.phone }}</p>
+          </div>
+        </div>
+
+        <div class="pt-4">
+          <button (click)="cancelEdit()"
+                  class="w-full px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Role Assignment Modal -->
+<div *ngIf="isRoleAssignmentMode && selectedEmployee" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+  <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+    <div class="mt-3">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-lg font-medium text-gray-900">Assign Role</h3>
+        <button (click)="cancelEdit()" class="text-gray-400 hover:text-gray-600">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
+      </div>
+
+      <form (ngSubmit)="saveRoleAssignment()" class="space-y-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700">Employee</label>
+          <p class="mt-1 text-sm text-gray-900">{{ getFullName(selectedEmployee) }}</p>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700">System Role</label>
+          <select [(ngModel)]="roleAssignmentForm.systemRole" name="systemRole" required
+                  class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+            <option *ngFor="let role of systemRoles" [value]="role.value">{{ role.label }}</option>
+          </select>
+        </div>
+
+        <div class="flex justify-end space-x-3 pt-4">
+          <button type="button" (click)="cancelEdit()"
+                  class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+            Cancel
+          </button>
+          <button type="submit"
+                  class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+            Assign Role
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Access Management Modal -->
+<div *ngIf="isAccessManagementMode && selectedEmployee" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+  <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+    <div class="mt-3">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-lg font-medium text-gray-900">Manage Access</h3>
+        <button (click)="cancelEdit()" class="text-gray-400 hover:text-gray-600">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
+      </div>
+
+      <form (ngSubmit)="saveAccessManagement()" class="space-y-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700">Employee</label>
+          <p class="mt-1 text-sm text-gray-900">{{ getFullName(selectedEmployee) }}</p>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700">Email</label>
+          <input type="email" [(ngModel)]="accessManagementForm.email" name="email" required
+                 class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+        </div>
+
+        <div class="flex items-center">
+          <input type="checkbox" [(ngModel)]="accessManagementForm.resetPassword" name="resetPassword" id="resetPassword"
+                 class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+          <label for="resetPassword" class="ml-2 block text-sm text-gray-900">Reset Password</label>
+        </div>
+
+        <div class="flex justify-end space-x-3 pt-4">
+          <button type="button" (click)="cancelEdit()"
+                  class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+            Cancel
+          </button>
+          <button type="submit"
+                  class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+            Save Changes
+          </button>
+        </div>
+      </form>
+    </div>
   </div>
 </div>

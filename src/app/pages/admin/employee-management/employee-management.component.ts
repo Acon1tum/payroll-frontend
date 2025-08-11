@@ -61,6 +61,7 @@ interface SystemRole {
 
 @Component({
   selector: 'app-employee-management',
+  standalone: true,
   imports: [CommonModule, FormsModule, HeaderComponent, SidebarComponent],
   templateUrl: './employee-management.component.html',
   styleUrl: './employee-management.component.scss'
@@ -327,6 +328,107 @@ export class EmployeeManagementComponent implements OnInit {
             }
           ],
           createdAt: new Date('2020-11-01'),
+          updatedAt: new Date('2024-01-15')
+        },
+        {
+          id: 6,
+          employeeId: 'EMP006',
+          firstName: 'Lisa',
+          lastName: 'Brown',
+          email: 'lisa.brown@company.com',
+          phone: '+1 (555) 678-9012',
+          dateOfBirth: new Date('1992-05-18'),
+          hireDate: new Date('2023-02-01'),
+          departmentId: 3,
+          departmentName: 'Marketing',
+          position: 'Marketing Specialist',
+          salary: 60000,
+          employmentStatus: 'active',
+          systemRole: 'employee',
+          address: '987 Cedar Ln, City, State 12345',
+          emergencyContact: {
+            name: 'Tom Brown',
+            relationship: 'Brother',
+            phone: '+1 (555) 432-1098'
+          },
+          employmentHistory: [
+            {
+              id: 7,
+              position: 'Marketing Specialist',
+              department: 'Marketing',
+              startDate: new Date('2023-02-01'),
+              salary: 60000
+            }
+          ],
+          createdAt: new Date('2023-02-01'),
+          updatedAt: new Date('2024-01-15')
+        },
+        {
+          id: 7,
+          employeeId: 'EMP007',
+          firstName: 'James',
+          lastName: 'Taylor',
+          email: 'james.taylor@company.com',
+          phone: '+1 (555) 789-0123',
+          dateOfBirth: new Date('1986-12-03'),
+          hireDate: new Date('2021-09-15'),
+          departmentId: 5,
+          departmentName: 'Sales',
+          position: 'Sales Representative',
+          salary: 55000,
+          employmentStatus: 'suspended',
+          systemRole: 'employee',
+          address: '456 Birch Rd, City, State 12345',
+          emergencyContact: {
+            name: 'Mary Taylor',
+            relationship: 'Mother',
+            phone: '+1 (555) 321-0987'
+          },
+          employmentHistory: [
+            {
+              id: 8,
+              position: 'Sales Representative',
+              department: 'Sales',
+              startDate: new Date('2021-09-15'),
+              endDate: new Date('2024-01-05'),
+              salary: 55000,
+              reason: 'Policy violation'
+            }
+          ],
+          createdAt: new Date('2021-09-15'),
+          updatedAt: new Date('2024-01-05')
+        },
+        {
+          id: 8,
+          employeeId: 'EMP008',
+          firstName: 'Amanda',
+          lastName: 'Garcia',
+          email: 'amanda.garcia@company.com',
+          phone: '+1 (555) 890-1234',
+          dateOfBirth: new Date('1989-08-14'),
+          hireDate: new Date('2022-01-10'),
+          departmentId: 6,
+          departmentName: 'Operations',
+          position: 'Operations Coordinator',
+          salary: 58000,
+          employmentStatus: 'active',
+          systemRole: 'employee',
+          address: '123 Spruce Ave, City, State 12345',
+          emergencyContact: {
+            name: 'Carlos Garcia',
+            relationship: 'Spouse',
+            phone: '+1 (555) 210-9876'
+          },
+          employmentHistory: [
+            {
+              id: 9,
+              position: 'Operations Coordinator',
+              department: 'Operations',
+              startDate: new Date('2022-01-10'),
+              salary: 58000
+            }
+          ],
+          createdAt: new Date('2022-01-10'),
           updatedAt: new Date('2024-01-15')
         }
       ];
@@ -667,3 +769,4 @@ export class EmployeeManagementComponent implements OnInit {
     return this.employees.filter(emp => emp.employmentStatus === status).length;
   }
 }
+
