@@ -5,6 +5,12 @@ import { Router } from '@angular/router';
 import { HeaderComponent } from '../../../../shared/header/header.component';
 import { SidebarComponent } from '../../../../shared/sidebar/sidebar.component';
 
+interface Breadcrumb {
+  label: string;
+  path?: string;
+  active?: boolean;
+}
+
 interface Payslip {
   id: number;
   employeeId: string;
@@ -65,6 +71,13 @@ interface PayslipFilter {
 })
 export class PayslipCenterComponent implements OnInit, OnDestroy {
   activeTab: 'view-download' | 'resend' = 'view-download';
+  
+  // Breadcrumbs for header
+  breadcrumbs: Breadcrumb[] = [
+    { label: 'Dashboard', path: '/dashboard' },
+    { label: 'Payroll Management', path: '/admin/payroll-management' },
+    { label: 'Payslip Center', active: true }
+  ];
   
   // Payslip data
   payslips: Payslip[] = [];

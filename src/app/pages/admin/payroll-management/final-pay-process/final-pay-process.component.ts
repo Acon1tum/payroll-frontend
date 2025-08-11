@@ -5,6 +5,12 @@ import { Router } from '@angular/router';
 import { HeaderComponent } from '../../../../shared/header/header.component';
 import { SidebarComponent } from '../../../../shared/sidebar/sidebar.component';
 
+interface Breadcrumb {
+  label: string;
+  path?: string;
+  active?: boolean;
+}
+
 interface Employee {
   id: string;
   employeeId: string;
@@ -94,6 +100,14 @@ interface LeaveComputation {
 })
 export class FinalPayProcessComponent implements OnInit {
   activeTab: 'process' | 'track' = 'process';
+  
+  // Breadcrumbs for header
+  breadcrumbs: Breadcrumb[] = [
+    { label: 'Dashboard', path: '/dashboard' },
+    { label: 'Payroll Management', path: '/admin/payroll-management' },
+    { label: 'Final Pay Process', active: true }
+  ];
+  
   selectedEmployee: Employee | null = null;
   selectedFinalPays: string[] = [];
   computationInProgress = false;

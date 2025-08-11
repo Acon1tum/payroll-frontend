@@ -5,6 +5,12 @@ import { Router } from '@angular/router';
 import { HeaderComponent } from '../../../../shared/header/header.component';
 import { SidebarComponent } from '../../../../shared/sidebar/sidebar.component';
 
+interface Breadcrumb {
+  label: string;
+  path?: string;
+  active?: boolean;
+}
+
 interface PayrollRun {
   id: number;
   cutoffStart: Date;
@@ -62,6 +68,13 @@ interface PayrollSummary {
 })
 export class RunPayrollComponent implements OnInit, OnDestroy {
   activeTab: 'new-run' | 'history' | 'preview' = 'new-run';
+  
+  // Breadcrumbs for header
+  breadcrumbs: Breadcrumb[] = [
+    { label: 'Dashboard', path: '/dashboard' },
+    { label: 'Payroll Management', path: '/admin/payroll-management' },
+    { label: 'Run Payroll', active: true }
+  ];
   
   // New Payroll Run
   payrollForm: FormGroup;

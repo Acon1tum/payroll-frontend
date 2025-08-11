@@ -5,6 +5,12 @@ import { Router } from '@angular/router';
 import { HeaderComponent } from '../../../../shared/header/header.component';
 import { SidebarComponent } from '../../../../shared/sidebar/sidebar.component';
 
+interface Breadcrumb {
+  label: string;
+  path?: string;
+  active?: boolean;
+}
+
 interface Employee {
   id: string;
   employeeId: string;
@@ -62,6 +68,14 @@ interface ComputationSettings {
 })
 export class ThirteenMonthPayComponent implements OnInit {
   activeTab: 'compute' | 'history' | 'settings' = 'compute';
+  
+  // Breadcrumbs for header
+  breadcrumbs: Breadcrumb[] = [
+    { label: 'Dashboard', path: '/dashboard' },
+    { label: 'Payroll Management', path: '/admin/payroll-management' },
+    { label: 'Thirteen Month Pay', active: true }
+  ];
+  
   selectedEmployees: string[] = [];
   selectedThirteenMonthPays: string[] = [];
   computationInProgress = false;
