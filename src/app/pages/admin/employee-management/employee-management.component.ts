@@ -87,6 +87,7 @@ export class EmployeeManagementComponent implements OnInit {
   // Breadcrumbs for header
   breadcrumbs: Breadcrumb[] = [
     { label: 'Dashboard', path: '/dashboard' },
+    { label: 'System Administration', path: '/admin/system-administration' },
     { label: 'Employee Management', active: true }
   ];
 

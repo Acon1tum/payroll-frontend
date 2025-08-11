@@ -14,6 +14,12 @@ export interface LeaveReport {
   period: string; // e.g., '2024', '2024-07'
 }
 
+interface Breadcrumb {
+  label: string;
+  path?: string;
+  active?: boolean;
+}
+
 @Component({
   selector: 'app-leave-reports',
   templateUrl: './leave-reports.component.html',
@@ -30,6 +36,13 @@ export class LeaveReportsComponent {
   filterReports() {
     // Implement filtering logic here
   }
+
+  // Breadcrumbs for header
+  breadcrumbs: Breadcrumb[] = [
+    { label: 'Dashboard', path: '/dashboard' },
+    { label: 'Leave Management', path: '/admin/leave-management' },
+    { label: 'Leave Reports', active: true }
+  ];
 
   exportReports() {
     const rows = [

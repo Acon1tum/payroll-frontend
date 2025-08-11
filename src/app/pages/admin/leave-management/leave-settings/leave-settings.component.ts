@@ -18,6 +18,13 @@ export interface LeaveCreditSetting {
   monthlyCap: number;
 }
 
+interface Breadcrumb {
+  label: string;
+  path?: string;
+  active?: boolean;
+}
+
+
 @Component({
   selector: 'app-leave-settings',
   templateUrl: './leave-settings.component.html',
@@ -67,6 +74,13 @@ export class LeaveSettingsComponent {
       monthlyCap: [0, [Validators.required, Validators.min(0)]]
     });
   }
+
+  // Breadcrumbs for header
+  breadcrumbs: Breadcrumb[] = [
+    { label: 'Dashboard', path: '/dashboard' },
+    { label: 'Leave Management', path: '/admin/leave-management' },
+    { label: 'Leave Settings', active: true }
+  ];
 
   // Leave Types CRUD
   openAddType(): void {

@@ -18,6 +18,12 @@ export interface LeaveRequest {
   appliedAt: Date;
 }
 
+interface Breadcrumb {
+  label: string;
+  path?: string;
+  active?: boolean;
+}
+
 @Component({
   selector: 'app-leave-requests',
   templateUrl: './leave-requests.component.html',
@@ -74,6 +80,13 @@ export class LeaveRequestsComponent {
     // This is a placeholder for demonstration
     // You may want to filter leaveRequests based on this.filter
   }
+
+  // Breadcrumbs for header
+  breadcrumbs: Breadcrumb[] = [
+    { label: 'Dashboard', path: '/dashboard' },
+    { label: 'Leave Management', path: '/admin/leave-management' },
+    { label: 'Leave Requests', active: true }
+  ];
 
   approveRequest(request: LeaveRequest) {
     // Implement approval logic here
