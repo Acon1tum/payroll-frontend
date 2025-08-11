@@ -3,6 +3,13 @@ import { CommonModule } from '@angular/common';
 import { SidebarComponent } from '../../../shared/sidebar/sidebar.component';
 import { HeaderComponent } from '../../../shared/header/header.component';
 
+interface Breadcrumb {
+  label: string;
+  path?: string;
+  active?: boolean;
+}
+
+
 @Component({
   selector: 'app-reports',
   imports: [CommonModule, SidebarComponent, HeaderComponent],
@@ -10,6 +17,13 @@ import { HeaderComponent } from '../../../shared/header/header.component';
   styleUrl: './reports.component.scss'
 })
 export class ReportsComponent {
+
+  // Breadcrumbs for header
+  breadcrumbs: Breadcrumb[] = [
+    { label: 'Dashboard', path: '/employee-dashboard' },
+    { label: 'My Reports', active: true }
+  ];
+
   // Quick export actions for employee pages
   exportPayslips(): void { this.downloadCsv('payslips', [ ['Period','Gross','Deductions','Net'], ['2025-06-15','35000','5000','30000'] ]); }
   exportContributions(): void { this.downloadCsv('contributions', [ ['Month','SSS','PhilHealth','Pag-IBIG','BIR'], ['2025-06','600','450','200','3000'] ]); }

@@ -3,6 +3,13 @@ import { CommonModule } from '@angular/common';
 import { SidebarComponent } from '../../../shared/sidebar/sidebar.component';
 import { HeaderComponent } from '../../../shared/header/header.component';
 
+interface Breadcrumb {
+  label: string;
+  path?: string;
+  active?: boolean;
+}
+
+
 @Component({
   selector: 'app-employee-settings',
   imports: [CommonModule, SidebarComponent, HeaderComponent],
@@ -10,6 +17,12 @@ import { HeaderComponent } from '../../../shared/header/header.component';
   styleUrl: './employee-settings.component.scss'
 })
 export class EmployeeSettingsComponent {
+  // Breadcrumbs for header
+  breadcrumbs: Breadcrumb[] = [
+    { label: 'Dashboard', path: '/employee-dashboard' },
+    { label: 'Security & Privacy', active: true }
+  ];
+
   // Terms
   showTermsModal = false;
   termsVersion = 'v1.3';

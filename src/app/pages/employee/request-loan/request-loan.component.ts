@@ -4,6 +4,12 @@ import { FormsModule } from '@angular/forms';
 import { HeaderComponent } from '../../../shared/header/header.component';
 import { SidebarComponent } from '../../../shared/sidebar/sidebar.component';
 
+interface Breadcrumb {
+  label: string;
+  path?: string;
+  active?: boolean;
+}
+
 @Component({
   selector: 'app-request-loan',
   imports: [CommonModule, FormsModule, HeaderComponent, SidebarComponent],
@@ -11,6 +17,13 @@ import { SidebarComponent } from '../../../shared/sidebar/sidebar.component';
   styleUrl: './request-loan.component.scss'
 })
 export class RequestLoanComponent {
+
+  // Breadcrumbs for header
+  breadcrumbs: Breadcrumb[] = [
+    { label: 'Dashboard', path: '/employee-dashboard' },
+    { label: 'Loans', active: true }
+  ];
+
   // Active loans (dummy)
   activeLoans: LoanRecord[] = [
     {

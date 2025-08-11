@@ -17,6 +17,12 @@ interface Payslip {
   netPay: number;
 }
 
+interface Breadcrumb {
+  label: string;
+  path?: string;
+  active?: boolean;
+}
+
 @Component({
   selector: 'app-payslip',
   imports: [CommonModule, SidebarComponent, HeaderComponent],
@@ -24,6 +30,12 @@ interface Payslip {
   styleUrl: './payslip.component.scss'
 })
 export class PayslipComponent {
+  // Breadcrumbs for header
+  breadcrumbs: Breadcrumb[] = [
+    { label: 'Dashboard', path: '/employee-dashboard' },
+    { label: 'Payslips', active: true }
+  ];
+
   private basePayslips = [
     {
       id: 'PS-2025-07A',

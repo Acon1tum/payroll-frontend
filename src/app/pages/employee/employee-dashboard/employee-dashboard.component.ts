@@ -3,6 +3,12 @@ import { SidebarComponent } from '../../../shared/sidebar/sidebar.component';
 import { HeaderComponent } from '../../../shared/header/header.component';
 import { CommonModule } from '@angular/common';
 
+interface Breadcrumb {
+  label: string;
+  path?: string;
+  active?: boolean;
+}
+
 @Component({
   selector: 'app-employee-dashboard',
   imports: [CommonModule, SidebarComponent, HeaderComponent],
@@ -16,6 +22,11 @@ export class EmployeeDashboardComponent {
     leave: { vacation: 12.5, sick: 10.0 },
     loanBalance: 8000,
   };
+
+  // Breadcrumbs for header
+  breadcrumbs: Breadcrumb[] = [
+    { label: 'Dashboard', active: true }
+  ];
 
   notifications = [
     { id: 1, type: 'payslip', title: 'New Payslip', message: 'Your payslip for the last cutoff is available.', timestamp: new Date(), icon: 'receipt_long', color: 'text-green-600' },

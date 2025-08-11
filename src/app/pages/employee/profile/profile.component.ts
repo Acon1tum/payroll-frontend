@@ -5,6 +5,13 @@ import { SidebarComponent } from '../../../shared/sidebar/sidebar.component';
 import { HeaderComponent } from '../../../shared/header/header.component';
 import { AuthService, User } from '../../../services/auth.service';
 
+interface Breadcrumb {
+  label: string;
+  path?: string;
+  active?: boolean;
+}
+
+
 @Component({
   selector: 'app-profile',
   imports: [CommonModule, FormsModule, SidebarComponent, HeaderComponent],
@@ -13,6 +20,12 @@ import { AuthService, User } from '../../../services/auth.service';
 })
 export class ProfileComponent {
   user: User | null = null;
+
+  // Breadcrumbs for header
+  breadcrumbs: Breadcrumb[] = [
+    { label: 'Dashboard', path: '/employee-dashboard' },
+    { label: 'My Profile', active: true }
+  ];
 
   // Derived display fields (with safe fallbacks)
   personalInfo = {

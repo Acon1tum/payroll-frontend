@@ -3,6 +3,13 @@ import { CommonModule } from '@angular/common';
 import { SidebarComponent } from '../../../shared/sidebar/sidebar.component';
 import { HeaderComponent } from '../../../shared/header/header.component';
 
+interface Breadcrumb {
+  label: string;
+  path?: string;
+  active?: boolean;
+}
+
+
 @Component({
   selector: 'app-employee-contributions',
   imports: [CommonModule, SidebarComponent, HeaderComponent],
@@ -22,6 +29,12 @@ export class EmployeeContributionsComponent {
   get maxYearTotal(): number {
     return Math.max(this.yearTotals.sss, this.yearTotals.philHealth, this.yearTotals.pagibig, this.yearTotals.bir) || 1;
   }
+
+  // Breadcrumbs for header
+  breadcrumbs: Breadcrumb[] = [
+    { label: 'Dashboard', path: '/employee-dashboard' },
+    { label: 'Contributions', active: true }
+  ];
 
   constructor() {
     // Dummy monthly data for current year

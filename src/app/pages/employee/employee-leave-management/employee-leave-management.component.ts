@@ -4,6 +4,12 @@ import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angula
 import { SidebarComponent } from '../../../shared/sidebar/sidebar.component';
 import { HeaderComponent } from '../../../shared/header/header.component';
 
+interface Breadcrumb {
+  label: string;
+  path?: string;
+  active?: boolean;
+}
+
 @Component({
   selector: 'app-employee-leave-management',
   imports: [CommonModule, ReactiveFormsModule, SidebarComponent, HeaderComponent],
@@ -15,6 +21,12 @@ export class EmployeeLeaveManagementComponent {
   leaveBalances: { type: string; remaining: number; used: number; total: number }[] = [
     { type: 'Vacation Leave', remaining: 12, used: 3, total: 15 },
     { type: 'Sick Leave', remaining: 8, used: 2, total: 10 },
+  ];
+
+  // Breadcrumbs for header
+  breadcrumbs: Breadcrumb[] = [
+    { label: 'Dashboard', path: '/employee-dashboard' },
+    { label: 'Leave Management', active: true }
   ];
 
   // Requests (current + pending)

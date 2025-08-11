@@ -28,6 +28,12 @@ interface FinalPaySummary {
   deductions: PayItem[];
 }
 
+interface Breadcrumb {
+  label: string;
+  path?: string;
+  active?: boolean;
+}
+
 @Component({
   selector: 'app-thirteenth-final-pay',
   imports: [CommonModule, SidebarComponent, HeaderComponent],
@@ -35,6 +41,13 @@ interface FinalPaySummary {
   styleUrl: './thirteenth-final-pay.component.scss'
 })
 export class ThirteenthFinalPayComponent {
+
+  // Breadcrumbs for header
+  breadcrumbs: Breadcrumb[] = [
+    { label: 'Dashboard', path: '/employee-dashboard' },
+    { label: '13th Month Pay & Final Pay', active: true }
+  ];
+
   // 13th Month dummy summary
   thirteenthSummary: ThirteenthMonthSummary = {
     year: new Date().getFullYear(),
