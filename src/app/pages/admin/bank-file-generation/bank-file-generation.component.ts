@@ -12,6 +12,13 @@ export interface BankDisbursement {
   bank: 'BDO' | 'Metrobank' | 'Landbank';
 }
 
+interface Breadcrumb {
+  label: string;
+  path?: string;
+  active?: boolean;
+}
+
+
 @Component({
   selector: 'app-bank-file-generation',
   templateUrl: './bank-file-generation.component.html',
@@ -22,6 +29,12 @@ export class BankFileGenerationComponent {
   selectedBank: 'BDO' | 'Metrobank' | 'Landbank' = 'BDO';
   period: string = '';
   disbursements: BankDisbursement[] = [];
+
+  // Breadcrumbs for header
+  breadcrumbs: Breadcrumb[] = [
+    { label: 'Dashboard', path: '/dashboard' },
+    { label: 'Bank File Generation', active: true }
+  ];
 
   // Simple dummy dataset generator
   private generateDummyDisbursements(bank: 'BDO' | 'Metrobank' | 'Landbank'): BankDisbursement[] {

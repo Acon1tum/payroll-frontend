@@ -26,6 +26,12 @@ export interface LoanRepayment {
   balance: number;
 }
 
+interface Breadcrumb {
+  label: string;
+  path?: string;
+  active?: boolean;
+}
+
 @Component({
   selector: 'app-loans',
   templateUrl: './loans.component.html',
@@ -38,6 +44,13 @@ export class LoansComponent implements OnInit {
 
   // UI state for tabs
   selectedTab: 'register' | 'track' = 'register';
+
+  // Breadcrumbs for header
+  breadcrumbs: Breadcrumb[] = [
+    { label: 'Dashboard', path: '/dashboard' },
+    { label: 'Contributions & Deductions', path: '/admin/contributions-deductions' },
+    { label: 'Loans', active: true }
+  ];
 
   // Modals
   showLoanModal = false;

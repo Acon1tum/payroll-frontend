@@ -21,6 +21,13 @@ export interface EmployeeDeductionAssignment {
   endDate?: Date;
 }
 
+interface Breadcrumb {
+  label: string;
+  path?: string;
+  active?: boolean;
+}
+
+
 @Component({
   selector: 'app-deductions',
   templateUrl: './deductions.component.html',
@@ -30,6 +37,13 @@ export interface EmployeeDeductionAssignment {
 export class DeductionsComponent implements OnInit {
   deductions: Deduction[] = [];
   assignments: EmployeeDeductionAssignment[] = [];
+
+  // Breadcrumbs for header
+  breadcrumbs: Breadcrumb[] = [
+    { label: 'Dashboard', path: '/dashboard' },
+    { label: 'Contributions & Deductions', path: '/admin/contributions-deductions' },
+    { label: 'Deductions', active: true }
+  ];
 
   // UI state for tabs
   selectedTab: 'manage' | 'assign' = 'manage';

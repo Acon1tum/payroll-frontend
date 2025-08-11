@@ -43,6 +43,12 @@ export interface ContributionHistory {
   bir: number;
 }
 
+interface Breadcrumb {
+  label: string;
+  path?: string;
+  active?: boolean;
+}
+
 @Component({
   selector: 'app-mandatory-contributions',
   imports: [CommonModule, FormsModule, SidebarComponent, HeaderComponent],
@@ -55,6 +61,13 @@ export class MandatoryContributionsComponent implements OnInit {
   philHealthBrackets: PhilHealthBracket[] = [];
   pagibigBrackets: PagIBIGBracket[] = [];
   birBrackets: BIRBracket[] = [];
+
+  // Breadcrumbs for header
+  breadcrumbs: Breadcrumb[] = [
+    { label: 'Dashboard', path: '/dashboard' },
+    { label: 'Contributions & Deductions', path: '/admin/contributions-deductions' },
+    { label: 'Mandatory Contributions', active: true }
+  ];
 
   // Contribution history
   contributionHistory: ContributionHistory[] = [];

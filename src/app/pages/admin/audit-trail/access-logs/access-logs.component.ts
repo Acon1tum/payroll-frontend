@@ -15,6 +15,12 @@ export interface AccessLog {
   status?: 'success' | 'failed';
 }
 
+interface Breadcrumb {
+  label: string;
+  path?: string;
+  active?: boolean;
+}
+
 @Component({
   selector: 'app-access-logs',
   templateUrl: './access-logs.component.html',
@@ -31,6 +37,13 @@ export class AccessLogsComponent {
   ];
   filtered: AccessLog[] = [...this.logs];
   filter: { user?: string; action?: string; ip?: string; date?: string } = {};
+
+  // Breadcrumbs for header
+  breadcrumbs: Breadcrumb[] = [
+    { label: 'Dashboard', path: '/dashboard' },
+    { label: 'Audit Trail', path: '/admin/audit-trail' },
+    { label: 'Access Logs', active: true }
+  ];
 
   filterLogs() {
     const userTerm = (this.filter.user || '').toLowerCase().trim();

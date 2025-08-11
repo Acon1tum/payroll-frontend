@@ -1,1 +1,73 @@
-<p>audit-trail works!</p>
+<div class="min-h-screen bg-gray-50 flex">
+  <!-- Sidebar -->
+  <app-sidebar></app-sidebar>
+
+  <!-- Main Content -->
+  <div class="flex-1 flex flex-col">
+    <!-- Header -->
+    <app-header 
+      [breadcrumbs]="breadcrumbs"
+      title="Audit Trail"
+    ></app-header>
+
+    <!-- Page Content -->
+    <main class="flex-1 p-6">
+      <div class="max-w-7xl mx-auto">
+        <!-- Page Header -->
+        <div class="bg-white rounded-lg shadow-lg border border-gray-200 p-6 mb-6">
+          <h1 class="text-3xl font-bold text-gray-900 mb-2">Audit Trail</h1>
+          <p class="text-gray-600">Monitor and track system activities and user access logs.</p>
+        </div>
+
+        <!-- Navigation Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <!-- Access Logs Card -->
+          <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow duration-200">
+            <div class="flex items-center justify-between mb-4">
+              <div class="flex items-center">
+                <div class="p-2 bg-blue-100 rounded-lg">
+                  <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                  </svg>
+                </div>
+                <div class="ml-4">
+                  <h3 class="text-lg font-medium text-gray-900">Access Logs</h3>
+                  <p class="text-sm text-gray-600">Track sign-ins, sign-outs, and data access</p>
+                </div>
+              </div>
+            </div>
+            <a routerLink="/admin/audit-trail/access-logs" class="inline-flex items-center text-blue-600 hover:text-blue-700 text-sm font-medium">
+              View Access Logs
+              <svg class="ml-1 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+              </svg>
+            </a>
+          </div>
+
+          <!-- Activity Logs Card -->
+          <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow duration-200">
+            <div class="flex items-center justify-between mb-4">
+              <div class="flex items-center">
+                <div class="p-2 bg-green-100 rounded-lg">
+                  <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                  </svg>
+                </div>
+                <div class="ml-4">
+                  <h3 class="text-lg font-medium text-gray-900">Activity Logs</h3>
+                  <p class="text-sm text-gray-600">Monitor system actions and user activities</p>
+                </div>
+              </div>
+            </div>
+            <a routerLink="/admin/audit-trail/activity-logs" class="inline-flex items-center text-green-600 hover:text-green-700 text-sm font-medium">
+              View Activity Logs
+              <svg class="ml-1 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+              </svg>
+            </a>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>

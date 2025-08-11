@@ -13,6 +13,12 @@ export interface ActivityLog {
   date: Date;
 }
 
+interface Breadcrumb {
+  label: string;
+  path?: string;
+  active?: boolean;
+}
+
 @Component({
   selector: 'app-activity-logs',
   templateUrl: './activity-logs.component.html',
@@ -28,6 +34,13 @@ export class ActivityLogsComponent {
   ];
   filtered: ActivityLog[] = [...this.logs];
   filter: { user?: string; module?: string; date?: string } = {};
+
+  // Breadcrumbs for header
+  breadcrumbs: Breadcrumb[] = [
+    { label: 'Dashboard', path: '/dashboard' },
+    { label: 'Audit Trail', path: '/admin/audit-trail' },
+    { label: 'Activity Logs', active: true }
+  ];
 
   filterLogs() {
     const userTerm = (this.filter.user || '').toLowerCase().trim();
