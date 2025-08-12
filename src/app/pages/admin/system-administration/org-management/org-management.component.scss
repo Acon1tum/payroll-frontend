@@ -148,12 +148,145 @@ span.inline-flex {
 
 // Search input enhancements
 .search-input {
-  background-image: linear-gradient(45deg, transparent 50%, #3b82f6 50%);
   background-position: calc(100% - 20px) calc(1em + 2px);
   background-size: 5px 5px;
   background-repeat: no-repeat;
-  
-  &:focus {
-    background-image: linear-gradient(45deg, transparent 50%, #1d4ed8 50%);
+}
+
+// Modal styles
+.modal-overlay {
+  animation: fadeIn 0.2s ease-out;
+}
+
+.modal-content {
+  animation: slideIn 0.3s ease-out;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+// Form input focus effects
+.form-input:focus {
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+// Button hover effects
+.btn-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 25px -5px rgba(59, 130, 246, 0.4);
+}
+
+// Table row hover effects
+.table-row:hover {
+  background-color: rgba(59, 130, 246, 0.05);
+}
+
+// Status badge styles
+.status-badge {
+  transition: all 0.2s ease-in-out;
+}
+
+.status-badge:hover {
+  transform: scale(1.05);
+}
+
+// Validation message animations
+.validation-message {
+  animation: slideDown 0.2s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+// Responsive modal adjustments
+@media (max-width: 768px) {
+  .modal-content {
+    margin: 1rem;
+    max-width: calc(100vw - 2rem);
+  }
+}
+
+// Scrollbar styling for modal body
+.modal-body::-webkit-scrollbar {
+  width: 6px;
+}
+
+.modal-body::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 3px;
+}
+
+.modal-body::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
+}
+
+.modal-body::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+// Search bar styles
+.search-container {
+  position: relative;
+}
+
+.search-input:focus {
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.search-clear-button {
+  transition: all 0.2s ease-in-out;
+}
+
+.search-clear-button:hover {
+  transform: scale(1.1);
+}
+
+// Search results highlighting
+.search-highlight {
+  background-color: rgba(59, 130, 246, 0.1);
+  border-radius: 2px;
+  padding: 1px 2px;
+}
+
+// Empty search state
+.empty-search-state {
+  animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
