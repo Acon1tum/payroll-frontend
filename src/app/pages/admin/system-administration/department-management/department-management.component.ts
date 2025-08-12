@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { HeaderComponent } from '../../../../shared/header/header.component';
 import { SidebarComponent } from '../../../../shared/sidebar/sidebar.component';
 import { DepartmentService, Department, Employee, Organization, CreateDepartmentRequest, UpdateDepartmentRequest, AssignHeadRequest } from '../../../../services/department.service';
+import { SidebarService } from '../../../../shared/sidebar/sidebar.service';
 
 interface Breadcrumb {
   label: string;
@@ -55,10 +56,17 @@ export class DepartmentManagementComponent implements OnInit {
     employeeId: null as string | null
   };
 
-  constructor(private departmentService: DepartmentService) {}
+  constructor(
+    private departmentService: DepartmentService,
+    private sidebarService: SidebarService
+  ) {}
 
   ngOnInit() {
     this.loadData();
+    // Subscribe to sidebar state changes
+    this.sidebarService.isCollapsed$.subscribe(
+      collapsed => this.isSidebarCollapsed = collapsed
+    );
   }
 
   loadData() {
@@ -333,7 +341,7 @@ export class DepartmentManagementComponent implements OnInit {
   }
 
   toggleSidebar() {
-    this.isSidebarCollapsed = !this.isSidebarCollapsed;
+    this.sidebarService.toggleSidebar();
   }
 
   getAvailableEmployees(): Employee[] {

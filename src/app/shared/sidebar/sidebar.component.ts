@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, HostListener } from '@angular/core';
+import { Component, OnInit, OnDestroy, HostListener, Input, Output, EventEmitter, OnChanges, SimpleChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, NavigationEnd, RouterLink, RouterLinkActive } from '@angular/router';
 import { Subscription } from 'rxjs';
@@ -19,12 +19,15 @@ interface MenuItem {
   templateUrl: './sidebar.component.html',
   styleUrl: './sidebar.component.scss'
 })
-export class SidebarComponent implements OnInit, OnDestroy {
-  isCollapsed = false;
-  userRole: string | undefined;
+export class SidebarComponent implements OnInit, OnDestroy, OnChanges {
+  @Input() isCollapsed = false;
+  @Input() userRole: string | undefined;
+  @Output() toggleCollapse = new EventEmitter<void>();
   menuItems: MenuItem[] = [];
   expandedItem: string | null = null;
   isMobile = window.innerWidth <= 768;
+  private internalIsCollapsed = false;
+  private useExternalInput = false;
 
   // Role-based menu configuration
   menuItemsByRole: { [role: string]: MenuItem[] } = {
@@ -106,9 +109,15 @@ export class SidebarComponent implements OnInit, OnDestroy {
   ngOnInit() {
     this.updateMenuItems();
     
-    // Subscribe to sidebar state changes
+    // Subscribe to sidebar state changes from service
     this.sidebarSub = this.sidebarService.isCollapsed$.subscribe(
-      collapsed => this.isCollapsed = collapsed
+      collapsed => {
+        this.internalIsCollapsed = collapsed;
+        // Only update if we're not using external input
+        if (!this.useExternalInput) {
+          this.isCollapsed = collapsed;
+        }
+      }
     );
     
     // React to auth user changes and router navigation
@@ -121,6 +130,22 @@ export class SidebarComponent implements OnInit, OnDestroy {
         this.updateMenuItems();
       }
     });
+  }
+
+  ngOnChanges(changes: SimpleChanges) {
+    if (changes['isCollapsed']) {
+      if (changes['isCollapsed'].firstChange) {
+        // On first change, check if we should use external input
+        this.useExternalInput = this.isCollapsed !== false;
+        if (this.useExternalInput) {
+          // Update service to match external input
+          this.sidebarService.setSidebarState(this.isCollapsed);
+        }
+      } else {
+        // On subsequent changes, always update service
+        this.sidebarService.setSidebarState(this.isCollapsed);
+      }
+    }
   }
 
   ngOnDestroy() {
@@ -155,6 +180,13 @@ export class SidebarComponent implements OnInit, OnDestroy {
   }
 
   toggleSidebar() {
-    this.sidebarService.toggleSidebar();
+    if (this.useExternalInput) {
+      // If using external input, just emit the event
+      this.toggleCollapse.emit();
+    } else {
+      // If using internal state, toggle the service
+      this.sidebarService.toggleSidebar();
+      this.toggleCollapse.emit();
+    }
   }
 }

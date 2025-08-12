@@ -1,6 +1,6 @@
 <aside 
   class="bg-white shadow-lg border-r border-gray-200 transition-all duration-300 ease-in-out h-screen"
-  [class]="isCollapsed ? 'w-16' : 'w-64'"
+  [ngClass]="isCollapsed ? 'w-16' : 'w-64'"
 >
   <!-- Sidebar Header -->
   <div class="flex items-center justify-between h-16 px-4 border-b border-gray-200">
@@ -53,15 +53,13 @@
         <div>
           <button
             (click)="toggleMenuItem(item.name, $event)"
-            [class]="item.children ? 'text-gray-700 hover:bg-gray-50 hover:text-gray-900 border-transparent' : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900 border-transparent'"
-            class="group w-full flex items-center px-3 py-2 text-sm font-medium rounded-lg border-l-4 transition-all duration-200"
+            class="group w-full flex items-center px-3 py-2 text-sm font-medium rounded-lg border-l-4 transition-all duration-200 text-gray-700 hover:bg-gray-50 hover:text-gray-900 border-transparent"
             [routerLink]="item.path"
             routerLinkActive="bg-blue-50 text-blue-700 border-blue-200"
           >
             <!-- Icon -->
             <span 
-              class="material-icons flex-shrink-0 h-5 w-5 mr-3 transition-all duration-200"
-              [class]="'text-gray-400 group-hover:text-gray-500'"
+              class="material-icons flex-shrink-0 h-5 w-5 mr-3 transition-all duration-200 text-gray-400 group-hover:text-gray-500"
             >
               {{ item.icon }}
             </span>
@@ -73,7 +71,7 @@
             <svg 
               *ngIf="!isCollapsed && item.children"
               class="flex-shrink-0 h-4 w-4 transition-transform duration-200"
-              [class]="isMenuItemExpanded(item.name) ? 'rotate-90' : ''"
+              [ngClass]="isMenuItemExpanded(item.name) ? 'rotate-90' : ''"
               fill="none" 
               stroke="currentColor" 
               viewBox="0 0 24 24"
@@ -96,8 +94,7 @@
             >
               <!-- Child Icon -->
               <span 
-                class="material-icons flex-shrink-0 h-4 w-4 mr-3 transition-all duration-200"
-                [class]="'text-gray-400 group-hover:text-gray-500'"
+                class="material-icons flex-shrink-0 h-4 w-4 mr-3 transition-all duration-200 text-gray-400 group-hover:text-gray-500"
               >
                 {{ child.icon }}
               </span>
