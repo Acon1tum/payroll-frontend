@@ -3,34 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HeaderComponent } from '../../../../shared/header/header.component';
 import { SidebarComponent } from '../../../../shared/sidebar/sidebar.component';
-
-interface Department {
-  id: number;
-  name: string;
-  organizationId: number;
-  organizationName: string;
-  departmentHeadId?: number;
-  departmentHeadName?: string;
-  memberCount: number;
-  description: string;
-  status: 'active' | 'inactive';
-  createdAt: Date;
-  updatedAt: Date;
-}
-
-interface Employee {
-  id: number;
-  name: string;
-  email: string;
-  position: string;
-  departmentId?: number;
-  isDepartmentHead: boolean;
-}
-
-interface Organization {
-  id: number;
-  name: string;
-}
+import { DepartmentService, Department, Employee, Organization, CreateDepartmentRequest, UpdateDepartmentRequest, AssignHeadRequest } from '../../../../services/department.service';
 
 interface Breadcrumb {
   label: string;
@@ -54,10 +27,12 @@ export class DepartmentManagementComponent implements OnInit {
   isEditMode = false;
   isAssignHeadMode = false;
   searchTerm = '';
-  selectedOrganizationId: number | null = null;
+  selectedOrganizationId: string | null = null;
   isLoading = false;
   errorMessage = '';
+  successMessage = '';
   isSidebarCollapsed = false;
+  nameValidationMessage: { message: string; isError: boolean } | null = null;
 
   // Breadcrumbs for header
   breadcrumbs: Breadcrumb[] = [
@@ -69,15 +44,18 @@ export class DepartmentManagementComponent implements OnInit {
   // Form data
   departmentForm = {
     name: '',
-    organizationId: null as number | null,
+    code: '',
+    organizationId: null as string | null,
     description: '',
     status: 'active' as 'active' | 'inactive'
   };
 
   assignHeadForm = {
-    departmentId: null as number | null,
-    employeeId: null as number | null
+    departmentId: null as string | null,
+    employeeId: null as string | null
   };
+
+  constructor(private departmentService: DepartmentService) {}
 
   ngOnInit() {
     this.loadData();
@@ -85,84 +63,50 @@ export class DepartmentManagementComponent implements OnInit {
 
   loadData() {
     this.isLoading = true;
-    // Simulate API calls
-    setTimeout(() => {
-      // Load organizations
-      this.organizations = [
-        { id: 1, name: 'TechCorp Solutions' },
-        { id: 2, name: 'Global Industries Ltd' },
-        { id: 3, name: 'Startup Ventures Inc' }
-      ];
+    this.errorMessage = '';
+    
+    // Load organizations
+    this.departmentService.getOrganizations().subscribe({
+      next: (response) => {
+        this.organizations = response.data;
+      },
+      error: (error) => {
+        console.error('Error loading organizations:', error);
+        this.errorMessage = 'Failed to load organizations';
+      }
+    });
 
-      // Load employees
-      this.employees = [
-        { id: 1, name: 'John Smith', email: 'john.smith@company.com', position: 'Senior Manager', isDepartmentHead: true },
-        { id: 2, name: 'Sarah Johnson', email: 'sarah.johnson@company.com', position: 'Team Lead', isDepartmentHead: false },
-        { id: 3, name: 'Mike Chen', email: 'mike.chen@company.com', position: 'Project Manager', isDepartmentHead: false },
-        { id: 4, name: 'Emily Davis', email: 'emily.davis@company.com', position: 'Senior Developer', isDepartmentHead: false },
-        { id: 5, name: 'David Wilson', email: 'david.wilson@company.com', position: 'HR Manager', isDepartmentHead: true },
-        { id: 6, name: 'Lisa Brown', email: 'lisa.brown@company.com', position: 'Finance Director', isDepartmentHead: false }
-      ];
+    // Load employees
+    this.departmentService.getAvailableEmployees().subscribe({
+      next: (response) => {
+        console.log('✅ Employees loaded successfully:', response);
+        this.employees = response.data;
+      },
+      error: (error) => {
+        console.error('❌ Error loading employees:', error);
+        console.error('Error details:', {
+          status: error.status,
+          statusText: error.statusText,
+          message: error.message,
+          error: error.error
+        });
+        this.errorMessage = 'Failed to load employees';
+      }
+    });
 
-      // Load departments
-      this.departments = [
-        {
-          id: 1,
-          name: 'Software Development',
-          organizationId: 1,
-          organizationName: 'TechCorp Solutions',
-          departmentHeadId: 1,
-          departmentHeadName: 'John Smith',
-          memberCount: 15,
-          description: 'Core software development team responsible for product development',
-          status: 'active',
-          createdAt: new Date('2024-01-15'),
-          updatedAt: new Date('2024-01-15')
-        },
-        {
-          id: 2,
-          name: 'Human Resources',
-          organizationId: 1,
-          organizationName: 'TechCorp Solutions',
-          departmentHeadId: 5,
-          departmentHeadName: 'David Wilson',
-          memberCount: 8,
-          description: 'HR department handling recruitment, employee relations, and benefits',
-          status: 'active',
-          createdAt: new Date('2024-02-20'),
-          updatedAt: new Date('2024-02-20')
-        },
-        {
-          id: 3,
-          name: 'Marketing',
-          organizationId: 2,
-          organizationName: 'Global Industries Ltd',
-          departmentHeadId: undefined,
-          departmentHeadName: undefined,
-          memberCount: 12,
-          description: 'Marketing team responsible for brand management and campaigns',
-          status: 'active',
-          createdAt: new Date('2024-03-10'),
-          updatedAt: new Date('2024-03-10')
-        },
-        {
-          id: 4,
-          name: 'Finance',
-          organizationId: 2,
-          organizationName: 'Global Industries Ltd',
-          departmentHeadId: 6,
-          departmentHeadName: 'Lisa Brown',
-          memberCount: 6,
-          description: 'Finance department handling accounting and financial planning',
-          status: 'inactive',
-          createdAt: new Date('2024-03-15'),
-          updatedAt: new Date('2024-03-15')
-        }
-      ];
-
-      this.filteredDepartments = [...this.departments];
-      this.isLoading = false;
-    }, 1000);
+    // Load departments
+    this.departmentService.getDepartments().subscribe({
+      next: (response) => {
+        this.departments = response.data;
+        this.filteredDepartments = [...this.departments];
+        this.isLoading = false;
+      },
+      error: (error) => {
+        console.error('Error loading departments:', error);
+        this.errorMessage = 'Failed to load departments';
+        this.isLoading = false;
+      }
+    });
   }
 
   searchDepartments() {
@@ -197,6 +141,7 @@ export class DepartmentManagementComponent implements OnInit {
     this.selectedDepartment = department;
     this.departmentForm = {
       name: department.name,
+      code: department.code || '',
       organizationId: department.organizationId,
       description: department.description,
       status: department.status
@@ -216,75 +161,145 @@ export class DepartmentManagementComponent implements OnInit {
 
   saveDepartment() {
     if (this.isAddMode) {
-      const organization = this.organizations.find(org => org.id === this.departmentForm.organizationId);
-      const newDept: Department = {
-        id: this.departments.length + 1,
+      const createRequest: CreateDepartmentRequest = {
         name: this.departmentForm.name,
+        code: this.departmentForm.code || undefined,
         organizationId: this.departmentForm.organizationId!,
-        organizationName: organization?.name || '',
-        memberCount: 0,
         description: this.departmentForm.description,
-        status: this.departmentForm.status,
-        createdAt: new Date(),
-        updatedAt: new Date()
+        status: this.departmentForm.status
       };
-      this.departments.push(newDept);
-      this.filteredDepartments = [...this.departments];
+
+      // Check for duplicate name before creating
+      this.checkDuplicateBeforeSave(createRequest.name, createRequest.organizationId, () => {
+        this.departmentService.createDepartment(createRequest).subscribe({
+          next: (response) => {
+            this.successMessage = response.message;
+            this.loadData(); // Reload data to get the new department
+            this.cancelEdit();
+            setTimeout(() => this.successMessage = '', 3000);
+          },
+          error: (error) => {
+            console.error('Error creating department:', error);
+            if (error.status === 409) {
+              this.errorMessage = error.error.message || 'A department with this name already exists in this organization';
+            } else {
+              this.errorMessage = 'Failed to create department';
+            }
+            setTimeout(() => this.errorMessage = '', 5000);
+          }
+        });
+      });
     } else if (this.isEditMode && this.selectedDepartment) {
-      const organization = this.organizations.find(org => org.id === this.departmentForm.organizationId);
-      const index = this.departments.findIndex(dept => dept.id === this.selectedDepartment!.id);
-      if (index !== -1) {
-        this.departments[index] = {
-          ...this.selectedDepartment,
-          name: this.departmentForm.name,
-          organizationId: this.departmentForm.organizationId!,
-          organizationName: organization?.name || '',
-          description: this.departmentForm.description,
-          status: this.departmentForm.status,
-          updatedAt: new Date()
-        };
-        this.filteredDepartments = [...this.departments];
-      }
+      const updateRequest: UpdateDepartmentRequest = {
+        name: this.departmentForm.name,
+        code: this.departmentForm.code || undefined,
+        organizationId: this.departmentForm.organizationId!,
+        description: this.departmentForm.description,
+        status: this.departmentForm.status
+      };
+
+      // Check for duplicate name before updating
+      this.checkDuplicateBeforeSave(updateRequest.name!, updateRequest.organizationId!, () => {
+        this.departmentService.updateDepartment(this.selectedDepartment!.id, updateRequest).subscribe({
+          next: (response) => {
+            this.successMessage = response.message;
+            this.loadData(); // Reload data to get updated department
+            this.cancelEdit();
+            setTimeout(() => this.successMessage = '', 3000);
+          },
+          error: (error) => {
+            console.error('Error updating department:', error);
+            if (error.status === 409) {
+              this.errorMessage = error.error.message || 'A department with this name already exists in this organization';
+            } else {
+              this.errorMessage = 'Failed to update department';
+            }
+            setTimeout(() => this.errorMessage = '', 5000);
+          }
+        });
+      }, this.selectedDepartment.id);
     }
-    this.cancelEdit();
+  }
+
+  // Check for duplicate department name before saving
+  private checkDuplicateBeforeSave(name: string, organizationId: string, onSuccess: () => void, excludeId?: string) {
+    if (!name.trim() || !organizationId) {
+      this.errorMessage = 'Please fill in all required fields';
+      setTimeout(() => this.errorMessage = '', 5000);
+      return;
+    }
+
+    this.departmentService.checkDuplicateDepartmentName(name.trim(), organizationId, excludeId).subscribe({
+      next: (response) => {
+        if (response.isDuplicate) {
+          this.errorMessage = response.message || 'A department with this name already exists in this organization';
+          setTimeout(() => this.errorMessage = '', 5000);
+        } else {
+          // No duplicate found, proceed with save
+          onSuccess();
+        }
+      },
+      error: (error) => {
+        console.error('Error checking duplicate:', error);
+        // If duplicate check fails, still try to save (backend will catch duplicates)
+        onSuccess();
+      }
+    });
   }
 
   saveDepartmentHead() {
     if (this.assignHeadForm.employeeId && this.assignHeadForm.departmentId) {
-      const employee = this.employees.find(emp => emp.id === this.assignHeadForm.employeeId);
-      const deptIndex = this.departments.findIndex(dept => dept.id === this.assignHeadForm.departmentId);
-      
-      if (deptIndex !== -1 && employee) {
-        // Remove previous department head status
-        this.employees.forEach(emp => {
-          if (emp.departmentId === this.assignHeadForm.departmentId) {
-            emp.isDepartmentHead = false;
-          }
-        });
+      const request: AssignHeadRequest = {
+        departmentId: this.assignHeadForm.departmentId,
+        employeeId: this.assignHeadForm.employeeId
+      };
 
-        // Update employee
-        const empIndex = this.employees.findIndex(emp => emp.id === this.assignHeadForm.employeeId);
-        if (empIndex !== -1) {
-          this.employees[empIndex].isDepartmentHead = true;
-          this.employees[empIndex].departmentId = this.assignHeadForm.departmentId;
+      this.departmentService.assignDepartmentHead(request).subscribe({
+        next: (response) => {
+          this.successMessage = response.message;
+          this.loadData(); // Reload data to get updated department
+          this.cancelEdit();
+          setTimeout(() => this.successMessage = '', 3000);
+        },
+        error: (error) => {
+          console.error('Error assigning department head:', error);
+          this.errorMessage = 'Failed to assign department head';
+          setTimeout(() => this.errorMessage = '', 5000);
         }
-
-        // Update department
-        this.departments[deptIndex].departmentHeadId = this.assignHeadForm.employeeId;
-        this.departments[deptIndex].departmentHeadName = employee.name;
-        this.departments[deptIndex].updatedAt = new Date();
-
-        this.filteredDepartments = [...this.departments];
-      }
+      });
     }
-    this.cancelEdit();
   }
 
   deleteDepartment(department: Department) {
     if (confirm(`Are you sure you want to delete ${department.name}?`)) {
-      this.departments = this.departments.filter(dept => dept.id !== department.id);
-      this.filteredDepartments = [...this.departments];
+      this.departmentService.deleteDepartment(department.id).subscribe({
+        next: (response) => {
+          this.successMessage = response.message;
+          this.loadData(); // Reload data to remove deleted department
+          setTimeout(() => this.successMessage = '', 3000);
+        },
+        error: (error) => {
+          console.error('Error deleting department:', error);
+          this.errorMessage = 'Failed to delete department';
+          setTimeout(() => this.errorMessage = '', 5000);
+        }
+      });
     }
+  }
+
+  toggleStatus(department: Department) {
+    this.departmentService.toggleDepartmentStatus(department.id).subscribe({
+      next: (response) => {
+        this.successMessage = response.message;
+        this.loadData(); // Reload data to get updated status
+        setTimeout(() => this.successMessage = '', 3000);
+      },
+      error: (error) => {
+        console.error('Error toggling department status:', error);
+        this.errorMessage = 'Failed to update department status';
+        setTimeout(() => this.errorMessage = '', 5000);
+      }
+    });
   }
 
   cancelEdit() {
@@ -296,9 +311,14 @@ export class DepartmentManagementComponent implements OnInit {
     this.resetAssignHeadForm();
   }
 
+  closeModal() {
+    this.cancelEdit();
+  }
+
   resetDepartmentForm() {
     this.departmentForm = {
       name: '',
+      code: '',
       organizationId: null,
       description: '',
       status: 'active'
@@ -312,16 +332,52 @@ export class DepartmentManagementComponent implements OnInit {
     };
   }
 
-  toggleStatus(department: Department) {
-    department.status = department.status === 'active' ? 'inactive' : 'active';
-    department.updatedAt = new Date();
-  }
-
   toggleSidebar() {
     this.isSidebarCollapsed = !this.isSidebarCollapsed;
   }
 
   getAvailableEmployees(): Employee[] {
     return this.employees.filter(emp => !emp.isDepartmentHead || emp.departmentId === this.assignHeadForm.departmentId);
+  }
+
+  clearMessages() {
+    this.errorMessage = '';
+    this.successMessage = '';
+    this.nameValidationMessage = null;
+  }
+
+  // Validate department name for duplicates
+  validateDepartmentName() {
+    const name = this.departmentForm.name?.trim();
+    const organizationId = this.departmentForm.organizationId;
+    
+    if (!name || !organizationId) {
+      this.nameValidationMessage = null;
+      return;
+    }
+
+    // Clear previous validation message
+    this.nameValidationMessage = null;
+
+    // Check for duplicate name
+    this.departmentService.checkDuplicateDepartmentName(name, organizationId, this.selectedDepartment?.id).subscribe({
+      next: (response) => {
+        if (response.isDuplicate) {
+          this.nameValidationMessage = {
+            message: response.message || 'A department with this name already exists in this organization',
+            isError: true
+          };
+        } else {
+          this.nameValidationMessage = {
+            message: 'Department name is available',
+            isError: false
+          };
+        }
+      },
+      error: (error) => {
+        console.error('Error validating department name:', error);
+        // Don't show error message for validation failures
+      }
+    });
   }
 }
