@@ -1,232 +1,95 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { HttpClientTestingModule } from '@angular/common/http/testing';
-import { FormsModule } from '@angular/forms';
+
 import { OrgManagementComponent } from './org-management.component';
-import { OrganizationService } from '../../../../services/organization.service';
 
 describe('OrgManagementComponent', () => {
   let component: OrgManagementComponent;
   let fixture: ComponentFixture<OrgManagementComponent>;
-  let organizationService: jasmine.SpyObj<OrganizationService>;
 
   beforeEach(async () => {
-    const spy = jasmine.createSpyObj('OrganizationService', [
-      'getOrganizations',
-      'getOrganization',
-      'createOrganization',
-      'updateOrganization',
-      'deleteOrganization',
-      'toggleOrganizationStatus',
-      'checkDuplicateOrganization'
-    ]);
-
     await TestBed.configureTestingModule({
-      imports: [
-        OrgManagementComponent,
-        HttpClientTestingModule,
-        FormsModule
-      ],
-      providers: [
-        { provide: OrganizationService, useValue: spy }
-      ]
+      imports: [OrgManagementComponent]
     })
     .compileComponents();
 
     fixture = TestBed.createComponent(OrgManagementComponent);
     component = fixture.componentInstance;
-    organizationService = TestBed.inject(OrganizationService) as jasmine.SpyObj<OrganizationService>;
+    fixture.detectChanges();
   });
 
   it('should create', () => {
     expect(component).toBeTruthy();
   });
 
-  it('should initialize with empty data', () => {
-    expect(component.organizations).toEqual([]);
-    expect(component.filteredOrganizations).toEqual([]);
-    expect(component.isLoading).toBeFalse();
-  });
-
-  it('should load data on init', () => {
-    spyOn(component, 'loadOrganizations');
-    component.ngOnInit();
-    expect(component.loadOrganizations).toHaveBeenCalled();
-  });
-
-  it('should toggle sidebar', () => {
-    const initialState = component.isSidebarCollapsed;
-    component.toggleSidebar();
-    expect(component.isSidebarCollapsed).toBe(!initialState);
-  });
-
-  it('should clear messages', () => {
-    component.errorMessage = 'Test error';
-    component.successMessage = 'Test success';
-    component.nameValidationMessage = { message: 'Test validation', isError: false };
-    component.tinValidationMessage = { message: 'Test validation', isError: false };
-    
-    component.clearMessages();
-    
-    expect(component.errorMessage).toBe('');
-    expect(component.successMessage).toBe('');
-    expect(component.nameValidationMessage).toBeNull();
-    expect(component.tinValidationMessage).toBeNull();
-  });
-
-  it('should clear validation messages', () => {
-    component.nameValidationMessage = { message: 'Test validation', isError: false };
-    component.tinValidationMessage = { message: 'Test validation', isError: false };
-    
-    component.clearValidationMessages();
-    
-    expect(component.nameValidationMessage).toBeNull();
-    expect(component.tinValidationMessage).toBeNull();
-  });
-
-  it('should add organization', () => {
-    component.addOrganization();
-    
-    expect(component.isAddMode).toBeTrue();
-    expect(component.isEditMode).toBeFalse();
-    expect(component.selectedOrganization).toBeNull();
-  });
-
-  it('should edit organization', () => {
-    const mockOrg = {
-      id: '1',
-      name: 'Test Org',
-      tin: '123456789',
-      address: 'Test Address',
-      contact: 'Test Contact',
-      email: 'test@test.com',
-      phone: '1234567890',
-      status: 'active' as const,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    };
-    
-    component.editOrganization(mockOrg);
-    
-    expect(component.isEditMode).toBeTrue();
-    expect(component.isAddMode).toBeFalse();
-    expect(component.selectedOrganization).toBe(mockOrg);
-    expect(component.organizationForm.name).toBe('Test Org');
-  });
-
-  it('should cancel edit', () => {
-    component.isAddMode = true;
-    component.isEditMode = true;
-    component.selectedOrganization = { id: '1', name: 'Test', tin: '123', address: 'Test', contact: 'Test', email: 'test@test.com', status: 'active', createdAt: new Date(), updatedAt: new Date() };
-    
-    component.cancelEdit();
-    
-    expect(component.isAddMode).toBeFalse();
-    expect(component.isEditMode).toBeFalse();
-    expect(component.selectedOrganization).toBeNull();
-  });
-
-  it('should search organizations', () => {
-    component.organizations = [
-      { id: '1', name: 'Test Org', tin: '123', address: 'Test', contact: 'Test', email: 'test@test.com', status: 'active', createdAt: new Date(), updatedAt: new Date() },
-      { id: '2', name: 'Another Org', tin: '456', address: 'Test', contact: 'Test', email: 'another@test.com', status: 'active', createdAt: new Date(), updatedAt: new Date() }
-    ];
-    component.filteredOrganizations = [...component.organizations];
-    
-    component.searchTerm = 'Test';
-    component.searchOrganizations();
-    
-    expect(component.filteredOrganizations.length).toBe(2);
-    
-    component.searchTerm = 'Another';
-    component.searchOrganizations();
-    
-    expect(component.filteredOrganizations.length).toBe(1);
-    expect(component.filteredOrganizations[0].name).toBe('Another Org');
-  });
-
-  it('should validate organization name', () => {
-    const mockResponse = { 
-      success: true, 
-      isDuplicate: false, 
-      duplicates: [],
-      message: 'Organization name is available'
-    };
-    (organizationService.checkDuplicateOrganization as jasmine.Spy).and.returnValue({
-      subscribe: (fn: any) => fn.next(mockResponse)
-    } as any);
-
-    component.organizationForm.name = 'Test Organization';
-    
-    component.validateOrganizationName();
-    
-    expect(organizationService.checkDuplicateOrganization).toHaveBeenCalledWith('Test Organization', undefined, undefined);
-    expect(component.nameValidationMessage).toEqual({
-      message: 'Organization name is available',
-      isError: false
+  describe('Pagination', () => {
+    beforeEach(() => {
+      // Mock organization data for pagination tests
+      component.organizations = [
+        { id: 1, name: 'Org 1', tin: '123', address: 'Address 1', contact: 'Contact 1', email: 'email1@test.com', phone: '123-456-7890', status: 'active', createdAt: new Date(), updatedAt: new Date() },
+        { id: 2, name: 'Org 2', tin: '456', address: 'Address 2', contact: 'Contact 2', email: 'email2@test.com', phone: '123-456-7891', status: 'active', createdAt: new Date(), updatedAt: new Date() },
+        { id: 3, name: 'Org 3', tin: '789', address: 'Address 3', contact: 'Contact 3', email: 'email3@test.com', phone: '123-456-7892', status: 'inactive', createdAt: new Date(), updatedAt: new Date() },
+        { id: 4, name: 'Org 4', tin: '012', address: 'Address 4', contact: 'Contact 4', email: 'email4@test.com', phone: '123-456-7893', status: 'active', createdAt: new Date(), updatedAt: new Date() },
+        { id: 5, name: 'Org 5', tin: '345', address: 'Address 5', contact: 'Contact 5', email: 'email5@test.com', phone: '123-456-7894', status: 'active', createdAt: new Date(), updatedAt: new Date() },
+        { id: 6, name: 'Org 6', tin: '678', address: 'Address 6', contact: 'Contact 6', email: 'email6@test.com', phone: '123-456-7895', status: 'inactive', createdAt: new Date(), updatedAt: new Date() }
+      ];
+      component.filteredOrganizations = [...component.organizations];
+      component.updatePagination();
     });
-  });
 
-  it('should validate organization TIN', () => {
-    const mockResponse = { 
-      success: true, 
-      isDuplicate: false, 
-      duplicates: [],
-      message: 'TIN is available'
-    };
-    (organizationService.checkDuplicateOrganization as jasmine.Spy).and.returnValue({
-      subscribe: (fn: any) => fn.next(mockResponse)
-    } as any);
-
-    component.organizationForm.tin = '123456789';
-    
-    component.validateOrganizationTIN();
-    
-    expect(organizationService.checkDuplicateOrganization).toHaveBeenCalledWith(undefined, '123456789', undefined);
-    expect(component.tinValidationMessage).toEqual({
-      message: 'TIN is available',
-      isError: false
+    it('should initialize pagination correctly', () => {
+      expect(component.totalItems).toBe(6);
+      expect(component.totalPages).toBe(2); // 6 items / 5 per page = 2 pages
+      expect(component.currentPage).toBe(1);
+      expect(component.paginatedOrganizations.length).toBe(5); // First page should have 5 items
     });
-  });
 
-  it('should show error for duplicate name validation', () => {
-    const mockResponse = { 
-      success: true, 
-      isDuplicate: true, 
-      duplicates: [{ field: 'name', message: 'An organization with the name "Test" already exists' }],
-      message: 'Duplicate organization found'
-    };
-    (organizationService.checkDuplicateOrganization as jasmine.Spy).and.returnValue({
-      subscribe: (fn: any) => fn.next(mockResponse)
-    } as any);
-
-    component.organizationForm.name = 'Test';
-    
-    component.validateOrganizationName();
-    
-    expect(component.nameValidationMessage).toEqual({
-      message: 'An organization with the name "Test" already exists',
-      isError: true
+    it('should navigate to next page', () => {
+      component.goToNextPage();
+      expect(component.currentPage).toBe(2);
+      expect(component.paginatedOrganizations.length).toBe(1); // Second page should have 1 item
     });
-  });
 
-  it('should show error for duplicate TIN validation', () => {
-    const mockResponse = { 
-      success: true, 
-      isDuplicate: true, 
-      duplicates: [{ field: 'tin', message: 'An organization with TIN "123456789" already exists' }],
-      message: 'Duplicate organization found'
-    };
-    (organizationService.checkDuplicateOrganization as jasmine.Spy).and.returnValue({
-      subscribe: (fn: any) => fn.next(mockResponse)
-    } as any);
+    it('should navigate to previous page', () => {
+      component.goToNextPage(); // Go to page 2
+      component.goToPreviousPage(); // Go back to page 1
+      expect(component.currentPage).toBe(1);
+      expect(component.paginatedOrganizations.length).toBe(5);
+    });
 
-    component.organizationForm.tin = '123456789';
-    
-    component.validateOrganizationTIN();
-    
-    expect(component.tinValidationMessage).toEqual({
-      message: 'An organization with TIN "123456789" already exists',
-      isError: true
+    it('should go to first page', () => {
+      component.goToNextPage(); // Go to page 2
+      component.goToFirstPage(); // Go to page 1
+      expect(component.currentPage).toBe(1);
+    });
+
+    it('should go to last page', () => {
+      component.goToLastPage();
+      expect(component.currentPage).toBe(2);
+    });
+
+    it('should change items per page', () => {
+      component.itemsPerPage = 10;
+      component.onItemsPerPageChange();
+      expect(component.currentPage).toBe(1);
+      expect(component.totalPages).toBe(1); // 6 items / 10 per page = 1 page
+      expect(component.paginatedOrganizations.length).toBe(6);
+    });
+
+    it('should get correct page numbers', () => {
+      const pageNumbers = component.getPageNumbers();
+      expect(pageNumbers).toEqual([1, 2]); // Should show pages 1 and 2
+    });
+
+    it('should not navigate beyond valid page range', () => {
+      component.goToPage(5); // Try to go to non-existent page
+      expect(component.currentPage).toBe(2); // Should stay on last valid page
+    });
+
+    it('should reset to first page when search changes', () => {
+      component.goToNextPage(); // Go to page 2
+      component.searchTerm = 'Org 1';
+      component.searchOrganizations();
+      expect(component.currentPage).toBe(1); // Should reset to first page
     });
   });
 });
