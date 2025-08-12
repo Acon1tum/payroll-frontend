@@ -71,28 +71,31 @@
               </div>
             </div>
 
-            <!-- Organization Filter -->
-            <div class="w-full lg:w-64">
-              <select
-                [(ngModel)]="selectedOrganizationId"
-                (change)="onOrganizationFilterChange()"
-                class="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
-              >
-                <option value="">All Organizations</option>
-                <option *ngFor="let org of organizations" [value]="org.id">{{ org.name }}</option>
-              </select>
-            </div>
+            <!-- Right side: Organization Filter and Add Department Button -->
+            <div class="flex flex-col sm:flex-row gap-4 items-center">
+              <!-- Organization Filter -->
+              <div class="w-full sm:w-64">
+                <select
+                  [(ngModel)]="selectedOrganizationId"
+                  (change)="onOrganizationFilterChange()"
+                  class="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+                >
+                  <option value="">All Organizations</option>
+                  <option *ngFor="let org of organizations" [value]="org.id">{{ org.name }}</option>
+                </select>
+              </div>
 
-            <!-- Add Department Button -->
-            <button
-              (click)="addDepartment()"
-              class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200 hover:scale-105 shadow-sm"
-            >
-              <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
-              </svg>
-              Add Department
-            </button>
+              <!-- Add Department Button -->
+              <button
+                (click)="addDepartment()"
+                class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200 hover:scale-105 shadow-sm"
+              >
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                </svg>
+                Add Department
+              </button>
+            </div>
           </div>
         </div>
 
@@ -152,7 +155,7 @@
                 </tr>
               </thead>
               <tbody class="bg-white divide-y divide-gray-200">
-                <tr *ngFor="let dept of filteredDepartments" class="hover:bg-gray-50 transition-colors duration-200">
+                <tr *ngFor="let dept of paginatedDepartments" class="hover:bg-gray-50 transition-colors duration-200">
                   <td class="px-6 py-4 whitespace-nowrap">
                     <div class="flex items-center">
                       <div class="flex-shrink-0 h-10 w-10">
@@ -237,6 +240,106 @@
                 </tr>
               </tbody>
             </table>
+          </div>
+
+          <!-- Pagination Controls -->
+          <div *ngIf="!isLoading && filteredDepartments.length > 0" class="px-6 py-4 border-t border-gray-200 bg-gray-50">
+            <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
+              <!-- Items per page and info -->
+              <div class="flex items-center gap-4">
+                <!-- Items Per Page Selector -->
+                <div class="flex items-center gap-2">
+                  <label for="itemsPerPage" class="text-sm font-medium text-gray-700">Show:</label>
+                  
+                  <div class="relative">
+                    <select
+                      id="itemsPerPage"
+                      [(ngModel)]="itemsPerPage"
+                      (change)="onItemsPerPageChange()"
+                      class="appearance-none block pl-3 pr-8 py-1.5 text-sm border border-gray-300 rounded-lg shadow-sm
+                             bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500
+                             hover:border-gray-400 transition-all duration-200 cursor-pointer">
+                      <option class="text-left" *ngFor="let option of itemsPerPageOptions" [value]="option">{{ option }}</option>
+                    </select>
+                  </div>
+              
+                  <span class="text-sm text-gray-700">per page</span>
+                </div>
+              
+                <!-- Results Counter -->
+                <div class="text-sm text-gray-700">
+                  Showing {{ (currentPage - 1) * itemsPerPage + 1 }} to
+                  {{ Math.min(currentPage * itemsPerPage, totalItems) }} of {{ totalItems }} results
+                </div>
+              </div>              
+
+              <!-- Pagination Navigation -->
+              <div class="flex items-center gap-2">
+                <!-- First Page Button -->
+                <button
+                  (click)="goToFirstPage()"
+                  [disabled]="currentPage === 1"
+                  class="pagination-btn"
+                  [class]="currentPage === 1 ? 'pagination-btn-disabled' : 'pagination-btn-enabled'"
+                  title="First page"
+                >
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7"></path>
+                  </svg>
+                </button>
+
+                <!-- Previous Page Button -->
+                <button
+                  (click)="goToPreviousPage()"
+                  [disabled]="currentPage === 1"
+                  class="pagination-btn"
+                  [class]="currentPage === 1 ? 'pagination-btn-disabled' : 'pagination-btn-enabled'"
+                  title="Previous page"
+                >
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                  </svg>
+                </button>
+
+                <!-- Page Numbers -->
+                <div class="flex items-center gap-1">
+                  <button
+                    *ngFor="let page of getPageNumbers()"
+                    (click)="goToPage(page)"
+                    class="pagination-page-btn"
+                    [class]="page === currentPage ? 'pagination-page-btn-active' : 'pagination-page-btn-inactive'"
+                  >
+                    {{ page }}
+                  </button>
+                </div>
+
+                <!-- Next Page Button -->
+                <button
+                  (click)="goToNextPage()"
+                  [disabled]="currentPage === totalPages"
+                  class="pagination-btn"
+                  [class]="currentPage === totalPages ? 'pagination-btn-disabled' : 'pagination-btn-enabled'"
+                  title="Next page"
+                >
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                  </svg>
+                </button>
+
+                <!-- Last Page Button -->
+                <button
+                  (click)="goToLastPage()"
+                  [disabled]="currentPage === totalPages"
+                  class="pagination-btn"
+                  [class]="currentPage === totalPages ? 'pagination-btn-disabled' : 'pagination-btn-enabled'"
+                  title="Last page"
+                >
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7m-8 0l7-7-7-7"></path>
+                  </svg>
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       </div>

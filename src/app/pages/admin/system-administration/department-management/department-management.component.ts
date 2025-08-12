@@ -28,12 +28,21 @@ export class DepartmentManagementComponent implements OnInit {
   isEditMode = false;
   isAssignHeadMode = false;
   searchTerm = '';
-  selectedOrganizationId: string | null = null;
+  selectedOrganizationId: string = ''; 
   isLoading = false;
   errorMessage = '';
   successMessage = '';
   isSidebarCollapsed = false;
   nameValidationMessage: { message: string; isError: boolean } | null = null;
+  
+  // Pagination properties
+  currentPage = 1;
+  itemsPerPage = 5;
+  itemsPerPageOptions = [5, 10, 15, 20];
+  totalItems = 0;
+  totalPages = 0;
+  paginatedDepartments: Department[] = [];
+  Math = Math; // Make Math available in template
 
   // Breadcrumbs for header
   breadcrumbs: Breadcrumb[] = [
@@ -107,6 +116,7 @@ export class DepartmentManagementComponent implements OnInit {
       next: (response) => {
         this.departments = response.data;
         this.filteredDepartments = [...this.departments];
+        this.updatePagination();
         this.isLoading = false;
       },
       error: (error) => {
@@ -128,9 +138,11 @@ export class DepartmentManagementComponent implements OnInit {
         (!this.selectedOrganizationId || dept.organizationId === this.selectedOrganizationId)
       );
     }
+    this.updatePagination();
   }
 
   onOrganizationFilterChange() {
+    this.currentPage = 1; // Reset to first page when filter changes
     this.searchDepartments();
   }
 
@@ -387,5 +399,78 @@ export class DepartmentManagementComponent implements OnInit {
         // Don't show error message for validation failures
       }
     });
+  }
+
+  // Pagination methods
+  updatePagination() {
+    this.totalItems = this.filteredDepartments.length;
+    this.totalPages = Math.ceil(this.totalItems / this.itemsPerPage);
+    
+    // Reset to first page if current page is out of bounds
+    if (this.currentPage > this.totalPages) {
+      this.currentPage = 1;
+    }
+    
+    // Calculate start and end indices
+    const startIndex = (this.currentPage - 1) * this.itemsPerPage;
+    const endIndex = startIndex + this.itemsPerPage;
+    
+    // Get paginated data
+    this.paginatedDepartments = this.filteredDepartments.slice(startIndex, endIndex);
+  }
+
+  onItemsPerPageChange() {
+    this.currentPage = 1; // Reset to first page when changing items per page
+    this.updatePagination();
+  }
+
+  goToPage(page: number) {
+    if (page >= 1 && page <= this.totalPages) {
+      this.currentPage = page;
+      this.updatePagination();
+    }
+  }
+
+  goToFirstPage() {
+    this.goToPage(1);
+  }
+
+  goToLastPage() {
+    this.goToPage(this.totalPages);
+  }
+
+  goToPreviousPage() {
+    this.goToPage(this.currentPage - 1);
+  }
+
+  goToNextPage() {
+    this.goToPage(this.currentPage + 1);
+  }
+
+  getPageNumbers(): number[] {
+    const pages: number[] = [];
+    const maxVisiblePages = 5;
+    
+    if (this.totalPages <= maxVisiblePages) {
+      // Show all pages if total pages is less than or equal to max visible
+      for (let i = 1; i <= this.totalPages; i++) {
+        pages.push(i);
+      }
+    } else {
+      // Show pages around current page
+      let startPage = Math.max(1, this.currentPage - Math.floor(maxVisiblePages / 2));
+      let endPage = Math.min(this.totalPages, startPage + maxVisiblePages - 1);
+      
+      // Adjust if we're near the end
+      if (endPage - startPage + 1 < maxVisiblePages) {
+        startPage = Math.max(1, endPage - maxVisiblePages + 1);
+      }
+      
+      for (let i = startPage; i <= endPage; i++) {
+        pages.push(i);
+      }
+    }
+    
+    return pages;
   }
 }

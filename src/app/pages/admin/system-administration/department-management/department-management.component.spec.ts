@@ -239,4 +239,98 @@ describe('DepartmentManagementComponent', () => {
     expect(component.nameValidationMessage).toBeNull();
     expect(departmentService.checkDuplicateDepartmentName).not.toHaveBeenCalled();
   });
+
+  // Pagination Tests
+  describe('Pagination', () => {
+    beforeEach(() => {
+      // Mock departments data
+      component.departments = [
+        { id: '1', name: 'Dept 1', organizationId: '1', organizationName: 'Org 1', memberCount: 5, description: '', status: 'active', createdAt: new Date(), updatedAt: new Date() },
+        { id: '2', name: 'Dept 2', organizationId: '1', organizationName: 'Org 1', memberCount: 3, description: '', status: 'active', createdAt: new Date(), updatedAt: new Date() },
+        { id: '3', name: 'Dept 3', organizationId: '1', organizationName: 'Org 1', memberCount: 7, description: '', status: 'active', createdAt: new Date(), updatedAt: new Date() },
+        { id: '4', name: 'Dept 4', organizationId: '1', organizationName: 'Org 1', memberCount: 2, description: '', status: 'active', createdAt: new Date(), updatedAt: new Date() },
+        { id: '5', name: 'Dept 5', organizationId: '1', organizationName: 'Org 1', memberCount: 4, description: '', status: 'active', createdAt: new Date(), updatedAt: new Date() },
+        { id: '6', name: 'Dept 6', organizationId: '1', organizationName: 'Org 1', memberCount: 6, description: '', status: 'active', createdAt: new Date(), updatedAt: new Date() }
+      ];
+      component.filteredDepartments = [...component.departments];
+    });
+
+    it('should initialize pagination correctly', () => {
+      component.updatePagination();
+      
+      expect(component.totalItems).toBe(6);
+      expect(component.totalPages).toBe(2); // 6 items / 5 per page = 2 pages
+      expect(component.currentPage).toBe(1);
+      expect(component.paginatedDepartments.length).toBe(5); // First page should have 5 items
+    });
+
+    it('should navigate to next page', () => {
+      component.updatePagination();
+      component.goToNextPage();
+      
+      expect(component.currentPage).toBe(2);
+      expect(component.paginatedDepartments.length).toBe(1); // Second page should have 1 item
+    });
+
+    it('should navigate to previous page', () => {
+      component.updatePagination();
+      component.goToNextPage(); // Go to page 2
+      component.goToPreviousPage(); // Go back to page 1
+      
+      expect(component.currentPage).toBe(1);
+      expect(component.paginatedDepartments.length).toBe(5);
+    });
+
+    it('should go to first page', () => {
+      component.updatePagination();
+      component.goToNextPage(); // Go to page 2
+      component.goToFirstPage(); // Go to page 1
+      
+      expect(component.currentPage).toBe(1);
+    });
+
+    it('should go to last page', () => {
+      component.updatePagination();
+      component.goToLastPage();
+      
+      expect(component.currentPage).toBe(2);
+    });
+
+    it('should change items per page', () => {
+      component.updatePagination();
+      component.itemsPerPage = 10;
+      component.onItemsPerPageChange();
+      
+      expect(component.currentPage).toBe(1);
+      expect(component.totalPages).toBe(1); // 6 items / 10 per page = 1 page
+      expect(component.paginatedDepartments.length).toBe(6); // All items on one page
+    });
+
+    it('should get correct page numbers', () => {
+      component.updatePagination();
+      const pageNumbers = component.getPageNumbers();
+      
+      expect(pageNumbers).toEqual([1, 2]);
+    });
+
+    it('should not navigate beyond valid page range', () => {
+      component.updatePagination();
+      
+      // Try to go to page 0
+      component.goToPage(0);
+      expect(component.currentPage).toBe(1);
+      
+      // Try to go to page 3 (doesn't exist)
+      component.goToPage(3);
+      expect(component.currentPage).toBe(1);
+    });
+
+    it('should reset to first page when filter changes', () => {
+      component.updatePagination();
+      component.goToNextPage(); // Go to page 2
+      component.onOrganizationFilterChange(); // Change filter
+      
+      expect(component.currentPage).toBe(1);
+    });
+  });
 });
