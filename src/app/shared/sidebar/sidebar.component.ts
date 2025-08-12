@@ -1,8 +1,9 @@
-import { Component, Input, Output, EventEmitter, OnInit, HostListener, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, NavigationEnd, RouterLink, RouterLinkActive } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { AuthService } from '../../services/auth.service';
+import { SidebarService } from '../services/sidebar.service';
 
 interface MenuItem {
   name: string;
@@ -19,10 +20,8 @@ interface MenuItem {
   styleUrl: './sidebar.component.scss'
 })
 export class SidebarComponent implements OnInit, OnDestroy {
-  @Input() isCollapsed = false;
-  @Input() userRole: string | undefined; // If not provided, derive from AuthService
-  @Output() toggleCollapse = new EventEmitter<void>();
-
+  isCollapsed = false;
+  userRole: string | undefined;
   menuItems: MenuItem[] = [];
   expandedItem: string | null = null;
   isMobile = window.innerWidth <= 768;
@@ -91,8 +90,13 @@ export class SidebarComponent implements OnInit, OnDestroy {
 
   private routerSub: Subscription | undefined;
   private authSub: Subscription | undefined;
+  private sidebarSub: Subscription | undefined;
 
-  constructor(private router: Router, private auth: AuthService) {}
+  constructor(
+    private router: Router, 
+    private auth: AuthService,
+    private sidebarService: SidebarService
+  ) {}
 
   @HostListener('window:resize', ['$event'])
   onResize() {
@@ -101,6 +105,12 @@ export class SidebarComponent implements OnInit, OnDestroy {
 
   ngOnInit() {
     this.updateMenuItems();
+    
+    // Subscribe to sidebar state changes
+    this.sidebarSub = this.sidebarService.isCollapsed$.subscribe(
+      collapsed => this.isCollapsed = collapsed
+    );
+    
     // React to auth user changes and router navigation
     this.authSub = this.auth.currentUser$.subscribe(() => {
       this.updateMenuItems();
@@ -116,6 +126,7 @@ export class SidebarComponent implements OnInit, OnDestroy {
   ngOnDestroy() {
     this.routerSub?.unsubscribe();
     this.authSub?.unsubscribe();
+    this.sidebarSub?.unsubscribe();
   }
 
   private updateMenuItems() {
@@ -144,8 +155,6 @@ export class SidebarComponent implements OnInit, OnDestroy {
   }
 
   toggleSidebar() {
-    this.toggleCollapse.emit();
+    this.sidebarService.toggleSidebar();
   }
-
-
 }

@@ -3,6 +3,34 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HeaderComponent } from '../../../../shared/header/header.component';
 import { SidebarComponent } from '../../../../shared/sidebar/sidebar.component';
+
+interface Organization {
+  id: number;
+  name: string;
+}
+
+interface Employee {
+  id: number;
+  name: string;
+  email: string;
+  position: string;
+  isDepartmentHead: boolean;
+  departmentId?: number;
+}
+
+interface Department {
+  id: number;
+  name: string;
+  organizationId: number;
+  organizationName: string;
+  departmentHeadId?: number;
+  departmentHeadName?: string;
+  memberCount: number;
+  description: string;
+  status: 'active' | 'inactive';
+  createdAt: Date;
+  updatedAt: Date;
+}
 import { DepartmentService, Department, Employee, Organization, CreateDepartmentRequest, UpdateDepartmentRequest, AssignHeadRequest } from '../../../../services/department.service';
 
 interface Breadcrumb {
@@ -13,15 +41,16 @@ interface Breadcrumb {
 
 @Component({
   selector: 'app-department-management',
+  standalone: true,
   imports: [CommonModule, FormsModule, HeaderComponent, SidebarComponent],
   templateUrl: './department-management.component.html',
   styleUrl: './department-management.component.scss'
 })
 export class DepartmentManagementComponent implements OnInit {
+  organizations: Organization[] = [];
+  employees: Employee[] = [];
   departments: Department[] = [];
   filteredDepartments: Department[] = [];
-  employees: Employee[] = [];
-  organizations: Organization[] = [];
   selectedDepartment: Department | null = null;
   isAddMode = false;
   isEditMode = false;
@@ -94,6 +123,64 @@ export class DepartmentManagementComponent implements OnInit {
       }
     });
 
+      // Load departments
+      this.departments = [
+        {
+          id: 1,
+          name: 'Software Development',
+          organizationId: 1,
+          organizationName: 'TechCorp Solutions',
+          departmentHeadId: 1,
+          departmentHeadName: 'John Smith',
+          memberCount: 15,
+          description: 'Core software development team responsible for product development',
+          status: 'active',
+          createdAt: new Date('2024-01-15'),
+          updatedAt: new Date('2024-01-15')
+        },
+        {
+          id: 2,
+          name: 'Human Resources',
+          organizationId: 1,
+          organizationName: 'TechCorp Solutions',
+          departmentHeadId: 5,
+          departmentHeadName: 'David Wilson',
+          memberCount: 8,
+          description: 'HR department handling recruitment, employee relations, and benefits',
+          status: 'active',
+          createdAt: new Date('2024-02-20'),
+          updatedAt: new Date('2024-02-20')
+        },
+        {
+          id: 3,
+          name: 'Marketing',
+          organizationId: 2,
+          organizationName: 'Global Industries Ltd',
+          departmentHeadId: undefined,
+          departmentHeadName: undefined,
+          memberCount: 12,
+          description: 'Marketing team responsible for brand management and campaigns',
+          status: 'active',
+          createdAt: new Date('2024-03-10'),
+          updatedAt: new Date('2024-03-10')
+        },
+        {
+          id: 4,
+          name: 'Finance',
+          organizationId: 2,
+          organizationName: 'Global Industries Ltd',
+          departmentHeadId: 6,
+          departmentHeadName: 'Lisa Brown',
+          memberCount: 10,
+          description: 'Finance department handling accounting, budgeting, and financial planning',
+          status: 'active',
+          createdAt: new Date('2024-01-20'),
+          updatedAt: new Date('2024-01-20')
+        }
+      ];
+      this.filteredDepartments = [...this.departments];
+      this.isLoading = false;
+    }, 1000);
     // Load departments
     this.departmentService.getDepartments().subscribe({
       next: (response) => {
@@ -165,6 +252,10 @@ export class DepartmentManagementComponent implements OnInit {
         name: this.departmentForm.name,
         code: this.departmentForm.code || undefined,
         organizationId: this.departmentForm.organizationId!,
+        organizationName: organization?.name || '',
+        departmentHeadId: undefined,
+        departmentHeadName: undefined,
+        memberCount: 0,
         description: this.departmentForm.description,
         status: this.departmentForm.status
       };
@@ -330,6 +421,11 @@ export class DepartmentManagementComponent implements OnInit {
       departmentId: null,
       employeeId: null
     };
+  }
+
+  toggleStatus(department: Department) {
+    department.status = department.status === 'active' ? 'inactive' : 'active';
+    department.updatedAt = new Date();
   }
 
   toggleSidebar() {

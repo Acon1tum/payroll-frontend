@@ -21,41 +21,156 @@
           </div>
         </div>
 
+        <!-- Loading State -->
+        <div *ngIf="isLoading" class="flex justify-center items-center py-8">
+          <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+          <span class="ml-2 text-gray-600">Loading profile...</span>
+        </div>
+
+        <!-- Profile Messages -->
+        <div *ngIf="profileMessage" class="bg-green-50 border border-green-200 rounded-md p-4">
+          <div class="flex">
+            <div class="flex-shrink-0">
+              <span class="material-icons text-green-400">check_circle</span>
+            </div>
+            <div class="ml-3">
+              <p class="text-sm text-green-800">{{ profileMessage }}</p>
+            </div>
+          </div>
+        </div>
+
+        <div *ngIf="profileError" class="bg-red-50 border border-red-200 rounded-md p-4">
+          <div class="flex">
+            <div class="flex-shrink-0">
+              <span class="material-icons text-red-400">error</span>
+            </div>
+            <div class="ml-3">
+              <p class="text-sm text-red-800">{{ profileError }}</p>
+            </div>
+          </div>
+        </div>
+
         <!-- Top Section: Personal Info and Photo -->
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <!-- Personal Info -->
           <div class="lg:col-span-2 bg-white rounded-lg shadow-sm border border-gray-200">
-            <div class="px-6 py-4 border-b border-gray-200">
-              <h4 class="text-md font-medium text-gray-900">View Personal Info</h4>
+            <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+              <h4 class="text-md font-medium text-gray-900">Personal Information</h4>
+              <button 
+                (click)="toggleEditMode()" 
+                class="inline-flex items-center px-3 py-2 text-sm rounded-md bg-blue-600 text-white hover:bg-blue-700"
+              >
+                <span class="material-icons mr-2 text-sm">{{ isEditing ? 'close' : 'edit' }}</span>
+                {{ isEditing ? 'Cancel' : 'Edit' }}
+              </button>
             </div>
-            <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-              <div>
-                <p class="text-gray-500">Full Name</p>
-                <p class="text-gray-900 font-medium">{{ personalInfo.fullName }}</p>
+            
+            <div class="p-6">
+              <!-- View Mode -->
+              <div *ngIf="!isEditing" class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                <div>
+                  <p class="text-gray-500">Full Name</p>
+                  <p class="text-gray-900 font-medium">{{ personalInfoForm.firstName }} {{ personalInfoForm.lastName }}</p>
+                </div>
+                <div>
+                  <p class="text-gray-500">Email</p>
+                  <p class="text-gray-900 font-medium">{{ user?.email || '-' }}</p>
+                </div>
+                <div>
+                  <p class="text-gray-500">SSS Number</p>
+                  <p class="text-gray-900 font-medium">{{ personalInfoForm.sssNumber || '-' }}</p>
+                </div>
+                <div>
+                  <p class="text-gray-500">PhilHealth Number</p>
+                  <p class="text-gray-900 font-medium">{{ personalInfoForm.philHealthNumber || '-' }}</p>
+                </div>
+                <div>
+                  <p class="text-gray-500">Pag-IBIG Number</p>
+                  <p class="text-gray-900 font-medium">{{ personalInfoForm.pagIbigNumber || '-' }}</p>
+                </div>
+                <div>
+                  <p class="text-gray-500">TIN Number</p>
+                  <p class="text-gray-900 font-medium">{{ personalInfoForm.tinNumber || '-' }}</p>
+                </div>
               </div>
-              <div>
-                <p class="text-gray-500">Email</p>
-                <p class="text-gray-900 font-medium">{{ personalInfo.email }}</p>
-              </div>
-              <div>
-                <p class="text-gray-500">Phone</p>
-                <p class="text-gray-900 font-medium">{{ personalInfo.phone }}</p>
-              </div>
-              <div>
-                <p class="text-gray-500">TIN</p>
-                <p class="text-gray-900 font-medium">{{ personalInfo.tin }}</p>
-              </div>
-              <div>
-                <p class="text-gray-500">SSS</p>
-                <p class="text-gray-900 font-medium">{{ personalInfo.sss }}</p>
-              </div>
-              <div>
-                <p class="text-gray-500">PhilHealth</p>
-                <p class="text-gray-900 font-medium">{{ personalInfo.philHealth }}</p>
-              </div>
-              <div>
-                <p class="text-gray-500">Pag-IBIG</p>
-                <p class="text-gray-900 font-medium">{{ personalInfo.pagibig }}</p>
+
+              <!-- Edit Mode -->
+              <div *ngIf="isEditing" class="space-y-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label class="block text-gray-700 mb-1">First Name *</label>
+                    <input 
+                      type="text" 
+                      [(ngModel)]="personalInfoForm.firstName" 
+                      class="w-full border rounded-md px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="First Name"
+                    />
+                  </div>
+                  <div>
+                    <label class="block text-gray-700 mb-1">Last Name *</label>
+                    <input 
+                      type="text" 
+                      [(ngModel)]="personalInfoForm.lastName" 
+                      class="w-full border rounded-md px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="Last Name"
+                    />
+                  </div>
+                  <div>
+                    <label class="block text-gray-700 mb-1">Middle Name</label>
+                    <input 
+                      type="text" 
+                      [(ngModel)]="personalInfoForm.middleName" 
+                      class="w-full border rounded-md px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="Middle Name"
+                    />
+                  </div>
+                  <div>
+                    <label class="block text-gray-700 mb-1">SSS Number</label>
+                    <input 
+                      type="text" 
+                      [(ngModel)]="personalInfoForm.sssNumber" 
+                      class="w-full border rounded-md px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="SSS Number"
+                    />
+                  </div>
+                  <div>
+                    <label class="block text-gray-700 mb-1">PhilHealth Number</label>
+                    <input 
+                      type="text" 
+                      [(ngModel)]="personalInfoForm.philHealthNumber" 
+                      class="w-full border rounded-md px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="PhilHealth Number"
+                    />
+                  </div>
+                  <div>
+                    <label class="block text-gray-700 mb-1">Pag-IBIG Number</label>
+                    <input 
+                      type="text" 
+                      [(ngModel)]="personalInfoForm.pagIbigNumber" 
+                      class="w-full border rounded-md px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="Pag-IBIG Number"
+                    />
+                  </div>
+                  <div>
+                    <label class="block text-gray-700 mb-1">TIN Number</label>
+                    <input 
+                      type="text" 
+                      [(ngModel)]="personalInfoForm.tinNumber" 
+                      class="w-full border rounded-md px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="TIN Number"
+                    />
+                  </div>
+                </div>
+                <div class="flex justify-end space-x-3">
+                  <button 
+                    (click)="updateProfile()" 
+                    [disabled]="isLoading"
+                    class="px-4 py-2 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
+                  >
+                    <span *ngIf="isLoading" class="animate-spin inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full mr-2"></span>
+                    Save Changes
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -63,7 +178,7 @@
           <!-- Update Photo -->
           <div class="bg-white rounded-lg shadow-sm border border-gray-200">
             <div class="px-6 py-4 border-b border-gray-200">
-              <h4 class="text-md font-medium text-gray-900">Update Photo</h4>
+              <h4 class="text-md font-medium text-gray-900">Profile Photo</h4>
             </div>
             <div class="p-6 space-y-4">
               <div class="flex items-center space-x-4">
@@ -79,11 +194,22 @@
                   </label>
                 </div>
               </div>
+              
+              <!-- Photo Error Message -->
+              <div *ngIf="photoError" class="text-sm text-red-600">{{ photoError }}</div>
+              
+              <!-- Photo Success Message -->
+              <div *ngIf="photoMessage" class="text-sm text-green-600">{{ photoMessage }}</div>
+              
               <div class="flex space-x-3">
-                <button (click)="savePhoto()" class="inline-flex items-center px-3 py-2 text-sm rounded-md bg-blue-600 text-white hover:bg-blue-700">
+                <button 
+                  (click)="savePhoto()" 
+                  [disabled]="!selectedPhoto || isLoading"
+                  class="inline-flex items-center px-3 py-2 text-sm rounded-md bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50"
+                >
+                  <span *ngIf="isLoading" class="animate-spin inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full mr-2"></span>
                   Save Photo
                 </button>
-                <span class="text-sm" [ngClass]="{'text-green-600': photoMessage?.includes('success'), 'text-gray-600': !photoMessage}">{{ photoMessage }}</span>
               </div>
             </div>
           </div>
@@ -95,6 +221,10 @@
             <h4 class="text-md font-medium text-gray-900">Employment Details</h4>
           </div>
           <div class="p-6 grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+            <div>
+              <p class="text-gray-500">Employee Number</p>
+              <p class="text-gray-900 font-medium">{{ employment.employeeNumber }}</p>
+            </div>
             <div>
               <p class="text-gray-500">Job Title</p>
               <p class="text-gray-900 font-medium">{{ employment.jobTitle }}</p>
@@ -113,7 +243,15 @@
             </div>
             <div>
               <p class="text-gray-500">Salary</p>
-              <p class="text-gray-900 font-medium">{{ employment.salary }}</p>
+              <p class="text-gray-900 font-medium">{{ formatSalary(employment.salary) }}</p>
+            </div>
+            <div>
+              <p class="text-gray-500">Employment Status</p>
+              <p class="text-gray-900 font-medium">{{ employment.employmentStatus }}</p>
+            </div>
+            <div>
+              <p class="text-gray-500">Pay Frequency</p>
+              <p class="text-gray-900 font-medium">{{ employment.payFrequency }}</p>
             </div>
           </div>
         </div>
@@ -126,18 +264,25 @@
           <div class="p-6 grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
             <div class="md:col-span-1">
               <label class="block text-gray-700 mb-1">Current Password</label>
-              <input type="password" [(ngModel)]="passwordForm.current" class="w-full border rounded-md px-3 py-2" placeholder="••••••••" />
+              <input type="password" [(ngModel)]="passwordForm.current" class="w-full border rounded-md px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="••••••••" />
             </div>
             <div>
               <label class="block text-gray-700 mb-1">New Password</label>
-              <input type="password" [(ngModel)]="passwordForm.new" class="w-full border rounded-md px-3 py-2" placeholder="At least 8 characters" />
+              <input type="password" [(ngModel)]="passwordForm.new" class="w-full border rounded-md px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="At least 8 characters" />
             </div>
             <div>
               <label class="block text-gray-700 mb-1">Confirm New Password</label>
-              <input type="password" [(ngModel)]="passwordForm.confirm" class="w-full border rounded-md px-3 py-2" placeholder="Re-enter new password" />
+              <input type="password" [(ngModel)]="passwordForm.confirm" class="w-full border rounded-md px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Re-enter new password" />
             </div>
             <div class="md:col-span-3 flex items-center space-x-3 mt-2">
-              <button (click)="changePassword()" class="inline-flex items-center px-3 py-2 text-sm rounded-md bg-blue-600 text-white hover:bg-blue-700">Update Password</button>
+              <button 
+                (click)="changePassword()" 
+                [disabled]="isLoading"
+                class="inline-flex items-center px-3 py-2 text-sm rounded-md bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50"
+              >
+                <span *ngIf="isLoading" class="animate-spin inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full mr-2"></span>
+                Update Password
+              </button>
               <span *ngIf="passwordError" class="text-sm text-red-600">{{ passwordError }}</span>
               <span *ngIf="passwordSuccess" class="text-sm text-green-600">{{ passwordSuccess }}</span>
             </div>

@@ -40,6 +40,20 @@
   }
 }
 
+// Slide in/out animation for submenus
+@keyframes slideInOut {
+  0% {
+    opacity: 0;
+    transform: translateY(-10px);
+    max-height: 0;
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+    max-height: 500px;
+  }
+}
+
 // Logo hover effects
 .logo {
   transition: all 0.2s ease;
@@ -103,4 +117,37 @@
     z-index: 50;
     height: 100vh;
   }
+}
+
+// Enhanced animations for better UX
+.sidebar-content {
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.menu-item-text {
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.menu-item-icon {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  
+  &:hover {
+    transform: scale(1.1) rotate(5deg);
+  }
+}
+
+// Smooth collapse/expand animation
+.sidebar-collapse-animation {
+  transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+// Text fade animation
+.text-fade {
+  transition: opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1), 
+              transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+// Button rotation animation
+.button-rotate {
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }

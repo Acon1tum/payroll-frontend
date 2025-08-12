@@ -25,6 +25,7 @@ interface Breadcrumb {
 
 @Component({
   selector: 'app-org-management',
+  standalone: true,
   imports: [CommonModule, FormsModule, HeaderComponent, SidebarComponent],
   templateUrl: './org-management.component.html',
   styleUrl: './org-management.component.scss'
@@ -38,7 +39,6 @@ export class OrgManagementComponent implements OnInit {
   searchTerm = '';
   isLoading = false;
   errorMessage = '';
-  isSidebarCollapsed = false;
 
   // Breadcrumbs for header
   breadcrumbs: Breadcrumb[] = [
@@ -197,9 +197,5 @@ export class OrgManagementComponent implements OnInit {
   toggleStatus(organization: Organization) {
     organization.status = organization.status === 'active' ? 'inactive' : 'active';
     organization.updatedAt = new Date();
-  }
-
-  toggleSidebar() {
-    this.isSidebarCollapsed = !this.isSidebarCollapsed;
   }
 }

@@ -1,9 +1,10 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { SidebarComponent } from '../../../shared/sidebar/sidebar.component';
 import { HeaderComponent } from '../../../shared/header/header.component';
 import { AuthService, User } from '../../../services/auth.service';
+import { ProfileService, PersonalInfo, EmploymentDetails, PasswordChangeRequest } from '../../../services/profile.service';
 
 interface Breadcrumb {
   label: string;
@@ -11,14 +12,13 @@ interface Breadcrumb {
   active?: boolean;
 }
 
-
 @Component({
   selector: 'app-profile',
   imports: [CommonModule, FormsModule, SidebarComponent, HeaderComponent],
   templateUrl: './profile.component.html',
   styleUrl: './profile.component.scss'
 })
-export class ProfileComponent {
+export class ProfileComponent implements OnInit {
   user: User | null = null;
 
   // Breadcrumbs for header
@@ -27,23 +27,28 @@ export class ProfileComponent {
     { label: 'My Profile', active: true }
   ];
 
-  // Derived display fields (with safe fallbacks)
-  personalInfo = {
-    fullName: '-',
-    email: '-',
-    phone: '-',
-    tin: '-',
-    sss: '-',
-    philHealth: '-',
-    pagibig: '-',
+  // Personal info form
+  personalInfoForm: PersonalInfo = {
+    firstName: '',
+    lastName: '',
+    middleName: '',
+    phone: '',
+    sssNumber: '',
+    philHealthNumber: '',
+    pagIbigNumber: '',
+    tinNumber: ''
   };
 
-  employment = {
+  // Employment details
+  employment: EmploymentDetails = {
     jobTitle: '-',
     department: '-',
     organization: '-',
     startDate: '-',
-    salary: '-',
+    salary: 0,
+    employeeNumber: '-',
+    employmentStatus: '-',
+    payFrequency: '-'
   };
 
   // Update Password form state
@@ -59,38 +64,147 @@ export class ProfileComponent {
   photoPreview: string | null = null;
   selectedPhoto: File | null = null;
   photoMessage: string | null = null;
+  photoError: string | null = null;
 
-  constructor(private auth: AuthService) {
+  // Profile update state
+  profileMessage: string | null = null;
+  profileError: string | null = null;
+  isLoading = false;
+
+  // Edit mode
+  isEditing = false;
+
+  constructor(
+    private auth: AuthService,
+    private profileService: ProfileService
+  ) {
     this.user = this.auth.currentUser;
-    this.hydrateFromUser();
   }
 
-  private hydrateFromUser(): void {
-    const employee = this.user?.employee;
-    const fullName = employee ? `${employee.firstName} ${employee.lastName}`.trim() : '-';
+  ngOnInit(): void {
+    this.loadProfile();
+    this.loadEmploymentDetails();
+  }
 
-    this.personalInfo.fullName = fullName || '-';
-    this.personalInfo.email = this.user?.email || '-';
-    // Placeholders for now; replace when backend fields are available
-    this.personalInfo.phone = '-';
-    this.personalInfo.tin = '-';
-    this.personalInfo.sss = '-';
-    this.personalInfo.philHealth = '-';
-    this.personalInfo.pagibig = '-';
+  private loadProfile(): void {
+    this.isLoading = true;
+    this.profileService.getProfile().subscribe({
+      next: (response) => {
+        if (response.success && response.data.user.employee) {
+          const employee = response.data.user.employee;
+          this.user = {
+            ...response.data.user,
+            role: response.data.user.role as 'admin' | 'hrStaff' | 'payrollManager' | 'employee'
+          };
+          
+          // Populate personal info form
+          this.personalInfoForm = {
+            firstName: employee.firstName || '',
+            lastName: employee.lastName || '',
+            middleName: employee.middleName || '',
+            phone: '', // Not in current schema
+            sssNumber: employee.sssNumber || '',
+            philHealthNumber: employee.philHealthNumber || '',
+            pagIbigNumber: employee.pagIbigNumber || '',
+            tinNumber: employee.tinNumber || ''
+          };
 
-    this.employment.jobTitle = employee?.position || '-';
-    this.employment.department = employee?.department?.name || '-';
-    this.employment.organization = employee?.organization?.name || '-';
-    this.employment.startDate = '-';
-    this.employment.salary = '-';
+          // Set photo preview if exists
+          if (employee.photoUrl) {
+            this.photoPreview = employee.photoUrl; // photoUrl now contains base64 data directly
+          }
+        }
+        this.isLoading = false;
+      },
+      error: (error) => {
+        console.error('Error loading profile:', error);
+        this.isLoading = false;
+      }
+    });
+  }
+
+  private loadEmploymentDetails(): void {
+    this.profileService.getEmploymentDetails().subscribe({
+      next: (response) => {
+        if (response.success && response.data.employmentDetails) {
+          const details = response.data.employmentDetails;
+          this.employment = {
+            jobTitle: details.jobTitle || '-',
+            department: details.department || '-',
+            organization: details.organization || '-',
+            startDate: details.startDate ? new Date(details.startDate).toLocaleDateString() : '-',
+            salary: details.salary || 0,
+            employeeNumber: details.employeeNumber || '-',
+            employmentStatus: details.employmentStatus || '-',
+            payFrequency: details.payFrequency || '-'
+          };
+        }
+      },
+      error: (error) => {
+        console.error('Error loading employment details:', error);
+      }
+    });
+  }
+
+  toggleEditMode(): void {
+    this.isEditing = !this.isEditing;
+    if (!this.isEditing) {
+      // Reset form to current values
+      this.loadProfile();
+    }
+  }
+
+  updateProfile(): void {
+    if (!this.personalInfoForm.firstName || !this.personalInfoForm.lastName) {
+      this.profileError = 'First name and last name are required.';
+      return;
+    }
+
+    this.isLoading = true;
+    this.profileService.updateProfile(this.personalInfoForm).subscribe({
+      next: (response) => {
+        this.profileMessage = 'Profile updated successfully!';
+        this.profileError = null;
+        this.isEditing = false;
+        this.isLoading = false;
+        
+        // Reload profile to get updated data
+        this.loadProfile();
+        
+        // Clear message after 3 seconds
+        setTimeout(() => {
+          this.profileMessage = null;
+        }, 3000);
+      },
+      error: (error) => {
+        this.profileError = error.error?.message || 'Failed to update profile.';
+        this.isLoading = false;
+      }
+    });
   }
 
   onPhotoSelected(event: Event): void {
     const input = event.target as HTMLInputElement;
     if (!input.files || input.files.length === 0) return;
+    
     const file = input.files[0];
-    this.selectedPhoto = file;
+    
+    // Validate file size (5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      this.photoError = 'File size must be less than 5MB.';
+      return;
+    }
 
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      this.photoError = 'Please select an image file.';
+      return;
+    }
+
+    this.selectedPhoto = file;
+    this.photoError = null;
+
+    // Convert to base64 for preview (same format as backend storage)
     const reader = new FileReader();
     reader.onload = () => {
       this.photoPreview = reader.result as string;
@@ -100,11 +214,31 @@ export class ProfileComponent {
 
   savePhoto(): void {
     if (!this.selectedPhoto) {
-      this.photoMessage = 'Please select a photo to upload.';
+      this.photoError = 'Please select a photo to upload.';
       return;
     }
-    // TODO: Wire to backend endpoint
-    this.photoMessage = 'Profile photo updated successfully (mock).';
+
+    this.isLoading = true;
+    this.profileService.updatePhoto(this.selectedPhoto).subscribe({
+      next: (response) => {
+        this.photoMessage = 'Profile photo updated successfully!';
+        this.photoError = null;
+        this.selectedPhoto = null;
+        this.isLoading = false;
+        
+        // Reload profile to get updated photo URL
+        this.loadProfile();
+        
+        // Clear message after 3 seconds
+        setTimeout(() => {
+          this.photoMessage = null;
+        }, 3000);
+      },
+      error: (error) => {
+        this.photoError = error.error?.message || 'Failed to update photo.';
+        this.isLoading = false;
+      }
+    });
   }
 
   changePassword(): void {
@@ -124,8 +258,37 @@ export class ProfileComponent {
       this.passwordError = 'New password and confirmation do not match.';
       return;
     }
-    // TODO: Call backend to update password
-    this.passwordSuccess = 'Password updated successfully (mock).';
-    this.passwordForm = { current: '', new: '', confirm: '' } as any;
+
+    const passwordData: PasswordChangeRequest = {
+      currentPassword: current,
+      newPassword: newPass
+    };
+
+    this.isLoading = true;
+    this.profileService.changePassword(passwordData).subscribe({
+      next: (response) => {
+        this.passwordSuccess = 'Password updated successfully!';
+        this.passwordError = null;
+        this.passwordForm = { current: '', new: '', confirm: '' } as any;
+        this.isLoading = false;
+        
+        // Clear success message after 3 seconds
+        setTimeout(() => {
+          this.passwordSuccess = null;
+        }, 3000);
+      },
+      error: (error) => {
+        this.passwordError = error.error?.message || 'Failed to update password.';
+        this.isLoading = false;
+      }
+    });
+  }
+
+  // Helper method to format salary
+  formatSalary(salary: number): string {
+    return new Intl.NumberFormat('en-PH', {
+      style: 'currency',
+      currency: 'PHP'
+    }).format(salary);
   }
 }

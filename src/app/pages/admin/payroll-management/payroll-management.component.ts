@@ -17,8 +17,6 @@ interface Breadcrumb {
   styleUrl: './payroll-management.component.scss'
 })
 export class PayrollManagementComponent implements OnInit {
-  isSidebarCollapsed = false;
-
   // Breadcrumbs for header
   breadcrumbs: Breadcrumb[] = [
     { label: 'Dashboard', path: '/dashboard' },
@@ -27,9 +25,5 @@ export class PayrollManagementComponent implements OnInit {
 
   ngOnInit() {
     // Component initialization logic
-  }
-
-  toggleSidebar() {
-    this.isSidebarCollapsed = !this.isSidebarCollapsed;
   }
 }

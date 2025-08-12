@@ -1,7 +1,9 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
+import { Subscription } from 'rxjs';
 import { AuthService, User } from '../../services/auth.service';
+import { SidebarService } from '../services/sidebar.service';
 
 interface Breadcrumb {
   label: string;
@@ -15,24 +17,37 @@ interface Breadcrumb {
   templateUrl: './header.component.html',
   styleUrl: './header.component.scss'
 })
-export class HeaderComponent implements OnInit {
+export class HeaderComponent implements OnInit, OnDestroy {
   @Input() breadcrumbs: Breadcrumb[] = [];
   @Input() title: string = 'Dashboard';
   
   isProfileDropdownOpen = false;
   isMobileMenuOpen = false;
+  isSidebarCollapsed = false;
   
   currentUser: User | null = null;
 
+  private sidebarSub: Subscription | undefined;
+
   constructor(
     private router: Router,
-    private authService: AuthService
+    private authService: AuthService,
+    private sidebarService: SidebarService
   ) {}
 
   ngOnInit() {
     this.authService.currentUser$.subscribe(user => {
       this.currentUser = user;
     });
+
+    // Subscribe to sidebar state changes
+    this.sidebarSub = this.sidebarService.isCollapsed$.subscribe(
+      collapsed => this.isSidebarCollapsed = collapsed
+    );
+  }
+
+  ngOnDestroy() {
+    this.sidebarSub?.unsubscribe();
   }
 
   toggleProfileDropdown() {
@@ -43,6 +58,10 @@ export class HeaderComponent implements OnInit {
     this.isMobileMenuOpen = !this.isMobileMenuOpen;
   }
 
+  toggleSidebar() {
+    this.sidebarService.toggleSidebar();
+  }
+
   closeProfileDropdown() {
     this.isProfileDropdownOpen = false;
   }
@@ -50,10 +69,10 @@ export class HeaderComponent implements OnInit {
   onProfileAction(action: string) {
     switch (action) {
       case 'profile':
-        this.router.navigate(['/profile']);
+        this.router.navigate(['/employee/profile']);
         break;
       case 'settings':
-        this.router.navigate(['/settings']);
+        this.router.navigate(['/employee/settings']);
         break;
       case 'logout':
         this.authService.logout();

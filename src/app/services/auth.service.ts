@@ -13,10 +13,11 @@ export interface User {
     lastName: string;
     employeeNumber: string;
     position: string;
-    organization: {
+    photoUrl?: string; // Base64 encoded image data
+    organization?: {
       name: string;
     };
-    department: {
+    department?: {
       name: string;
     };
   };
