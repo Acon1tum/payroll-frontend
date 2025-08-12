@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { Router, NavigationEnd, RouterLink, RouterLinkActive } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { AuthService } from '../../services/auth.service';
-import { SidebarService } from '../services/sidebar.service';
+import { SidebarService } from './sidebar.service';
 
 interface MenuItem {
   name: string;

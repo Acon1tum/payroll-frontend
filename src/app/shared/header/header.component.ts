@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { AuthService, User } from '../../services/auth.service';
-import { SidebarService } from '../services/sidebar.service';
+import { SidebarService } from '../sidebar/sidebar.service';
 
 interface Breadcrumb {
   label: string;
