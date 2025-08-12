@@ -25,15 +25,22 @@
         <section class="col-span-1 bg-white rounded-lg shadow p-4">
           <h2 class="text-lg font-semibold mb-4">Leave Balances</h2>
           <div class="space-y-4">
+            <div *ngIf="isLoading" class="text-center py-4">
+              <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+              <p class="text-sm text-gray-600 mt-2">Loading balances...</p>
+            </div>
             <div *ngFor="let bal of leaveBalances" class="border rounded-md p-3">
               <div class="flex items-center justify-between">
-                <span class="font-medium">{{ bal.type }}</span>
+                <span class="font-medium">{{ bal.leaveType.name }}</span>
                 <span class="text-sm text-gray-600">Remaining: {{ bal.remaining }} days</span>
               </div>
               <div class="mt-2 h-2 w-full bg-gray-200 rounded">
-                <div class="h-2 bg-blue-500 rounded" [style.width.%]="(bal.used / bal.total) * 100"></div>
+                <div class="h-2 bg-blue-500 rounded" [style.width.%]="((bal.leaveType.maxDaysPerYear - bal.remaining) / bal.leaveType.maxDaysPerYear) * 100"></div>
               </div>
-              <div class="mt-1 text-xs text-gray-600">Used {{ bal.used }}/{{ bal.total }} days</div>
+              <div class="mt-1 text-xs text-gray-600">Used {{ bal.leaveType.maxDaysPerYear - bal.remaining }}/{{ bal.leaveType.maxDaysPerYear }} days</div>
+            </div>
+            <div *ngIf="!isLoading && leaveBalances.length === 0" class="text-center py-4 text-gray-500">
+              No leave balances found
             </div>
           </div>
         </section>
@@ -43,42 +50,37 @@
             <h2 class="text-lg font-semibold">Track Requests</h2>
           </div>
           <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-gray-200">
+            <div *ngIf="isLoading" class="text-center py-8">
+              <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+              <p class="text-sm text-gray-600 mt-2">Loading requests...</p>
+            </div>
+            <table *ngIf="!isLoading" class="min-w-full divide-y divide-gray-200">
               <thead class="bg-gray-50">
                 <tr>
                   <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
                   <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Dates</th>
                   <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Days</th>
                   <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Reason</th>
-                  <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Attachments</th>
                   <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                   <th class="px-4 py-2"></th>
                 </tr>
               </thead>
               <tbody class="bg-white divide-y divide-gray-200">
                 <tr *ngFor="let r of leaveRequests">
-                  <td class="px-4 py-2">{{ r.type }}</td>
-                  <td class="px-4 py-2">{{ formatDate(r.startDate) }} - {{ formatDate(r.endDate) }}</td>
-                  <td class="px-4 py-2">{{ r.days }}</td>
-                  <td class="px-4 py-2 max-w-xs truncate" title="{{ r.reason }}">{{ r.reason }}</td>
-                  <td class="px-4 py-2 text-sm text-gray-600">
-                    <ng-container *ngIf="r.attachments?.length; else noFiles">
-                      <div class="flex flex-wrap gap-2">
-                        <span *ngFor="let f of r.attachments" class="inline-flex items-center gap-1 rounded bg-gray-100 px-2 py-1 text-xs text-gray-700">
-                          <span class="material-icons text-sm">attach_file</span>
-                          {{ f }}
-                        </span>
-                      </div>
-                    </ng-container>
-                    <ng-template #noFiles>
-                      <span class="text-xs text-gray-400">None</span>
-                    </ng-template>
-                  </td>
+                  <td class="px-4 py-2">{{ r.leaveType.name }}</td>
+                  <td class="px-4 py-2">{{ formatDateNumbers(r.startDate) }} - {{ formatDateNumbers(r.endDate) }}</td>
+                  <td class="px-4 py-2">{{ calculateDays(r.startDate, r.endDate) }}</td>
+                  <td class="px-4 py-2 max-w-xs truncate" title="{{ r.reason }}">{{ r.reason || 'No reason provided' }}</td>
                   <td class="px-4 py-2">
-                    <span class="px-2 py-1 text-xs rounded" [ngClass]="statusBadgeClass(r.status)">{{ r.status }}</span>
+                    <span class="px-2 py-1 text-xs rounded" [ngClass]="statusBadgeClass(r.status)">{{ r.status | titlecase }}</span>
                   </td>
                   <td class="px-4 py-2 text-right">
-                    <button *ngIf="r.status === 'Pending'" (click)="cancelRequest(r.id)" class="text-red-600 hover:underline text-sm">Cancel</button>
+                    <button *ngIf="r.status === 'pending'" (click)="cancelRequest(r.id)" class="text-red-600 hover:underline text-sm">Cancel</button>
+                  </td>
+                </tr>
+                <tr *ngIf="leaveRequests.length === 0">
+                  <td colspan="6" class="px-4 py-8 text-center text-gray-500">
+                    No leave requests found
                   </td>
                 </tr>
               </tbody>
@@ -90,7 +92,11 @@
       <section class="bg-white rounded-lg shadow p-4">
         <h2 class="text-lg font-semibold mb-4">Leave History</h2>
         <div class="overflow-x-auto">
-          <table class="min-w-full divide-y divide-gray-200">
+          <div *ngIf="isLoading" class="text-center py-8">
+            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+            <p class="text-sm text-gray-600 mt-2">Loading history...</p>
+          </div>
+          <table *ngIf="!isLoading" class="min-w-full divide-y divide-gray-200">
             <thead class="bg-gray-50">
               <tr>
                 <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
@@ -101,66 +107,98 @@
             </thead>
             <tbody class="bg-white divide-y divide-gray-200">
               <tr *ngFor="let h of leaveHistory">
-                <td class="px-4 py-2">{{ h.type }}</td>
+                <td class="px-4 py-2">{{ h.leaveType.name }}</td>
                 <td class="px-4 py-2">{{ formatDate(h.startDate) }} - {{ formatDate(h.endDate) }}</td>
-                <td class="px-4 py-2">{{ h.days }}</td>
+                <td class="px-4 py-2">{{ calculateDays(h.startDate, h.endDate) }}</td>
                 <td class="px-4 py-2">
-                  <span class="px-2 py-1 text-xs rounded" [ngClass]="statusBadgeClass(h.status)">{{ h.status }}</span>
+                  <span class="px-2 py-1 text-xs rounded" [ngClass]="statusBadgeClass(h.status)">{{ h.status | titlecase }}</span>
+                </td>
+              </tr>
+              <tr *ngIf="leaveHistory.length === 0">
+                <td colspan="4" class="px-4 py-8 text-center text-gray-500">
+                  No leave history found
                 </td>
               </tr>
             </tbody>
           </table>
         </div>
       </section>
-
-      <!-- Apply Leave Modal -->
-      <div *ngIf="showApplyModal" class="fixed inset-0 z-50 flex items-center justify-center">
-        <div class="absolute inset-0 bg-black/40" (click)="closeApplyModal()"></div>
-        <div class="relative w-full max-w-2xl bg-white rounded-lg shadow-lg">
-          <div class="flex items-center justify-between px-5 py-3 border-b">
-            <h3 class="text-lg font-semibold">Apply for Leave</h3>
-            <button (click)="closeApplyModal()" class="text-gray-500 hover:text-gray-700">
-              <span class="material-icons">close</span>
-            </button>
-          </div>
-          <form [formGroup]="applyForm" (ngSubmit)="submitApplication()" class="p-5 space-y-4">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Leave Type</label>
-                <select formControlName="type" class="w-full rounded border-gray-300">
-                  <option>Vacation Leave</option>
-                  <option>Sick Leave</option>
-                  <option>Emergency Leave</option>
-                </select>
-              </div>
-              <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
-                <input type="date" formControlName="startDate" class="w-full rounded border-gray-300" />
-              </div>
-              <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">End Date</label>
-                <input type="date" formControlName="endDate" class="w-full rounded border-gray-300" />
-              </div>
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">Reason</label>
-              <textarea formControlName="reason" class="w-full rounded border-gray-300" rows="4" placeholder="Add details for your leave..."></textarea>
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">Upload Documents</label>
-              <input type="file" (change)="onFileSelected($event)" multiple class="block w-full text-sm text-gray-700 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" />
-              <div class="mt-2 text-xs text-gray-600" *ngIf="selectedFiles.length">
-                Selected: {{ getSelectedFileNames() }}
-              </div>
-            </div>
-            <div class="flex items-center justify-end gap-2 pt-2">
-              <button type="button" (click)="closeApplyModal()" class="rounded border px-4 py-2 text-gray-700">Cancel</button>
-              <button type="submit" class="rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700">Submit Request</button>
-            </div>
-          </form>
-        </div>
-      </div>
       </div>
     </main>
+  </div>
+</div>
+
+<!-- Apply Leave Modal - Moved outside main content to cover entire viewport -->
+<div *ngIf="showApplyModal" class="fixed inset-0 z-[9999] flex items-center justify-center">
+  <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" (click)="closeApplyModal()"></div>
+  <div class="relative w-full max-w-2xl bg-white rounded-lg shadow-xl z-10">
+    <div class="flex items-center justify-between px-5 py-3 border-b">
+      <h3 class="text-lg font-semibold">Apply for Leave</h3>
+      <button (click)="closeApplyModal()" class="text-gray-500 hover:text-gray-700">
+        <span class="material-icons">close</span>
+      </button>
+    </div>
+    <form [formGroup]="applyForm" (ngSubmit)="submitApplication()" class="p-5 space-y-4">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Leave Type</label>
+          <select formControlName="leaveTypeId" class="w-full rounded border-gray-300">
+            <option value="">Select leave type</option>
+            <option *ngFor="let type of leaveTypes" [value]="type.id">{{ type.name }}</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
+          <input type="date" formControlName="startDate" class="w-full rounded border-gray-300" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">End Date</label>
+          <input type="date" formControlName="endDate" class="w-full rounded border-gray-300" />
+        </div>
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Reason</label>
+        <textarea formControlName="reason" class="w-full rounded border-gray-300" rows="4" placeholder="Add details for your leave..."></textarea>
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Upload Documents</label>
+        <input type="file" (change)="onFileSelected($event)" multiple class="block w-full text-sm text-gray-700 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" />
+        <div class="mt-2 text-xs text-gray-600" *ngIf="selectedFiles.length">
+          Selected: {{ getSelectedFileNames() }}
+        </div>
+      </div>
+      <div class="flex items-center justify-end gap-2 pt-2">
+        <button type="button" (click)="closeApplyModal()" class="rounded border px-4 py-2 text-gray-700">Cancel</button>
+        <button type="submit" [disabled]="isLoading" class="rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed">
+          <span *ngIf="isLoading" class="inline-flex items-center">
+            <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+            Submitting...
+          </span>
+          <span *ngIf="!isLoading">Submit Request</span>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Success Animation Notification -->
+<div *ngIf="showSuccessAnimation" class="fixed top-4 right-4 z-[10000] animate-slide-in">
+  <div class="bg-green-500 text-white px-6 py-4 rounded-lg shadow-lg flex items-center space-x-3 max-w-sm success-notification">
+    <div class="flex-shrink-0">
+      <div class="success-checkmark">
+        <div class="check-icon">
+          <span class="icon-line line-tip"></span>
+          <span class="icon-line line-long"></span>
+          <div class="icon-circle"></div>
+          <div class="icon-fix"></div>
+        </div>
+      </div>
+    </div>
+    <div class="flex-1">
+      <p class="text-sm font-medium">{{ successMessage }}</p>
+    </div>
+    <button (click)="hideSuccessNotification()" class="flex-shrink-0 text-white hover:text-green-100">
+      <span class="material-icons text-sm">close</span>
+    </button>
   </div>
 </div>

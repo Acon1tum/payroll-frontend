@@ -1,8 +1,9 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { SidebarComponent } from '../../../shared/sidebar/sidebar.component';
 import { HeaderComponent } from '../../../shared/header/header.component';
+import { LeaveManagementService, LeaveBalance, LeaveApplication, LeaveType, ApplyLeaveRequest } from '../../../services/leave-management.service';
 
 interface Breadcrumb {
   label: string;
@@ -16,12 +17,9 @@ interface Breadcrumb {
   templateUrl: './employee-leave-management.component.html',
   styleUrl: './employee-leave-management.component.scss'
 })
-export class EmployeeLeaveManagementComponent {
+export class EmployeeLeaveManagementComponent implements OnInit {
   // Balances
-  leaveBalances: { type: string; remaining: number; used: number; total: number }[] = [
-    { type: 'Vacation Leave', remaining: 12, used: 3, total: 15 },
-    { type: 'Sick Leave', remaining: 8, used: 2, total: 10 },
-  ];
+  leaveBalances: LeaveBalance[] = [];
 
   // Breadcrumbs for header
   breadcrumbs: Breadcrumb[] = [
@@ -30,59 +28,33 @@ export class EmployeeLeaveManagementComponent {
   ];
 
   // Requests (current + pending)
-  leaveRequests: Array<{
-    id: number;
-    type: string;
-    startDate: Date;
-    endDate: Date;
-    days: number;
-    reason: string;
-    status: 'Pending' | 'Approved' | 'Rejected' | 'Cancelled';
-    attachments?: string[];
-  }> = [
-    {
-      id: 101,
-      type: 'Vacation Leave',
-      startDate: new Date(new Date().getFullYear(), new Date().getMonth(), 14),
-      endDate: new Date(new Date().getFullYear(), new Date().getMonth(), 16),
-      days: 3,
-      reason: 'Family trip',
-      status: 'Pending',
-      attachments: ['itinerary.pdf']
-    },
-    {
-      id: 102,
-      type: 'Sick Leave',
-      startDate: new Date(new Date().getFullYear(), new Date().getMonth() - 1, 3),
-      endDate: new Date(new Date().getFullYear(), new Date().getMonth() - 1, 4),
-      days: 2,
-      reason: 'Flu',
-      status: 'Approved',
-      attachments: ['medical-certificate.jpg']
-    }
-  ];
+  leaveRequests: LeaveApplication[] = [];
+
+  // All applications for current year (to check overlaps)
+  allApplications: LeaveApplication[] = [];
 
   // History (previous leaves)
-  leaveHistory: Array<{
-    id: number;
-    type: string;
-    startDate: Date;
-    endDate: Date;
-    days: number;
-    status: 'Approved' | 'Rejected';
-  }> = [
-    { id: 80, type: 'Vacation Leave', startDate: new Date(new Date().getFullYear(), 4, 2), endDate: new Date(new Date().getFullYear(), 4, 5), days: 4, status: 'Approved' },
-    { id: 81, type: 'Sick Leave', startDate: new Date(new Date().getFullYear(), 1, 20), endDate: new Date(new Date().getFullYear(), 1, 20), days: 1, status: 'Approved' },
-  ];
+  leaveHistory: LeaveApplication[] = [];
+
+  // Leave types for dropdown
+  leaveTypes: LeaveType[] = [];
 
   // Apply form state
   showApplyModal = false;
   applyForm: FormGroup;
   selectedFiles: File[] = [];
 
-  constructor(private formBuilder: FormBuilder) {
+  // Success animation state
+  showSuccessAnimation = false;
+  successMessage = '';
+  isLoading = false;
+
+  constructor(
+    private formBuilder: FormBuilder,
+    private leaveManagementService: LeaveManagementService
+  ) {
     this.applyForm = this.formBuilder.group({
-      type: ['Vacation Leave', Validators.required],
+      leaveTypeId: [null, Validators.required],
       startDate: [null, Validators.required],
       endDate: [null, Validators.required],
       reason: ['', [Validators.required, Validators.maxLength(500)]],
@@ -90,14 +62,102 @@ export class EmployeeLeaveManagementComponent {
     });
   }
 
+  ngOnInit(): void {
+    this.loadData();
+  }
+
+  loadData(): void {
+    this.isLoading = true;
+    
+    // Load leave balances
+    this.leaveManagementService.getLeaveBalances().subscribe({
+      next: (response) => {
+        this.leaveBalances = response.data;
+      },
+      error: (error) => {
+        console.error('Error loading leave balances:', error);
+      }
+    });
+
+    // Load leave requests
+    this.leaveManagementService.getLeaveRequests().subscribe({
+      next: (response) => {
+        this.leaveRequests = response.data;
+      },
+      error: (error) => {
+        console.error('Error loading leave requests:', error);
+      }
+    });
+
+    // Load all leave applications for current year
+    this.leaveManagementService.getAllLeaveApplications().subscribe({
+      next: (response) => {
+        this.allApplications = response.data;
+      },
+      error: (error) => {
+        console.error('Error loading all leave applications:', error);
+      }
+    });
+
+    // Load leave history
+    this.leaveManagementService.getLeaveHistory().subscribe({
+      next: (response) => {
+        this.leaveHistory = response.data;
+      },
+      error: (error) => {
+        console.error('Error loading leave history:', error);
+      }
+    });
+
+    // Load leave types
+    this.leaveManagementService.getLeaveTypes().subscribe({
+      next: (response) => {
+        this.leaveTypes = response.data;
+        this.isLoading = false;
+      },
+      error: (error) => {
+        console.error('Error loading leave types:', error);
+        this.isLoading = false;
+      }
+    });
+  }
+
   openApplyModal(): void {
     this.showApplyModal = true;
-    this.applyForm.reset({ type: 'Vacation Leave', startDate: null, endDate: null, reason: '', attachments: [] });
+    this.applyForm.reset();
     this.selectedFiles = [];
   }
 
   closeApplyModal(): void {
     this.showApplyModal = false;
+  }
+
+  showSuccessNotification(message: string): void {
+    this.successMessage = message;
+    this.showSuccessAnimation = true;
+    
+    // Auto-hide after 3 seconds
+    setTimeout(() => {
+      this.hideSuccessNotification();
+    }, 3000);
+  }
+
+  hideSuccessNotification(): void {
+    // Add slide-out animation before hiding
+    const notification = document.querySelector('.animate-slide-in');
+    if (notification) {
+      notification.classList.remove('animate-slide-in');
+      notification.classList.add('animate-slide-out');
+      
+      // Wait for animation to complete before hiding
+      setTimeout(() => {
+        this.showSuccessAnimation = false;
+        this.successMessage = '';
+      }, 500);
+    } else {
+      this.showSuccessAnimation = false;
+      this.successMessage = '';
+    }
   }
 
   onFileSelected(event: Event): void {
@@ -116,32 +176,82 @@ export class EmployeeLeaveManagementComponent {
   submitApplication(): void {
     if (this.applyForm.invalid) {
       this.applyForm.markAllAsTouched();
+      console.log('Form is invalid:', this.applyForm.errors);
       return;
     }
-    const { type, startDate, endDate, reason, attachments } = this.applyForm.value;
-    const days = this.calculateInclusiveDays(new Date(startDate), new Date(endDate));
-    const newRequest = {
-      id: this.generateId(),
-      type,
-      startDate: new Date(startDate),
-      endDate: new Date(endDate),
-      days,
-      reason,
-      status: 'Pending' as const,
-      attachments: (attachments as string[]) || []
+
+    const formValue = this.applyForm.value;
+    console.log('Form values:', formValue);
+    
+    const request: ApplyLeaveRequest = {
+      leaveTypeId: formValue.leaveTypeId,
+      startDate: formValue.startDate,
+      endDate: formValue.endDate,
+      reason: formValue.reason,
+      attachments: formValue.attachments || []
     };
-    this.leaveRequests = [newRequest, ...this.leaveRequests];
-    this.closeApplyModal();
+    
+    console.log('Request being sent:', request);
+
+    // Check for overlapping dates before submitting
+    const overlappingApp = this.checkForOverlappingDates(formValue.startDate, formValue.endDate);
+    if (overlappingApp) {
+      const overlappingStart = new Date(overlappingApp.startDate).toLocaleDateString();
+      const overlappingEnd = new Date(overlappingApp.endDate).toLocaleDateString();
+      alert(`You have an overlapping leave application: ${overlappingApp.leaveType.name} from ${overlappingStart} to ${overlappingEnd} (Status: ${overlappingApp.status})`);
+      return;
+    }
+
+    this.isLoading = true;
+    this.leaveManagementService.applyForLeave(request).subscribe({
+      next: (response) => {
+        console.log('Success response:', response);
+        // Add the new request to the list
+        this.leaveRequests = [response.data, ...this.leaveRequests];
+        this.allApplications = [response.data, ...this.allApplications];
+        this.closeApplyModal();
+        this.isLoading = false;
+        
+        // Show success animation
+        this.showSuccessNotification('Leave application submitted successfully!');
+      },
+      error: (error) => {
+        console.error('Error submitting leave application:', error);
+        console.error('Error details:', error.error);
+        
+        // Show specific error message to user
+        let errorMessage = 'Failed to submit leave application';
+        if (error.error && error.error.error) {
+          errorMessage = error.error.error;
+        }
+        
+        // You can add a toast notification or alert here
+        alert(errorMessage);
+        
+        this.isLoading = false;
+      }
+    });
   }
 
-  cancelRequest(requestId: number): void {
-    this.leaveRequests = this.leaveRequests.map(r => r.id === requestId && r.status === 'Pending' ? { ...r, status: 'Cancelled' } : r);
-  }
-
-  private calculateInclusiveDays(start: Date, end: Date): number {
-    const oneDayMs = 24 * 60 * 60 * 1000;
-    const diff = Math.floor((end.getTime() - start.getTime()) / oneDayMs) + 1;
-    return Math.max(diff, 0);
+  cancelRequest(leaveId: string): void {
+    this.leaveManagementService.cancelLeaveRequest(leaveId).subscribe({
+      next: (response) => {
+        // Update the request in both lists
+        this.leaveRequests = this.leaveRequests.map(r => 
+          r.id === leaveId ? response.data : r
+        );
+        this.allApplications = this.allApplications.map(r => 
+          r.id === leaveId ? response.data : r
+        );
+        
+        // Show success animation
+        this.showSuccessNotification('Leave request cancelled successfully!');
+      },
+      error: (error) => {
+        console.error('Error cancelling leave request:', error);
+        alert('Failed to cancel leave request');
+      }
+    });
   }
 
   formatDate(date?: Date | string | null): string {
@@ -150,20 +260,45 @@ export class EmployeeLeaveManagementComponent {
     return new Intl.DateTimeFormat('en-PH', { year: 'numeric', month: 'short', day: 'numeric' }).format(d);
   }
 
-  statusBadgeClass(status: string): string {
-    switch (status) {
-      case 'Approved':
-        return 'bg-green-100 text-green-700';
-      case 'Rejected':
-        return 'bg-red-100 text-red-700';
-      case 'Cancelled':
-        return 'bg-gray-100 text-gray-700';
-      default:
-        return 'bg-yellow-100 text-yellow-800';
-    }
+  formatDateNumbers(date?: Date | string | null): string {
+    if (!date) return '';
+    const d = typeof date === 'string' ? new Date(date) : date;
+    const month = (d.getMonth() + 1).toString().padStart(2, '0');
+    const day = d.getDate().toString().padStart(2, '0');
+    const year = d.getFullYear();
+    return `${month}/${day}/${year}`;
   }
 
-  private generateId(): number {
-    return Math.floor(Math.random() * 100000) + 100;
+  statusBadgeClass(status: string): string {
+    return this.leaveManagementService.getStatusBadgeClass(status);
+  }
+
+  // Helper method to get leave type name by ID
+  getLeaveTypeName(leaveTypeId: number): string {
+    const leaveType = this.leaveTypes.find(lt => lt.id === leaveTypeId);
+    return leaveType ? leaveType.name : 'Unknown';
+  }
+
+  // Helper method to check for overlapping dates
+  checkForOverlappingDates(startDate: string, endDate: string): LeaveApplication | null {
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    
+    return this.allApplications.find(app => {
+      if (app.status === 'cancelled' || app.status === 'rejected') {
+        return false; // Skip cancelled/rejected applications
+      }
+      
+      const appStart = new Date(app.startDate);
+      const appEnd = new Date(app.endDate);
+      
+      // Check for overlap
+      return (start <= appEnd && end >= appStart);
+    }) || null;
+  }
+
+  // Helper method to calculate days
+  calculateDays(startDate: string, endDate: string): number {
+    return this.leaveManagementService.calculateDays(startDate, endDate);
   }
 }
