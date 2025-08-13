@@ -68,40 +68,64 @@
           </div>
         </div>
 
+        <!-- Success State -->
+        <div *ngIf="successMessage" class="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
+          <div class="flex">
+            <div class="flex-shrink-0">
+              <svg class="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+              </svg>
+            </div>
+            <div class="ml-3">
+              <h3 class="text-sm font-medium text-green-800">Success</h3>
+              <div class="mt-2 text-sm text-green-700">{{ successMessage }}</div>
+            </div>
+          </div>
+        </div>
+
         <!-- Employee List Tab -->
         <div *ngIf="currentTab === 'list' && !isLoading">
           <!-- Search and Filters -->
-          <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+          <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6 filter-section">
             <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
               <!-- Search -->
-              <div>
+              <div [class.filter-active]="searchTerm">
                 <label class="block text-sm font-medium text-gray-700 mb-2">Search</label>
                 <input
                   type="text"
                   [(ngModel)]="searchTerm"
+                  (ngModelChange)="onSearchChange()"
                   placeholder="Search employees..."
-                  class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent filter-input"
                 >
               </div>
 
               <!-- Department Filter -->
-              <div>
+              <div [class.filter-active]="selectedOrganizationId">
                 <label class="block text-sm font-medium text-gray-700 mb-2">Department</label>
                 <select
-                  [(ngModel)]="selectedDepartmentId"
-                  class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  [(ngModel)]="selectedOrganizationId"
+                  (ngModelChange)="onDepartmentChange()"
+                  class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent filter-select"
+                  [disabled]="departments.length === 0"
                 >
                   <option value="">All Departments</option>
-                  <option *ngFor="let dept of departments" [value]="dept.id">{{ dept.name }}</option>
+                  <option *ngFor="let dept of departments" [value]="dept.id">
+                    {{ dept.name }}
+                  </option>
                 </select>
+                <div *ngIf="departments.length === 0" class="mt-1 text-xs text-gray-500">
+                  No departments available
+                </div>
               </div>
 
               <!-- Status Filter -->
-              <div>
+              <div [class.filter-active]="selectedStatus">
                 <label class="block text-sm font-medium text-gray-700 mb-2">Status</label>
                 <select
                   [(ngModel)]="selectedStatus"
-                  class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  (ngModelChange)="onStatusChange()"
+                  class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-transparent filter-select"
                 >
                   <option value="">All Statuses</option>
                   <option value="active">Active</option>
@@ -112,11 +136,12 @@
               </div>
 
               <!-- Role Filter -->
-              <div>
+              <div [class.filter-active]="selectedRole">
                 <label class="block text-sm font-medium text-gray-700 mb-2">Role</label>
                 <select
                   [(ngModel)]="selectedRole"
-                  class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  (ngModelChange)="onRoleChange()"
+                  class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 filter-select"
                 >
                   <option value="">All Roles</option>
                   <option value="admin">Admin</option>
@@ -132,12 +157,26 @@
               <div class="text-sm text-gray-600">
                 Showing {{ filteredEmployees.length }} of {{ employees.length }} employees
               </div>
-              <button
-                (click)="isAddMode = true; resetEmployeeForm()"
-                class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors duration-200"
-              >
-                Add Employee
-              </button>
+              <div class="flex space-x-3">
+                <button
+                  (click)="exportDepartmentData()"
+                  class="px-4 py-2 border border-blue-300 rounded-md text-sm font-medium text-blue-700 hover:bg-blue-50 transition-colors duration-200"
+                >
+                  Export Data
+                </button>
+                <button
+                  (click)="clearFilters()"
+                  class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors duration-200 clear-filters-btn"
+                >
+                  Clear Filters
+                </button>
+                <button
+                  (click)="isAddMode = true; resetEmployeeForm()"
+                  class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors duration-200"
+                >
+                  Add Employee
+                </button>
+              </div>
             </div>
           </div>
 
@@ -188,16 +227,16 @@
                         View
                       </button>
                       <button
-                        (click)="selectedEmployee = employee; isEditMode = true"
+                        (click)="editEmployee(employee)"
                         class="text-indigo-600 hover:text-indigo-900 mr-3"
                       >
                         Edit
                       </button>
                       <button
-                        (click)="selectedEmployee = employee; isRoleAssignmentMode = true"
-                        class="text-green-600 hover:text-green-900"
+                        (click)="deleteEmployee(employee)"
+                        class="text-red-600 hover:text-red-900 mr-3"
                       >
-                        Role
+                        Delete
                       </button>
                     </td>
                   </tr>
@@ -306,32 +345,31 @@
         </button>
       </div>
 
-      <form (ngSubmit)="saveEmployee()" class="space-y-4">
+      <form (ngSubmit)="saveEmployee()" class="space-y-4" #employeeFormRef="ngForm">
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label class="block text-sm font-medium text-gray-700">Employee ID</label>
+            <label class="block text-sm font-medium text-gray-700">Employee ID <span class="text-red-500">*</span></label>
             <input type="text" [(ngModel)]="employeeForm.employeeId" name="employeeId" required
-                   class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                   class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500 form-input"
+                   [class.border-red-500]="employeeFormRef.submitted && !employeeForm.employeeId">
+            <div *ngIf="employeeFormRef.submitted && !employeeForm.employeeId" class="mt-1 text-sm text-red-600">
+              Employee ID is required
+            </div>
           </div>
           <div>
             <label class="block text-sm font-medium text-gray-700">First Name</label>
             <input type="text" [(ngModel)]="employeeForm.firstName" name="firstName" required
-                   class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                   class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500 form-input">
           </div>
           <div>
             <label class="block text-sm font-medium text-gray-700">Last Name</label>
             <input type="text" [(ngModel)]="employeeForm.lastName" name="lastName" required
-                   class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                   class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500 form-input">
           </div>
           <div>
             <label class="block text-sm font-medium text-gray-700">Email</label>
             <input type="email" [(ngModel)]="employeeForm.email" name="email" required
-                   class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500">
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-gray-700">Phone</label>
-            <input type="tel" [(ngModel)]="employeeForm.phone" name="phone" required
-                   class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                   class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500 form-input">
           </div>
           <div>
             <label class="block text-sm font-medium text-gray-700">Date of Birth</label>
@@ -344,10 +382,24 @@
                    class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500">
           </div>
           <div>
+            <label class="block text-sm font-medium text-gray-700">Profile Photo</label>
+            <div class="flex items-center space-x-4 photo-field">
+              <div class="w-16 h-16 rounded-full bg-gray-100 overflow-hidden flex items-center justify-center border">
+                <img *ngIf="employeeForm.photoUrl" [src]="employeeForm.photoUrl" alt="Profile" class="w-full h-full object-cover">
+                <span *ngIf="!employeeForm.photoUrl" class="text-gray-400 text-xs">No photo</span>
+              </div>
+              <div>
+                <input type="file" accept="image/*" (change)="onPhotoSelected($event)" class="block w-full text-sm text-gray-700" />
+                <button type="button" class="mt-2 text-sm text-red-600 hover:text-red-800" (click)="removePhoto()" *ngIf="employeeForm.photoUrl">Remove</button>
+              </div>
+            </div>
+            <p class="mt-1 text-xs text-gray-500">PNG/JPG up to ~1MB. Stored as base64.</p>
+          </div>
+          <div>
             <label class="block text-sm font-medium text-gray-700">Department</label>
             <select [(ngModel)]="employeeForm.departmentId" name="departmentId" required
                     class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500">
-              <option value="">Select Department</option>
+              <option value="" hidden>Select Department</option>
               <option *ngFor="let dept of departments" [value]="dept.id">{{ dept.name }}</option>
             </select>
           </div>
@@ -357,9 +409,13 @@
                    class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500">
           </div>
           <div>
-            <label class="block text-sm font-medium text-gray-700">Salary</label>
-            <input type="number" [(ngModel)]="employeeForm.salary" name="salary" required
-                   class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+            <label class="block text-sm font-medium text-gray-700">Salary <span class="text-red-500">*</span></label>
+            <input type="number" [(ngModel)]="employeeForm.salary" name="salary" required min="0" step="0.01"
+                   class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500 form-input"
+                   [class.border-red-500]="employeeFormRef.submitted && (!employeeForm.salary || employeeForm.salary <= 0)">
+            <div *ngIf="employeeFormRef.submitted && (!employeeForm.salary || employeeForm.salary <= 0)" class="mt-1 text-sm text-red-600">
+              Salary must be greater than 0
+            </div>
           </div>
           <div>
             <label class="block text-sm font-medium text-gray-700">Employment Status</label>
@@ -378,41 +434,11 @@
               <option *ngFor="let role of systemRoles" [value]="role.value">{{ role.label }}</option>
             </select>
           </div>
-          <div>
-            <label class="block text-sm font-medium text-gray-700">Manager</label>
-            <select [(ngModel)]="employeeForm.managerId" name="managerId"
-                    class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500">
-              <option value="">No Manager</option>
-              <option *ngFor="let manager of getAvailableManagers()" [value]="manager.id">
-                {{ getFullName(manager) }}
-              </option>
-            </select>
-          </div>
         </div>
 
-        <div>
-          <label class="block text-sm font-medium text-gray-700">Address</label>
-          <textarea [(ngModel)]="employeeForm.address" name="address" rows="3" required
-                    class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"></textarea>
-        </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div>
-            <label class="block text-sm font-medium text-gray-700">Emergency Contact Name</label>
-            <input type="text" [(ngModel)]="employeeForm.emergencyContactName" name="emergencyContactName" required
-                   class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500">
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-gray-700">Relationship</label>
-            <input type="text" [(ngModel)]="employeeForm.emergencyContactRelationship" name="emergencyContactRelationship" required
-                   class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500">
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-gray-700">Emergency Contact Phone</label>
-            <input type="tel" [(ngModel)]="employeeForm.emergencyContactPhone" name="emergencyContactPhone" required
-                   class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500">
-          </div>
-        </div>
+
+
 
         <div class="flex justify-end space-x-3 pt-4">
           <button type="button" (click)="cancelEdit()"
@@ -420,8 +446,18 @@
             Cancel
           </button>
           <button type="submit"
-                  class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-            {{ isAddMode ? 'Add Employee' : 'Save Changes' }}
+                  [disabled]="isSaving"
+                  class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed">
+            <span *ngIf="!isSaving">
+              {{ isAddMode ? 'Add Employee' : 'Save Changes' }}
+            </span>
+            <span *ngIf="isSaving" class="flex items-center">
+              <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              {{ isAddMode ? 'Adding...' : 'Saving...' }}
+            </span>
           </button>
         </div>
       </form>
@@ -457,10 +493,6 @@
             <p class="mt-1 text-sm text-gray-900">{{ selectedEmployee.email }}</p>
           </div>
           <div>
-            <label class="block text-sm font-medium text-gray-700">Phone</label>
-            <p class="mt-1 text-sm text-gray-900">{{ selectedEmployee.phone }}</p>
-          </div>
-          <div>
             <label class="block text-sm font-medium text-gray-700">Department</label>
             <p class="mt-1 text-sm text-gray-900">{{ selectedEmployee.departmentName }}</p>
           </div>
@@ -481,26 +513,6 @@
           </div>
         </div>
 
-        <div>
-          <label class="block text-sm font-medium text-gray-700">Address</label>
-          <p class="mt-1 text-sm text-gray-900">{{ selectedEmployee.address }}</p>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div>
-            <label class="block text-sm font-medium text-gray-700">Emergency Contact</label>
-            <p class="mt-1 text-sm text-gray-900">{{ selectedEmployee.emergencyContact.name }}</p>
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-gray-700">Relationship</label>
-            <p class="mt-1 text-sm text-gray-900">{{ selectedEmployee.emergencyContact.relationship }}</p>
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-gray-700">Phone</label>
-            <p class="mt-1 text-sm text-gray-900">{{ selectedEmployee.emergencyContact.phone }}</p>
-          </div>
-        </div>
-
         <div class="pt-4">
           <button (click)="cancelEdit()"
                   class="w-full px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
@@ -508,48 +520,6 @@
           </button>
         </div>
       </div>
-    </div>
-  </div>
-</div>
-
-<!-- Role Assignment Modal -->
-<div *ngIf="isRoleAssignmentMode && selectedEmployee" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-  <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
-    <div class="mt-3">
-      <div class="flex items-center justify-between mb-4">
-        <h3 class="text-lg font-medium text-gray-900">Assign Role</h3>
-        <button (click)="cancelEdit()" class="text-gray-400 hover:text-gray-600">
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-          </svg>
-        </button>
-      </div>
-
-      <form (ngSubmit)="saveRoleAssignment()" class="space-y-4">
-        <div>
-          <label class="block text-sm font-medium text-gray-700">Employee</label>
-          <p class="mt-1 text-sm text-gray-900">{{ getFullName(selectedEmployee) }}</p>
-        </div>
-
-        <div>
-          <label class="block text-sm font-medium text-gray-700">System Role</label>
-          <select [(ngModel)]="roleAssignmentForm.systemRole" name="systemRole" required
-                  class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500">
-            <option *ngFor="let role of systemRoles" [value]="role.value">{{ role.label }}</option>
-          </select>
-        </div>
-
-        <div class="flex justify-end space-x-3 pt-4">
-          <button type="button" (click)="cancelEdit()"
-                  class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-            Cancel
-          </button>
-          <button type="submit"
-                  class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-            Assign Role
-          </button>
-        </div>
-      </form>
     </div>
   </div>
 </div>

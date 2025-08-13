@@ -9,6 +9,53 @@
   }
 }
 
+// Filter styles
+.filter-section {
+  .filter-input {
+    transition: all 0.2s ease;
+    
+    &:focus {
+      transform: scale(1.02);
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+  }
+  
+  .filter-select {
+    transition: all 0.2s ease;
+    
+    &:focus {
+      transform: scale(1.02);
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+  }
+}
+
+.clear-filters-btn {
+  transition: all 0.2s ease;
+  
+  &:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  }
+}
+
+// Active filter indicator
+.filter-active {
+  position: relative;
+  
+  &::after {
+    content: '';
+    position: absolute;
+    top: -2px;
+    right: -2px;
+    width: 8px;
+    height: 8px;
+    background: #10b981;
+    border-radius: 50%;
+    border: 2px solid white;
+  }
+}
+
 .status-badge {
   &.active {
     background: linear-gradient(135deg, #10b981, #059669);
@@ -45,6 +92,20 @@
   
   &:hover {
     transform: scale(1.1);
+  }
+}
+
+// Delete button specific styles
+.delete-button {
+  transition: all 0.2s ease;
+  
+  &:hover {
+    transform: scale(1.05);
+    box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3);
+  }
+  
+  &:active {
+    transform: scale(0.95);
   }
 }
 
@@ -109,6 +170,12 @@
   background: linear-gradient(135deg, #3b82f6, #1d4ed8);
   color: white;
   font-weight: 600;
+}
+
+// Photo upload field styling
+.photo-field {
+	display: flex;
+	align-items: center;
 }
 
 .status-grid {
@@ -200,5 +267,96 @@
   
   &:hover::after {
     opacity: 1;
+  }
+}
+
+// Form validation styles
+.form-input {
+  transition: all 0.2s ease;
+  
+  &.ng-invalid.ng-touched,
+  &.ng-invalid.ng-dirty {
+    border-color: #ef4444;
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+  }
+  
+  &.ng-valid.ng-touched,
+  &.ng-valid.ng-dirty {
+    border-color: #10b981;
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+  }
+  
+  &:focus {
+    transform: scale(1.01);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  }
+}
+
+// Form field validation messages
+.validation-message {
+  animation: slideDown 0.3s ease-out;
+  margin-top: 0.25rem;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+}
+
+// Required field indicator
+.required-field {
+  color: #ef4444;
+  font-weight: 500;
+}
+
+// Form submission feedback
+.form-submitted {
+  .form-input.ng-invalid {
+    border-color: #ef4444;
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+  }
+}
+
+// Modal animations
+.modal-enter {
+  animation: modalSlideIn 0.3s ease-out;
+}
+
+.modal-exit {
+  animation: modalSlideOut 0.3s ease-in;
+}
+
+@keyframes modalSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-50px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes modalSlideOut {
+  from {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-50px) scale(0.95);
+  }
+}
+
+// Form section animations
+.form-section {
+  animation: formSlideIn 0.4s ease-out;
+}
+
+@keyframes formSlideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
   }
 }
