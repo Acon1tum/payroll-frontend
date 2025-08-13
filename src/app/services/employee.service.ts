@@ -20,6 +20,7 @@ export interface EmployeeDto {
   salary: number;
   employmentStatus: 'active' | 'resigned' | 'suspended' | 'terminated';
   systemRole: 'admin' | 'hrStaff' | 'payrollManager' | 'employee';
+  payFrequency?: string; // e.g., 'semiMonthly', 'monthly', 'biweekly', 'weekly'
   createdAt: string | Date;
   updatedAt: string | Date;
 }

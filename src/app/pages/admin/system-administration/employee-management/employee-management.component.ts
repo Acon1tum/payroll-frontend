@@ -12,6 +12,7 @@ interface Employee {
   lastName: string;
   email: string;
   phone: string;
+  photoUrl?: string | null;
   dateOfBirth: Date;
   hireDate: Date;
   departmentId: number | null;
@@ -20,6 +21,7 @@ interface Employee {
   salary: number;
   employmentStatus: 'active' | 'resigned' | 'suspended' | 'terminated';
   systemRole: 'admin' | 'hr' | 'payroll_manager' | 'employee';
+  payFrequency?: string; // e.g., 'semiMonthly', 'monthly', 'biweekly', 'weekly'
   managerId?: number;
   managerName?: string;
   address: string;
@@ -81,6 +83,7 @@ export class EmployeeManagementComponent implements OnInit {
   selectedOrganizationId: string = '';
   selectedStatus: string = '';
   selectedRole: string = '';
+  selectedPayFrequency: string = '';
   isLoading = false;
   isSaving = false;
   errorMessage = '';
@@ -165,6 +168,7 @@ export class EmployeeManagementComponent implements OnInit {
           lastName: e.lastName,
           email: e.email,
           phone: e.phone || '',
+          photoUrl: e.photoUrl || null,
           dateOfBirth: new Date(e.dateOfBirth),
           hireDate: new Date(e.hireDate),
           departmentId: e.departmentName ? this.getDepartmentIdByName(e.departmentName) : null, // Map department name to numeric ID
@@ -173,6 +177,7 @@ export class EmployeeManagementComponent implements OnInit {
           salary: e.salary,
           employmentStatus: e.employmentStatus,
           systemRole: this.mapServerRoleToClientRole(e.systemRole),
+          payFrequency: e.payFrequency || undefined,
           address: '',
           emergencyContact: { name: '', relationship: '', phone: '' },
           employmentHistory: [],
@@ -354,7 +359,6 @@ export class EmployeeManagementComponent implements OnInit {
             lastName: response.data.lastName,
             email: response.data.email,
             phone: response.data.phone || '',
-            // @ts-ignore - extend locally with optional photoUrl
             photoUrl: response.data.photoUrl || null,
             dateOfBirth: new Date(response.data.dateOfBirth),
             hireDate: new Date(response.data.hireDate),
@@ -364,6 +368,7 @@ export class EmployeeManagementComponent implements OnInit {
             salary: response.data.salary,
             employmentStatus: response.data.employmentStatus,
             systemRole: this.mapServerRoleToClientRole(response.data.systemRole),
+            payFrequency: response.data.payFrequency || undefined,
             managerId: undefined,
             address: '',
             emergencyContact: {
@@ -457,7 +462,6 @@ export class EmployeeManagementComponent implements OnInit {
               firstName: response.data.firstName,
               lastName: response.data.lastName,
               email: response.data.email,
-              // @ts-ignore
               photoUrl: response.data.photoUrl || null,
               dateOfBirth: new Date(response.data.dateOfBirth),
               hireDate: new Date(response.data.hireDate),
@@ -467,6 +471,7 @@ export class EmployeeManagementComponent implements OnInit {
               salary: response.data.salary,
               employmentStatus: response.data.employmentStatus,
               systemRole: this.mapServerRoleToClientRole(response.data.systemRole),
+              payFrequency: response.data.payFrequency || this.employees[employeeIndex].payFrequency,
               updatedAt: new Date(response.data.updatedAt)
             };
           }
@@ -627,6 +632,21 @@ export class EmployeeManagementComponent implements OnInit {
     return roleObj ? roleObj.label : role;
   }
 
+  getPayFrequencyLabel(payFrequency?: string): string {
+    switch (payFrequency) {
+      case 'semiMonthly':
+        return 'Semi-monthly';
+      case 'monthly':
+        return 'Monthly';
+      case 'biweekly':
+        return 'Biweekly';
+      case 'weekly':
+        return 'Weekly';
+      default:
+        return payFrequency || '-';
+    }
+  }
+
   getStatusColor(status: string): string {
     switch (status) {
       case 'active': return 'bg-green-100 text-green-800';
@@ -659,9 +679,9 @@ export class EmployeeManagementComponent implements OnInit {
   }
 
   formatCurrency(amount: number): string {
-    return new Intl.NumberFormat('en-US', {
+    return new Intl.NumberFormat('en-PH', {
       style: 'currency',
-      currency: 'USD'
+      currency: 'PHP'
     }).format(amount);
   }
 
@@ -691,7 +711,7 @@ export class EmployeeManagementComponent implements OnInit {
       searchTerm: this.searchTerm,
           selectedOrganizationId: this.selectedOrganizationId,
       selectedStatus: this.selectedStatus,
-      selectedRole: this.selectedRole
+      selectedPayFrequency: this.selectedPayFrequency
     });
     
     this.filteredEmployees = this.employees.filter(employee => {
@@ -713,11 +733,11 @@ export class EmployeeManagementComponent implements OnInit {
       const statusMatch = !this.selectedStatus || 
         employee.employmentStatus === this.selectedStatus;
 
-      // Role filter
-      const roleMatch = !this.selectedRole || 
-        employee.systemRole === this.selectedRole;
+      // Pay frequency filter
+      const payFrequencyMatch = !this.selectedPayFrequency || 
+        employee.payFrequency === this.selectedPayFrequency;
 
-      return searchMatch && departmentMatch && statusMatch && roleMatch;
+      return searchMatch && departmentMatch && statusMatch && payFrequencyMatch;
     });
     
     console.log(`Filtered employees: ${this.filteredEmployees.length} of ${this.employees.length}`);
@@ -740,7 +760,7 @@ export class EmployeeManagementComponent implements OnInit {
   }
 
   // Method to handle role filter changes
-  onRoleChange() {
+  onPayFrequencyChange() {
     this.applyFilters();
   }
 
@@ -750,6 +770,7 @@ export class EmployeeManagementComponent implements OnInit {
     this.selectedOrganizationId = '';
     this.selectedStatus = '';
     this.selectedRole = '';
+    this.selectedPayFrequency = '';
     this.applyFilters();
   }
 

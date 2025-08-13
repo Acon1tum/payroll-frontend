@@ -47,6 +47,7 @@ describe('EmployeeManagementComponent', () => {
         salary: 50000,
         employmentStatus: 'active',
         systemRole: 'employee',
+        payFrequency: 'semiMonthly',
         address: '123 Main St',
         emergencyContact: { name: 'Jane Doe', relationship: 'Spouse', phone: '0987654321' },
         employmentHistory: [],
@@ -89,6 +90,7 @@ describe('EmployeeManagementComponent', () => {
     component.selectedOrganizationId = '1';
     component.selectedStatus = 'active';
     component.selectedRole = 'employee';
+    component.selectedPayFrequency = 'weekly';
 
     component.clearFilters();
 
@@ -96,6 +98,7 @@ describe('EmployeeManagementComponent', () => {
     expect(component.selectedOrganizationId).toBe('');
     expect(component.selectedStatus).toBe('');
     expect(component.selectedRole).toBe('');
+    expect(component.selectedPayFrequency).toBe('');
   });
 
   it('should populate form for editing', () => {
@@ -116,6 +119,7 @@ describe('EmployeeManagementComponent', () => {
       salary: 50000,
       employmentStatus: 'active' as const,
       systemRole: 'employee' as const,
+      payFrequency: 'semiMonthly',
       address: '123 Main St',
       emergencyContact: { name: 'Jane Doe', relationship: 'Spouse', phone: '0987654321' },
       employmentHistory: [],
@@ -149,6 +153,7 @@ describe('EmployeeManagementComponent', () => {
       salary: 50000,
       employmentStatus: 'active' as const,
       systemRole: 'employee' as const,
+      payFrequency: 'semiMonthly',
       address: '123 Main St',
       emergencyContact: { name: 'Jane Doe', relationship: 'Spouse', phone: '0987654321' },
       employmentHistory: [],
@@ -233,6 +238,7 @@ describe('EmployeeManagementComponent', () => {
       salary: 50000,
       employmentStatus: 'active' as const,
       systemRole: 'employee' as const,
+      payFrequency: 'semiMonthly',
       address: '123 Main St',
       emergencyContact: { name: 'Jane Doe', relationship: 'Spouse', phone: '0987654321' },
       employmentHistory: [],
@@ -284,6 +290,7 @@ describe('EmployeeManagementComponent', () => {
       salary: 50000,
       employmentStatus: 'active' as const,
       systemRole: 'employee' as const,
+      payFrequency: 'semiMonthly',
       address: '123 Main St',
       emergencyContact: { name: 'Jane Doe', relationship: 'Spouse', phone: '0987654321' },
       employmentHistory: [],
@@ -301,5 +308,13 @@ describe('EmployeeManagementComponent', () => {
     
     // Should remove employee from array
     expect(component.employees.length).toBe(0);
+  });
+
+  it('should map pay frequency label correctly', () => {
+    expect(component.getPayFrequencyLabel('semiMonthly')).toBe('Semi-monthly');
+    expect(component.getPayFrequencyLabel('monthly')).toBe('Monthly');
+    expect(component.getPayFrequencyLabel('biweekly')).toBe('Biweekly');
+    expect(component.getPayFrequencyLabel('weekly')).toBe('Weekly');
+    expect(component.getPayFrequencyLabel(undefined)).toBe('-');
   });
 });

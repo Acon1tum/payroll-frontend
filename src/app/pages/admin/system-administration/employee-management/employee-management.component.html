@@ -127,7 +127,7 @@
                   (ngModelChange)="onStatusChange()"
                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-transparent filter-select"
                 >
-                  <option value="">All Statuses</option>
+                  <option value="">All Status</option>
                   <option value="active">Active</option>
                   <option value="resigned">Resigned</option>
                   <option value="suspended">Suspended</option>
@@ -135,19 +135,18 @@
                 </select>
               </div>
 
-              <!-- Role Filter -->
-              <div [class.filter-active]="selectedRole">
-                <label class="block text-sm font-medium text-gray-700 mb-2">Role</label>
+              <!-- Pay Frequency Filter -->
+              <div [class.filter-active]="selectedPayFrequency">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Pay Frequency</label>
                 <select
-                  [(ngModel)]="selectedRole"
-                  (ngModelChange)="onRoleChange()"
+                  [(ngModel)]="selectedPayFrequency"
+                  (ngModelChange)="onPayFrequencyChange()"
                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 filter-select"
                 >
-                  <option value="">All Roles</option>
-                  <option value="admin">Admin</option>
-                  <option value="hr">HR</option>
-                  <option value="payroll_manager">Payroll Manager</option>
-                  <option value="employee">Employee</option>
+                  <option value="">All Frequencies</option>
+                  <option value="weekly">Weekly</option>
+                  <option value="semiMonthly">Semi-Monthly</option>
+                  <option value="monthly">Monthly</option>
                 </select>
               </div>
             </div>
@@ -190,7 +189,7 @@
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Department</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Position</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Pay Frequency</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Salary</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                   </tr>
@@ -200,8 +199,9 @@
                     <td class="px-6 py-4 whitespace-nowrap">
                       <div class="flex items-center">
                         <div class="flex-shrink-0 h-10 w-10">
-                          <div class="h-10 w-10 rounded-full bg-blue-600 flex items-center justify-center">
-                            <span class="text-white text-sm font-medium">{{ getFullName(employee).charAt(0) }}</span>
+                          <div class="h-10 w-10 rounded-full bg-blue-600 flex items-center justify-center overflow-hidden">
+                            <img *ngIf="employee.photoUrl" [src]="employee.photoUrl" alt="Profile" class="w-full h-full object-cover" />
+                            <span *ngIf="!employee.photoUrl" class="text-white text-sm font-medium">{{ getFullName(employee).charAt(0) }}</span>
                           </div>
                         </div>
                         <div class="ml-4">
@@ -217,7 +217,7 @@
                         {{ employee.employmentStatus }}
                       </span>
                     </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ getRoleLabel(employee.systemRole) }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ getPayFrequencyLabel(employee.payFrequency) }}</td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ formatCurrency(employee.salary) }}</td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                       <button
