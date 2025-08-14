@@ -37,9 +37,8 @@ import { EmployeeSettingsComponent } from './pages/employee/employee-settings/em
 import { ReportsComponent } from './pages/employee/reports/reports.component';
 
 export const routes: Routes = [
-  { path: '', component: LandingComponent },
+  { path: '', component: LoginComponent },
   { path: 'landing', component: LandingComponent },
-  { path: 'login', component: LoginComponent },
   { path: 'dashboard', component: DashboardComponent },
   { path: 'employee-dashboard', component: EmployeeDashboardComponent },
   { path: 'department-management', component: DepartmentManagementComponent },
