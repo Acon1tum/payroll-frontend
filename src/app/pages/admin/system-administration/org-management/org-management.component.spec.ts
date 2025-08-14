@@ -194,6 +194,181 @@ describe('OrgManagementComponent', () => {
     });
   });
 
+  describe('Enhanced Search Functionality', () => {
+    beforeEach(() => {
+      component.organizations = [
+        { id: '1', name: 'TechCorp Solutions', code: 'TECH001', tin: '123456789', address: '123 Business Ave, Tech City, TC 12345', contact: 'John Smith', email: 'john@techcorp.com', phone: '123-456-7890', status: 'active', createdAt: new Date(), updatedAt: new Date() },
+        { id: '2', name: 'Global Industries Ltd', code: 'GLOB002', tin: '987654321', address: '456 Corporate Blvd, Business District, BD 67890', contact: 'Sarah Johnson', email: 'sarah@global.com', phone: '123-456-7891', status: 'active', createdAt: new Date(), updatedAt: new Date() },
+        { id: '3', name: 'Innovation Corp', code: 'INNO003', tin: '555666777', address: '789 Innovation St, Tech Hub, TH 11111', contact: 'Mike Wilson', email: 'mike@innovation.com', phone: '123-456-7892', status: 'inactive', createdAt: new Date(), updatedAt: new Date() }
+      ];
+      component.filteredOrganizations = [...component.organizations];
+    });
+
+    it('should implement search debouncing', (done) => {
+      spyOn(component, 'searchOrganizations');
+      
+      component.onSearchInput();
+      
+      // Should not call searchOrganizations immediately
+      expect(component.searchOrganizations).not.toHaveBeenCalled();
+      
+      // Should call searchOrganizations after 300ms
+      setTimeout(() => {
+        expect(component.searchOrganizations).toHaveBeenCalled();
+        done();
+      }, 350);
+    });
+
+    it('should clear search and reset results', () => {
+      component.searchTerm = 'TechCorp';
+      component.searchOrganizations();
+      
+      expect(component.filteredOrganizations.length).toBe(1);
+      
+      component.clearSearch();
+      
+      expect(component.searchTerm).toBe('');
+      expect(component.filteredOrganizations.length).toBe(3);
+      expect(component.currentPage).toBe(1);
+    });
+
+    it('should provide search result count', () => {
+      component.searchTerm = 'TechCorp';
+      component.searchOrganizations();
+      
+      expect(component.searchResultCount).toBe(1);
+      expect(component.hasSearchResults).toBe(true);
+    });
+
+    it('should handle search with no results', () => {
+      component.searchTerm = 'NonExistent';
+      component.searchOrganizations();
+      
+      expect(component.searchResultCount).toBe(0);
+      expect(component.hasSearchResults).toBe(false);
+    });
+
+    it('should search across multiple fields', () => {
+      // Search by name
+      component.searchTerm = 'TechCorp';
+      component.searchOrganizations();
+      expect(component.filteredOrganizations.length).toBe(1);
+      
+      // Search by code
+      component.searchTerm = 'GLOB';
+      component.searchOrganizations();
+      expect(component.filteredOrganizations.length).toBe(1);
+      
+      // Search by TIN
+      component.searchTerm = '123456789';
+      component.searchOrganizations();
+      expect(component.filteredOrganizations.length).toBe(1);
+      
+      // Search by contact
+      component.searchTerm = 'John Smith';
+      component.searchOrganizations();
+      expect(component.filteredOrganizations.length).toBe(1);
+      
+      // Search by email
+      component.searchTerm = 'sarah@global.com';
+      component.searchOrganizations();
+      expect(component.filteredOrganizations.length).toBe(1);
+      
+      // Search by address
+      component.searchTerm = 'Business District';
+      component.searchOrganizations();
+      expect(component.filteredOrganizations.length).toBe(1);
+      
+      // Search by phone
+      component.searchTerm = '123-456-7890';
+      component.searchOrganizations();
+      expect(component.filteredOrganizations.length).toBe(1);
+    });
+
+    it('should handle case-insensitive search', () => {
+      component.searchTerm = 'techcorp';
+      component.searchOrganizations();
+      expect(component.filteredOrganizations.length).toBe(1);
+      
+      component.searchTerm = 'TECHCORP';
+      component.searchOrganizations();
+      expect(component.filteredOrganizations.length).toBe(1);
+    });
+
+    it('should handle partial search matches', () => {
+      component.searchTerm = 'Tech';
+      component.searchOrganizations();
+      expect(component.filteredOrganizations.length).toBe(1);
+      
+      component.searchTerm = '123';
+      component.searchOrganizations();
+      expect(component.filteredOrganizations.length).toBe(1);
+    });
+
+    it('should reset pagination when searching', () => {
+      component.currentPage = 2;
+      component.searchTerm = 'TechCorp';
+      component.searchOrganizations();
+      
+      expect(component.currentPage).toBe(1);
+    });
+
+    it('should handle empty search term', () => {
+      component.searchTerm = '   ';
+      component.searchOrganizations();
+      
+      expect(component.filteredOrganizations.length).toBe(3);
+    });
+
+    it('should handle special characters in search', () => {
+      component.searchTerm = 'Tech-Corp';
+      component.searchOrganizations();
+      expect(component.filteredOrganizations.length).toBe(0);
+      
+      component.searchTerm = 'Tech@Corp';
+      component.searchOrganizations();
+      expect(component.filteredOrganizations.length).toBe(0);
+    });
+
+    it('should highlight search terms in text', () => {
+      const text = 'TechCorp Solutions';
+      const searchTerm = 'Tech';
+      
+      const highlighted = component.highlightSearchTerm(text, searchTerm);
+      expect(highlighted).toContain('<mark class="search-highlight">Tech</mark>');
+    });
+
+    it('should handle case-insensitive highlighting', () => {
+      const text = 'TechCorp Solutions';
+      const searchTerm = 'tech';
+      
+      const highlighted = component.highlightSearchTerm(text, searchTerm);
+      expect(highlighted).toContain('<mark class="search-highlight">Tech</mark>');
+    });
+
+    it('should escape special regex characters', () => {
+      const text = 'Tech.Corp Solutions';
+      const searchTerm = 'Tech.Corp';
+      
+      const highlighted = component.highlightSearchTerm(text, searchTerm);
+      expect(highlighted).toContain('<mark class="search-highlight">Tech.Corp</mark>');
+    });
+
+    it('should check if text contains search term', () => {
+      const text = 'TechCorp Solutions';
+      const searchTerm = 'Tech';
+      
+      expect(component.containsSearchTerm(text, searchTerm)).toBe(true);
+      expect(component.containsSearchTerm(text, 'NonExistent')).toBe(false);
+    });
+
+    it('should handle empty or null values in highlighting', () => {
+      expect(component.highlightSearchTerm('', 'test')).toBe('');
+      expect(component.highlightSearchTerm('test', '')).toBe('test');
+      expect(component.highlightSearchTerm('', '')).toBe('');
+    });
+  });
+
   describe('Form Validation', () => {
     it('should validate required fields', () => {
       // Test with empty form
@@ -335,6 +510,59 @@ describe('OrgManagementComponent', () => {
       });
 
       expect(component.organizations[0].status).toBe('inactive');
+    });
+  });
+
+  describe('Modal Functionality', () => {
+    it('should close modal on escape key press', () => {
+      component.isAddMode = true;
+      fixture.detectChanges();
+      
+      const escapeEvent = new KeyboardEvent('keydown', { key: 'Escape' });
+      document.dispatchEvent(escapeEvent);
+      
+      expect(component.isAddMode).toBe(false);
+    });
+
+    it('should not close modal on other key press', () => {
+      component.isAddMode = true;
+      fixture.detectChanges();
+      
+      const otherKeyEvent = new KeyboardEvent('keydown', { key: 'Enter' });
+      document.dispatchEvent(otherKeyEvent);
+      
+      expect(component.isAddMode).toBe(true);
+    });
+
+    it('should close modal on backdrop click', () => {
+      component.isAddMode = true;
+      fixture.detectChanges();
+      
+      const mockEvent = {
+        target: document.createElement('div'),
+        currentTarget: document.createElement('div')
+      };
+      mockEvent.target = mockEvent.currentTarget; // Simulate clicking on backdrop
+      
+      component.onModalBackdropClick(mockEvent as any);
+      
+      expect(component.isAddMode).toBe(false);
+    });
+
+    it('should not close modal on modal content click', () => {
+      component.isAddMode = true;
+      fixture.detectChanges();
+      
+      const mockEvent = {
+        target: document.createElement('div'),
+        currentTarget: document.createElement('div')
+      };
+      // Different targets to simulate clicking on modal content
+      mockEvent.target = document.createElement('input');
+      
+      component.onModalBackdropClick(mockEvent as any);
+      
+      expect(component.isAddMode).toBe(true);
     });
   });
 });

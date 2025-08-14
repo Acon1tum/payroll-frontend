@@ -52,6 +52,9 @@ export class OrgManagementComponent implements OnInit {
   paginatedOrganizations: Organization[] = [];
   Math = Math;
 
+  // Debouncing for search
+  private searchTimeout: any;
+
   // Breadcrumbs for header
   breadcrumbs: Breadcrumb[] = [
     { label: 'Dashboard', path: '/dashboard' },
@@ -75,6 +78,38 @@ export class OrgManagementComponent implements OnInit {
 
   ngOnInit() {
     this.loadOrganizations();
+    this.setupModalListeners();
+  }
+
+  ngOnDestroy() {
+    this.removeModalListeners();
+    // Clear search timeout
+    if (this.searchTimeout) {
+      clearTimeout(this.searchTimeout);
+    }
+  }
+
+  private setupModalListeners() {
+    // Add escape key listener
+    document.addEventListener('keydown', this.handleEscapeKey.bind(this));
+  }
+
+  private removeModalListeners() {
+    // Remove escape key listener
+    document.removeEventListener('keydown', this.handleEscapeKey.bind(this));
+  }
+
+  private handleEscapeKey(event: KeyboardEvent) {
+    if (event.key === 'Escape' && (this.isAddMode || this.isEditMode)) {
+      this.cancelEdit();
+    }
+  }
+
+  // Method to handle modal backdrop click
+  onModalBackdropClick(event: Event) {
+    if (event.target === event.currentTarget) {
+      this.cancelEdit();
+    }
   }
 
   loadOrganizations() {
@@ -113,16 +148,66 @@ export class OrgManagementComponent implements OnInit {
     if (!this.searchTerm.trim()) {
       this.filteredOrganizations = [...this.organizations];
     } else {
+      const searchLower = this.searchTerm.toLowerCase().trim();
       this.filteredOrganizations = this.organizations.filter(org =>
-        org.name.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
-        org.code.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
-        org.tin.includes(this.searchTerm) ||
-        org.contact.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
-        org.email.toLowerCase().includes(this.searchTerm.toLowerCase())
+        org.name.toLowerCase().includes(searchLower) ||
+        org.code.toLowerCase().includes(searchLower) ||
+        org.tin.toLowerCase().includes(searchLower) ||
+        org.contact.toLowerCase().includes(searchLower) ||
+        org.email.toLowerCase().includes(searchLower) ||
+        org.address.toLowerCase().includes(searchLower) ||
+        (org.phone && org.phone.toLowerCase().includes(searchLower))
       );
     }
     this.currentPage = 1; // Reset to first page when searching
     this.updatePagination();
+  }
+
+  // Enhanced search with debouncing
+  onSearchInput() {
+    // Clear any existing timeout
+    if (this.searchTimeout) {
+      clearTimeout(this.searchTimeout);
+    }
+    
+    // Set a new timeout to search after user stops typing
+    this.searchTimeout = setTimeout(() => {
+      this.searchOrganizations();
+    }, 300); // 300ms delay
+  }
+
+  // Clear search
+  clearSearch() {
+    this.searchTerm = '';
+    this.searchOrganizations();
+  }
+
+  // Check if search has results
+  get hasSearchResults(): boolean {
+    return this.filteredOrganizations.length > 0;
+  }
+
+  // Get search result count
+  get searchResultCount(): number {
+    return this.filteredOrganizations.length;
+  }
+
+  // Highlight search terms in text
+  highlightSearchTerm(text: string, searchTerm: string): string {
+    if (!searchTerm || !text) {
+      return text;
+    }
+    
+    const regex = new RegExp(`(${searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+    return text.replace(regex, '<mark class="search-highlight">$1</mark>');
+  }
+
+  // Check if text contains search term
+  containsSearchTerm(text: string, searchTerm: string): boolean {
+    if (!searchTerm || !text) {
+      return false;
+    }
+    return text.toLowerCase().includes(searchTerm.toLowerCase());
   }
 
   // Pagination methods
