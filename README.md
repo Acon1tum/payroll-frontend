@@ -57,3 +57,16 @@ Angular CLI does not come with an end-to-end testing framework by default. You c
 ## Additional Resources
 
 For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+
+
+REMINDER:
+WHEN DEPLOYED MAKE SURE TO CHANGE THE 
+if (process.env.NODE_ENV === 'production') {
+      allowedOrigins.push(
+        'https://yourdomain.com',     // Change this to your actual domain
+        'https://www.yourdomain.com'  // Change this to your actual domain
+      );
+    }
+
+
+IN (src\index.ts)
