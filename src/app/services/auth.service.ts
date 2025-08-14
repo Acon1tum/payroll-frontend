@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { BehaviorSubject, Observable, tap, map } from 'rxjs';
+import { BehaviorSubject, Observable, tap, map, catchError } from 'rxjs';
 import { Router } from '@angular/router';
 import { environment } from '../../environment/environment';
 
@@ -84,17 +84,99 @@ export class AuthService {
           const payload = resp?.data ?? resp;
           const normalized: LoginResponse = { user: payload.user, token: payload.token };
           this.setSession(normalized);
+          
+          // Log successful login to access logs
+          this.logLoginAccess(normalized.user, 'success');
+          
           return normalized;
+        }),
+        catchError((error: any) => {
+          // Log failed login attempt (but don't break the error flow)
+          console.warn('Login failed:', error);
+          throw error;
         })
       );
   }
 
+  private logLoginAccess(user: User, status: 'success' | 'failed'): void {
+    // For successful logins, we can log after setting the session
+    // For failed logins, we'll skip logging since we don't have a user object
+    if (status === 'success') {
+      // Log successful login after setting the session (when we have a token)
+      setTimeout(() => {
+        this.logSuccessfulLogin(user);
+      }, 100);
+    }
+    // Note: Failed login attempts are typically logged by the backend during authentication
+  }
+
+  private logSuccessfulLogin(user: User): void {
+    const token = this.token;
+    if (token) {
+      // Log to activity logs
+      fetch(`${this.API_URL}/audit-trail/activity-logs/log`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          userId: user.id,
+          entity: 'User',
+          entityId: user.id,
+          action: 'LOGIN',
+          details: 'User logged in successfully',
+          severity: 'info'
+        })
+      }).catch(error => {
+        // Silently fail - don't break login process
+        console.warn('Failed to log successful login:', error);
+      });
+    } else {
+      // If no token available, skip logging - this shouldn't happen in normal flow
+      console.warn('No token available for logging successful login');
+    }
+  }
+
   logout(): void {
+    // Log logout activity before clearing session
+    this.logLogoutActivity();
+    
     // Clear all session data for security
     this.clearSession();
     
     // Force navigation to login page and clear any cached routes
     this.router.navigate(['/login'], { replaceUrl: true });
+  }
+
+  private logLogoutActivity(): void {
+    // Only log if we have a current user
+    if (this.currentUser) {
+      // Use a simple HTTP request to log logout (don't use the service to avoid circular dependency)
+      const token = this.token;
+      if (token) {
+        // Log to activity logs
+        fetch(`${this.API_URL}/audit-trail/activity-logs/logout`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            userId: this.currentUser.id,
+            entity: 'User',
+            entityId: this.currentUser.id,
+            action: 'LOGOUT',
+            details: 'User logged out',
+            severity: 'info'
+          })
+        }).catch(error => {
+          // Silently fail - don't break logout process
+          console.warn('Failed to log logout activity:', error);
+        });
+       
+      }
+    }
   }
 
   private setSession(response: LoginResponse): void {

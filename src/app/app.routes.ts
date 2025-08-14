@@ -26,7 +26,6 @@ import { GovtReportsComponent } from './pages/admin/reports-remittances/govt-rep
 import { BankFileGenerationComponent } from './pages/admin/bank-file-generation/bank-file-generation.component';
 import { AuditTrailComponent } from './pages/admin/audit-trail/audit-trail.component';
 import { ActivityLogsComponent } from './pages/admin/audit-trail/activity-logs/activity-logs.component';
-import { AccessLogsComponent } from './pages/admin/audit-trail/access-logs/access-logs.component';
 import { RequestLoanComponent } from './pages/employee/request-loan/request-loan.component';
 import { ProfileComponent } from './pages/employee/profile/profile.component';
 import { PayslipComponent } from './pages/employee/payslip/payslip.component';
@@ -207,12 +206,6 @@ export const routes: Routes = [
   { 
     path: 'activity-logs', 
     component: ActivityLogsComponent,
-    canActivate: [AuthGuard, RoleGuard],
-    data: { roles: ['admin'] }
-  },
-  { 
-    path: 'access-logs', 
-    component: AccessLogsComponent,
     canActivate: [AuthGuard, RoleGuard],
     data: { roles: ['admin'] }
   },

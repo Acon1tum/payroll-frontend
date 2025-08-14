@@ -1,17 +1,11 @@
-import { Component } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { SidebarComponent } from "../../../../shared/sidebar/sidebar.component";
 import { HeaderComponent } from "../../../../shared/header/header.component";
-
-export interface ActivityLog {
-  id: string;
-  user: string;
-  module: string;
-  action: string;
-  details: string;
-  date: Date;
-}
+import { ActivityLogsService, ActivityLog, ActivityLogsResponse, ActivityLogsSummary, ActivityLogsFilters } from '../../../../services/activity-logs.service';
+import { FormBuilder, FormGroup } from '@angular/forms';
+import { Subject, takeUntil, debounceTime, distinctUntilChanged } from 'rxjs';
 
 interface Breadcrumb {
   label: string;
@@ -23,17 +17,30 @@ interface Breadcrumb {
   selector: 'app-activity-logs',
   templateUrl: './activity-logs.component.html',
   styleUrl: './activity-logs.component.scss',
-  imports: [CommonModule, FormsModule, SidebarComponent, HeaderComponent]
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, SidebarComponent, HeaderComponent]
 })
-export class ActivityLogsComponent {
-  logs: ActivityLog[] = [
-    { id: 'ACT-001', user: 'admin@company.com', module: 'Payroll', action: 'Run Payroll', details: 'Run for 2025-06 period', date: new Date() },
-    { id: 'ACT-002', user: 'hr@company.com', module: 'Employees', action: 'Create', details: 'Added EMP-1010', date: new Date(Date.now() - 1000*60*20) },
-    { id: 'ACT-003', user: 'payroll@company.com', module: 'Deductions', action: 'Update', details: 'Updated SSS table', date: new Date(Date.now() - 1000*60*60) },
-    { id: 'ACT-004', user: 'auditor@company.com', module: 'Audit', action: 'Export', details: 'Downloaded logs', date: new Date(Date.now() - 1000*60*60*24) },
-  ];
-  filtered: ActivityLog[] = [...this.logs];
-  filter: { user?: string; module?: string; date?: string } = {};
+export class ActivityLogsComponent implements OnInit, OnDestroy {
+  private destroy$ = new Subject<void>();
+
+  // Data
+  activityLogs: ActivityLog[] = [];
+  summary: ActivityLogsSummary | null = null;
+  loading = false;
+  error = '';
+
+  // Pagination
+  currentPage = 1;
+  pageSize = 20;
+  totalItems = 0;
+  totalPages = 0;
+
+  // Filters
+  filtersForm: FormGroup;
+  showFilters = false;
+
+  // Export
+  exporting = false;
+  isRealTimeEnabled = true;
 
   // Breadcrumbs for header
   breadcrumbs: Breadcrumb[] = [
@@ -42,30 +49,223 @@ export class ActivityLogsComponent {
     { label: 'Activity Logs', active: true }
   ];
 
-  filterLogs() {
-    const userTerm = (this.filter.user || '').toLowerCase().trim();
-    const moduleTerm = (this.filter.module || '').toLowerCase().trim();
-    const dateStr = (this.filter.date || '').trim();
-    this.filtered = this.logs.filter(l => {
-      const okUser = !userTerm || l.user.toLowerCase().includes(userTerm);
-      const okModule = !moduleTerm || l.module.toLowerCase().includes(moduleTerm);
-      const okDate = !dateStr || new Date(l.date).toISOString().slice(0,10) === dateStr;
-      return okUser && okModule && okDate;
+  constructor(
+    public activityLogsService: ActivityLogsService,
+    private fb: FormBuilder
+  ) {
+    this.filtersForm = this.fb.group({
+      entity: [''],
+      action: [''],
+      severity: [''],
+      ipAddress: [''],
+      startDate: [''],
+      endDate: [''],
+      search: ['']
     });
   }
 
-  exportCsv() {
-    const rows = [
-      ['ID','User','Module','Action','Details','Date'],
-      ...this.filtered.map(l => [l.id, l.user, l.module, l.action, l.details, l.date.toISOString()])
-    ];
-    const csv = rows.map(r => r.map(v => `"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'activity-logs.csv';
-    a.click();
-    URL.revokeObjectURL(url);
+  ngOnInit(): void {
+    this.loadActivityLogs();
+    this.loadSummary();
+
+    // Start real-time updates
+    this.startRealTimeUpdates();
+
+    // Setup search debouncing
+    this.filtersForm.get('search')?.valueChanges
+      .pipe(
+        takeUntil(this.destroy$),
+        debounceTime(500),
+        distinctUntilChanged()
+      )
+      .subscribe(() => {
+        this.currentPage = 1;
+        this.loadActivityLogs();
+      });
+
+    // Setup other filter changes
+    this.filtersForm.valueChanges
+      .pipe(
+        takeUntil(this.destroy$),
+        debounceTime(300),
+        distinctUntilChanged()
+      )
+      .subscribe(() => {
+        this.currentPage = 1;
+        this.loadActivityLogs();
+      });
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+    
+    // Stop real-time updates
+    this.stopRealTimeUpdates();
+  }
+
+  startRealTimeUpdates(): void {
+    // Subscribe to real-time updates
+    this.activityLogsService.lastUpdateTime$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(() => {
+        // Refresh data when real-time update is triggered
+        this.loadActivityLogs();
+        this.loadSummary();
+      });
+    
+    // Start the real-time service
+    this.activityLogsService.startRealTimeUpdates(30000); // 30 seconds
+    
+    // Update the local state
+    this.isRealTimeEnabled = true;
+  }
+
+  stopRealTimeUpdates(): void {
+    this.activityLogsService.stopRealTimeUpdates();
+    
+    // Update the local state
+    this.isRealTimeEnabled = false;
+  }
+
+  toggleRealTime(): void {
+    if (this.isRealTimeEnabled) {
+      this.stopRealTimeUpdates();
+      this.isRealTimeEnabled = false;
+    } else {
+      this.startRealTimeUpdates();
+      this.isRealTimeEnabled = true;
+    }
+  }
+
+  manualRefresh(): void {
+    this.loadActivityLogs();
+    this.loadSummary();
+  }
+
+  loadActivityLogs(): void {
+    this.loading = true;
+    this.error = '';
+
+    const filters: ActivityLogsFilters = {
+      page: this.currentPage,
+      limit: this.pageSize,
+      ...this.filtersForm.value
+    };
+
+    this.activityLogsService.getActivityLogs(filters)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (response: ActivityLogsResponse) => {
+          this.activityLogs = response.data.activityLogs;
+          this.totalItems = response.data.pagination.total;
+          this.totalPages = response.data.pagination.totalPages;
+          this.loading = false;
+        },
+        error: (error) => {
+          this.error = 'Failed to load activity logs';
+          this.loading = false;
+          console.error('Error loading activity logs:', error);
+        }
+      });
+  }
+
+  loadSummary(): void {
+    const { startDate, endDate } = this.filtersForm.value;
+    
+    this.activityLogsService.getActivityLogsSummary(startDate, endDate)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (response) => {
+          this.summary = response;
+        },
+        error: (error) => {
+          console.error('Error loading summary:', error);
+        }
+      });
+  }
+
+  onPageChange(page: number): void {
+    this.currentPage = page;
+    this.loadActivityLogs();
+  }
+
+  onPageSizeChange(pageSize: number): void {
+    this.pageSize = pageSize;
+    this.currentPage = 1;
+    this.loadActivityLogs();
+  }
+
+  clearFilters(): void {
+    this.filtersForm.reset();
+    this.currentPage = 1;
+    this.loadActivityLogs();
+    this.loadSummary();
+  }
+
+  toggleFilters(): void {
+    this.showFilters = !this.showFilters;
+  }
+
+  exportToCSV(): void {
+    this.exporting = true;
+    const filters: ActivityLogsFilters = this.filtersForm.value;
+
+    this.activityLogsService.exportActivityLogs(filters)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (blob) => {
+          this.activityLogsService.downloadCSV(blob);
+          this.exporting = false;
+        },
+        error: (error) => {
+          this.error = 'Failed to export activity logs';
+          this.exporting = false;
+          console.error('Error exporting activity logs:', error);
+        }
+      });
+  }
+
+  getSeverityColor(severity: string): string {
+    return this.activityLogsService.getSeverityColor(severity);
+  }
+
+  getActionIcon(action: string): string {
+    return this.activityLogsService.getActionIcon(action);
+  }
+
+  getActionColor(action: string): string {
+    return this.activityLogsService.getActionColor(action);
+  }
+
+  formatDate(dateString: string): string {
+    return this.activityLogsService.formatDate(dateString);
+  }
+
+  getUserDisplayName(log: ActivityLog): string {
+    if (log.user?.employee) {
+      return `${log.user.employee.firstName} ${log.user.employee.lastName} (${log.user.employee.employeeNumber})`;
+    }
+    return log.user?.email || 'System';
+  }
+
+  getRoleDisplayName(role: string): string {
+    return role.charAt(0).toUpperCase() + role.slice(1).replace(/([A-Z])/g, ' $1');
+  }
+
+  getWarningCount(): number {
+    if (!this.summary?.data.severityCounts) return 0;
+    const warningCount = this.summary.data.severityCounts.find(s => s.severity === 'warning');
+    return warningCount?._count.severity || 0;
+  }
+
+  getErrorCount(): number {
+    if (!this.summary?.data.severityCounts) return 0;
+    const errorCount = this.summary.data.severityCounts.find(s => s.severity === 'error');
+    return errorCount?._count.severity || 0;
+  }
+
+  getMaxPageItems(): number {
+    return Math.min(this.currentPage * this.pageSize, this.totalItems);
   }
 }

@@ -68,7 +68,6 @@ export class SidebarComponent implements OnInit, OnDestroy, OnChanges {
         { name: 'Bank File Generation', icon: 'account_circle', path: '/bank-file-generation' },
         { name: 'Audit & Logs', icon: 'person', children: [
           { name: 'Activity Logs', icon: 'account_circle', path: '/activity-logs' },
-          { name: 'Access Logs', icon: 'schedule', path: '/access-logs' }
         ] },
         
     ],
