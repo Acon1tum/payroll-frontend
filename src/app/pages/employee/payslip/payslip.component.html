@@ -21,10 +21,84 @@
           </div>
         </div>
 
-        <!-- Payslip History Table -->
+        <!-- Filters -->
         <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+          <div class="px-6 py-4 border-b border-gray-200">
+            <h4 class="text-md font-medium text-gray-900 mb-3">Filters</h4>
+            <div class="flex flex-wrap gap-4 items-center">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Year</label>
+                <select 
+                  [value]="selectedYear || ''" 
+                  (change)="onYearSelect($event)"
+                  class="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                  <option value="">All Years</option>
+                  <option value="2024">2024</option>
+                  <option value="2023">2023</option>
+                  <option value="2022">2022</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Month</label>
+                <select 
+                  [value]="selectedMonth || ''" 
+                  (change)="onMonthSelect($event)"
+                  class="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                  <option value="">All Months</option>
+                  <option value="1">January</option>
+                  <option value="2">February</option>
+                  <option value="3">March</option>
+                  <option value="4">April</option>
+                  <option value="5">May</option>
+                  <option value="6">June</option>
+                  <option value="7">July</option>
+                  <option value="8">August</option>
+                  <option value="9">September</option>
+                  <option value="10">October</option>
+                  <option value="11">November</option>
+                  <option value="12">December</option>
+                </select>
+              </div>
+              <div class="flex items-end">
+                <button 
+                  (click)="clearFilters()"
+                  class="px-4 py-2 text-sm bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200">
+                  Clear Filters
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Loading State -->
+        <div *ngIf="loading" class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+          <div class="flex items-center justify-center">
+            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+            <span class="ml-3 text-gray-600">Loading payslips...</span>
+          </div>
+        </div>
+
+        <!-- Error State -->
+        <div *ngIf="error && !loading" class="bg-red-50 border border-red-200 rounded-lg p-4">
+          <div class="flex">
+            <div class="flex-shrink-0">
+              <svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+              </svg>
+            </div>
+            <div class="ml-3">
+              <p class="text-sm text-red-700">{{ error }}</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Payslip History Table -->
+        <div *ngIf="!loading && !error" class="bg-white rounded-lg shadow-sm border border-gray-200">
           <div class="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
             <h4 class="text-md font-medium text-gray-900">Payslip History</h4>
+            <div class="text-sm text-gray-600">
+              Showing {{ (currentPage - 1) * itemsPerPage + 1 }} to {{ Math.min(currentPage * itemsPerPage, totalItems) }} of {{ totalItems }} results
+            </div>
           </div>
           <div class="p-6 overflow-x-auto">
             <table class="min-w-full divide-y divide-gray-200">
@@ -42,10 +116,10 @@
               <tbody class="bg-white divide-y divide-gray-200">
                 <tr *ngFor="let p of payslips">
                   <td class="px-4 py-3 text-sm text-gray-900">{{ p.id }}</td>
-                  <td class="px-4 py-3 text-sm text-gray-600">{{ p.periodFrom | date:'MMM d, y' }} - {{ p.periodTo | date:'MMM d, y' }}</td>
-                  <td class="px-4 py-3 text-sm text-gray-600">{{ p.payDate | date:'MMM d, y' }}</td>
-                  <td class="px-4 py-3 text-sm text-gray-900 text-right">{{ formatCurrency(p.grossTotal) }}</td>
-                  <td class="px-4 py-3 text-sm text-gray-900 text-right">{{ formatCurrency(p.deductionsTotal) }}</td>
+                  <td class="px-4 py-3 text-sm text-gray-600">{{ formatDate(p.payrollRun.periodStart) }} - {{ formatDate(p.payrollRun.periodEnd) }}</td>
+                  <td class="px-4 py-3 text-sm text-gray-600">{{ formatDate(p.payrollRun.payDate) }}</td>
+                  <td class="px-4 py-3 text-sm text-gray-900 text-right">{{ formatCurrency(p.grossPay) }}</td>
+                  <td class="px-4 py-3 text-sm text-gray-900 text-right">{{ formatCurrency(p.totalDeductions) }}</td>
                   <td class="px-4 py-3 text-sm font-semibold text-gray-900 text-right">{{ formatCurrency(p.netPay) }}</td>
                   <td class="px-4 py-3 text-sm text-right">
                     <div class="inline-flex space-x-2">
@@ -56,6 +130,68 @@
                 </tr>
               </tbody>
             </table>
+
+            <!-- Empty State -->
+            <div *ngIf="payslips.length === 0" class="text-center py-8">
+              <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              <h3 class="mt-2 text-sm font-medium text-gray-900">No payslips found</h3>
+              <p class="mt-1 text-sm text-gray-500">No payslips match your current filters.</p>
+            </div>
+          </div>
+
+          <!-- Pagination -->
+          <div *ngIf="totalPages > 1" class="px-6 py-3 border-t border-gray-200 flex items-center justify-between">
+            <div class="flex-1 flex justify-between sm:hidden">
+              <button 
+                (click)="onPageChange(currentPage - 1)"
+                [disabled]="!hasPreviousPage()"
+                class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
+                Previous
+              </button>
+              <button 
+                (click)="onPageChange(currentPage + 1)"
+                [disabled]="!hasNextPage()"
+                class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
+                Next
+              </button>
+            </div>
+            <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+              <div>
+                <p class="text-sm text-gray-700">
+                  Showing <span class="font-medium">{{ (currentPage - 1) * itemsPerPage + 1 }}</span> to <span class="font-medium">{{ Math.min(currentPage * itemsPerPage, totalItems) }}</span> of <span class="font-medium">{{ totalItems }}</span> results
+                </p>
+              </div>
+              <div>
+                <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                  <button 
+                    (click)="onPageChange(currentPage - 1)"
+                    [disabled]="!hasPreviousPage()"
+                    class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
+                    <span class="sr-only">Previous</span>
+                    <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                      <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
+                    </svg>
+                  </button>
+                  <button 
+                    *ngFor="let page of getPageNumbers()"
+                    (click)="onPageChange(page)"
+                    [class]="page === currentPage ? 'relative inline-flex items-center px-4 py-2 border border-blue-500 bg-blue-50 text-sm font-medium text-blue-600' : 'relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50'">
+                    {{ page }}
+                  </button>
+                  <button 
+                    (click)="onPageChange(currentPage + 1)"
+                    [disabled]="!hasNextPage()"
+                    class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
+                    <span class="sr-only">Next</span>
+                    <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                      <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+                    </svg>
+                  </button>
+                </nav>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -65,7 +201,7 @@
             <div class="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
               <div>
                 <h4 class="text-md font-medium text-gray-900">Payslip Details</h4>
-                <p class="text-xs text-gray-600">Reference: {{ selected?.id }} • Period: {{ selected?.periodFrom | date:'MMM d, y' }} - {{ selected?.periodTo | date:'MMM d, y' }}</p>
+                <p class="text-xs text-gray-600">Reference: {{ selected?.id }} • Period: {{ selected?.payrollRun?.periodStart | date:'MMM d, y' }} - {{ selected?.payrollRun?.periodEnd | date:'MMM d, y' }}</p>
               </div>
               <button (click)="closeDetails()" class="text-gray-500 hover:text-gray-700">✕</button>
             </div>
@@ -73,26 +209,26 @@
               <div>
                 <h5 class="text-sm font-semibold text-gray-900 mb-2">Earnings</h5>
                 <div class="space-y-2 text-sm">
-                  <div class="flex items-center justify-between" *ngFor="let e of selected?.earnings">
+                  <div class="flex items-center justify-between" *ngFor="let e of getEarnings(selected!)">
                     <span class="text-gray-700">{{ e.label }}</span>
                     <span class="text-gray-900 font-medium">{{ formatCurrency(e.amount) }}</span>
                   </div>
                   <div class="flex items-center justify-between border-t border-gray-200 pt-2">
                     <span class="text-gray-700 font-medium">Gross Total</span>
-                    <span class="text-gray-900 font-semibold">{{ formatCurrency(selected?.grossTotal) }}</span>
+                    <span class="text-gray-900 font-semibold">{{ formatCurrency(selected?.grossPay) }}</span>
                   </div>
                 </div>
               </div>
               <div>
                 <h5 class="text-sm font-semibold text-gray-900 mb-2">Deductions</h5>
                 <div class="space-y-2 text-sm">
-                  <div class="flex items-center justify-between" *ngFor="let d of selected?.deductions">
+                  <div class="flex items-center justify-between" *ngFor="let d of getDeductions(selected!)">
                     <span class="text-gray-700">{{ d.label }}</span>
                     <span class="text-gray-900 font-medium">{{ formatCurrency(d.amount) }}</span>
                   </div>
                   <div class="flex items-center justify-between border-t border-gray-200 pt-2">
                     <span class="text-gray-700 font-medium">Deductions Total</span>
-                    <span class="text-gray-900 font-semibold">{{ formatCurrency(selected?.deductionsTotal) }}</span>
+                    <span class="text-gray-900 font-semibold">{{ formatCurrency(selected?.totalDeductions) }}</span>
                   </div>
                 </div>
               </div>

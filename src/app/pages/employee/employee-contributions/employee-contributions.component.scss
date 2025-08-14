@@ -1,0 +1,73 @@
+// Contribution logo styling for PNG images
+.contribution-logo {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+  border-radius: 4px;
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+  padding: 2px;
+  display: block;
+  transition: all 0.2s ease-in-out;
+  
+  &:hover {
+    transform: scale(1.05);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
+}
+
+// Fallback styling when logo fails to load
+.contribution-logo-fallback {
+  width: 32px;
+  height: 32px;
+  border-radius: 4px;
+  background-color: #3b82f6;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  border: 1px solid #e2e8f0;
+  transition: all 0.2s ease-in-out;
+  
+  &:hover {
+    background-color: #2563eb;
+    transform: scale(1.05);
+  }
+}
+
+// Summary card hover effects
+.summary-card {
+  transition: all 0.2s ease-in-out;
+  
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  }
+}
+
+// Logo container styling
+.logo-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
+  min-height: 32px;
+  flex-shrink: 0;
+}
+
+// Responsive adjustments
+@media (max-width: 768px) {
+  .contribution-logo,
+  .contribution-logo-fallback {
+    width: 28px;
+    height: 28px;
+  }
+  
+  .logo-container {
+    min-width: 28px;
+    min-height: 28px;
+  }
+}
