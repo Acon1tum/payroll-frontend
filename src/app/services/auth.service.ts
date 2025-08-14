@@ -55,11 +55,25 @@ export class AuthService {
   }
 
   get isAuthenticated(): boolean {
-    return !!this.currentUserSubject.value;
+    // Check if user exists and token is valid
+    const user = this.currentUserSubject.value;
+    const token = this.token;
+    
+    if (!user || !token) {
+      return false;
+    }
+    
+    // Check if token has expired (optional additional security)
+    if (this.isTokenExpired()) {
+      this.logout();
+      return false;
+    }
+    
+    return true;
   }
 
   get token(): string | null {
-    return localStorage.getItem('auth_token');
+    return sessionStorage.getItem('auth_token');
   }
 
   login(credentials: LoginRequest): Observable<LoginResponse> {
@@ -76,25 +90,34 @@ export class AuthService {
   }
 
   logout(): void {
-    localStorage.removeItem('auth_token');
-    localStorage.removeItem('current_user');
-    this.currentUserSubject.next(null);
+    // Clear all session data for security
+    this.clearSession();
     
     // Force navigation to login page and clear any cached routes
     this.router.navigate(['/login'], { replaceUrl: true });
   }
 
   private setSession(response: LoginResponse): void {
-    localStorage.setItem('auth_token', response.token);
-    localStorage.setItem('current_user', JSON.stringify(response.user));
+    // Use sessionStorage for better security (cleared when tab closes)
+    // Add timestamp for token expiration tracking
+    const sessionData = {
+      token: response.token,
+      user: response.user,
+      timestamp: Date.now()
+    };
+    
+    sessionStorage.setItem('auth_token', response.token);
+    sessionStorage.setItem('current_user', JSON.stringify(response.user));
+    sessionStorage.setItem('session_timestamp', Date.now().toString());
+    
     this.currentUserSubject.next(response.user);
   }
 
   private loadStoredUser(): void {
-    const storedUser = localStorage.getItem('current_user');
+    const storedUser = sessionStorage.getItem('current_user');
     if (!storedUser || storedUser === 'undefined' || storedUser === 'null') {
       // Clean up any invalid persisted value
-      localStorage.removeItem('current_user');
+      sessionStorage.removeItem('current_user');
       return;
     }
 
@@ -104,11 +127,11 @@ export class AuthService {
       if (user && typeof user === 'object' && typeof user.email === 'string' && typeof user.role === 'string') {
         this.currentUserSubject.next(user);
       } else {
-        localStorage.removeItem('current_user');
+        sessionStorage.removeItem('current_user');
       }
     } catch (error) {
       console.error('Error parsing stored user:', error);
-      localStorage.removeItem('current_user');
+      sessionStorage.removeItem('current_user');
     }
   }
 
@@ -134,5 +157,31 @@ export class AuthService {
 
   isEmployee(): boolean {
     return this.hasRole('employee');
+  }
+
+  /**
+   * Check if the current token has expired
+   * This provides additional security by validating token freshness
+   */
+  private isTokenExpired(): boolean {
+    const timestamp = sessionStorage.getItem('session_timestamp');
+    if (!timestamp) {
+      return true;
+    }
+    
+    const sessionAge = Date.now() - parseInt(timestamp);
+    const maxSessionAge = 2 * 60 * 60 * 1000; // 2 hours in milliseconds
+    
+    return sessionAge > maxSessionAge;
+  }
+
+  /**
+   * Clear all session data for security
+   */
+  private clearSession(): void {
+    sessionStorage.removeItem('auth_token');
+    sessionStorage.removeItem('current_user');
+    sessionStorage.removeItem('session_timestamp');
+    this.currentUserSubject.next(null);
   }
 } 
