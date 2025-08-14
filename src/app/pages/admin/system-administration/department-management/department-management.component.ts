@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HeaderComponent } from '../../../../shared/header/header.component';
 import { SidebarComponent } from '../../../../shared/sidebar/sidebar.component';
-import { DepartmentService, Department, Employee, Organization, CreateDepartmentRequest, UpdateDepartmentRequest, AssignHeadRequest } from '../../../../services/department.service';
+import { DepartmentService, Department, Employee, Organization, CreateDepartmentRequest, UpdateDepartmentRequest, AssignHeadRequest, DepartmentEmployee, DepartmentEmployeesResponse } from '../../../../services/department.service';
 import { SidebarService } from '../../../../shared/sidebar/sidebar.service';
 
 interface Breadcrumb {
@@ -27,6 +27,7 @@ export class DepartmentManagementComponent implements OnInit {
   isAddMode = false;
   isEditMode = false;
   isAssignHeadMode = false;
+  isViewEmployeesMode = false;
   searchTerm = '';
   selectedOrganizationId: string = ''; 
   isLoading = false;
@@ -34,6 +35,11 @@ export class DepartmentManagementComponent implements OnInit {
   successMessage = '';
   isSidebarCollapsed = false;
   nameValidationMessage: { message: string; isError: boolean } | null = null;
+  
+  // Department employees properties
+  departmentEmployees: DepartmentEmployee[] = [];
+  selectedDepartmentForEmployees: Department | null = null;
+  isLoadingEmployees = false;
   
   // Pagination properties
   currentPage = 1;
@@ -177,6 +183,33 @@ export class DepartmentManagementComponent implements OnInit {
       departmentId: department.id,
       employeeId: department.departmentHeadId || null
     };
+  }
+
+  viewDepartmentEmployees(department: Department) {
+    this.isViewEmployeesMode = true;
+    this.isAddMode = false;
+    this.isEditMode = false;
+    this.isAssignHeadMode = false;
+    this.selectedDepartmentForEmployees = department;
+    this.loadDepartmentEmployees(department.id);
+  }
+
+  loadDepartmentEmployees(departmentId: string) {
+    this.isLoadingEmployees = true;
+    this.errorMessage = '';
+    
+    this.departmentService.getEmployeesByDepartment(departmentId).subscribe({
+      next: (response) => {
+        this.departmentEmployees = response.data.employees;
+        this.isLoadingEmployees = false;
+      },
+      error: (error) => {
+        console.error('Error loading department employees:', error);
+        this.errorMessage = 'Failed to load department employees';
+        this.isLoadingEmployees = false;
+        setTimeout(() => this.errorMessage = '', 5000);
+      }
+    });
   }
 
   saveDepartment() {
@@ -326,7 +359,10 @@ export class DepartmentManagementComponent implements OnInit {
     this.isAddMode = false;
     this.isEditMode = false;
     this.isAssignHeadMode = false;
+    this.isViewEmployeesMode = false;
     this.selectedDepartment = null;
+    this.selectedDepartmentForEmployees = null;
+    this.departmentEmployees = [];
     this.resetDepartmentForm();
     this.resetAssignHeadForm();
   }
@@ -472,5 +508,81 @@ export class DepartmentManagementComponent implements OnInit {
     }
     
     return pages;
+  }
+
+  // Handle image loading errors
+  onImageError(event: Event): void {
+    const img = event.target as HTMLImageElement;
+    img.style.display = 'none';
+    // The default avatar will be shown by the ng-template
+  }
+
+  // View employee photo in larger size
+  viewEmployeePhoto(employee: DepartmentEmployee): void {
+    if (employee.photoUrl) {
+      // Create a modal or use browser's built-in image viewer
+      const newWindow = window.open('', '_blank');
+      if (newWindow) {
+        newWindow.document.write(`
+          <html>
+            <head>
+              <title>${employee.fullName} - Photo</title>
+              <style>
+                body { 
+                  margin: 0; 
+                  padding: 20px; 
+                  background: #f5f5f5; 
+                  font-family: Arial, sans-serif;
+                  display: flex;
+                  flex-direction: column;
+                  align-items: center;
+                  justify-content: center;
+                  min-height: 100vh;
+                }
+                .photo-container {
+                  background: white;
+                  padding: 20px;
+                  border-radius: 12px;
+                  box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+                  text-align: center;
+                }
+                img { 
+                  max-width: 100%; 
+                  max-height: 80vh; 
+                  border-radius: 8px;
+                  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+                }
+                h2 { 
+                  margin: 0 0 15px 0; 
+                  color: #333; 
+                }
+                .close-btn {
+                  margin-top: 15px;
+                  padding: 8px 16px;
+                  background: #3b82f6;
+                  color: white;
+                  border: none;
+                  border-radius: 6px;
+                  cursor: pointer;
+                  font-size: 14px;
+                }
+                .close-btn:hover {
+                  background: #2563eb;
+                }
+              </style>
+            </head>
+            <body>
+              <div class="photo-container">
+                <h2>${employee.fullName}</h2>
+                <img src="${employee.photoUrl}" alt="${employee.fullName}" />
+                <br>
+                <button class="close-btn" onclick="window.close()">Close</button>
+              </div>
+            </body>
+          </html>
+        `);
+        newWindow.document.close();
+      }
+    }
   }
 }

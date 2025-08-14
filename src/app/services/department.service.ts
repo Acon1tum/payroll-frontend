@@ -28,6 +28,7 @@ export interface Employee {
   name: string;
   position: string;
   departmentId?: string;
+  photoUrl?: string;
   isDepartmentHead: boolean;
 }
 
@@ -50,6 +51,36 @@ export interface UpdateDepartmentRequest {
 export interface AssignHeadRequest {
   departmentId: string;
   employeeId: string;
+}
+
+export interface DepartmentEmployee {
+  id: string;
+  employeeNumber: string;
+  name: string;
+  fullName: string;
+  position: string;
+  baseSalary: number;
+  hireDate: Date;
+  employmentStatus: string;
+  photoUrl?: string;
+  sssNumber?: string;
+  philHealthNumber?: string;
+  pagIbigNumber?: string;
+  tinNumber?: string;
+  createdAt: Date;
+}
+
+export interface DepartmentEmployeesResponse {
+  department: {
+    id: string;
+    name: string;
+    organization: {
+      id: string;
+      name: string;
+    };
+  };
+  employees: DepartmentEmployee[];
+  totalCount: number;
 }
 
 @Injectable({
@@ -78,6 +109,11 @@ export class DepartmentService {
   // Get available employees
   getAvailableEmployees(): Observable<{ success: boolean; data: Employee[] }> {
     return this.http.get<{ success: boolean; data: Employee[] }>(`${this.apiUrl}/employees`);
+  }
+
+  // Get employees by department ID
+  getEmployeesByDepartment(departmentId: string): Observable<{ success: boolean; data: DepartmentEmployeesResponse }> {
+    return this.http.get<{ success: boolean; data: DepartmentEmployeesResponse }>(`${this.apiUrl}/${departmentId}/employees`);
   }
 
   // Create department
