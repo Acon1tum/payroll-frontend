@@ -35,43 +35,252 @@ import { EmployeeLeaveManagementComponent } from './pages/employee/employee-leav
 import { ThirteenthFinalPayComponent } from './pages/employee/thirteenth-final-pay/thirteenth-final-pay.component';
 import { EmployeeSettingsComponent } from './pages/employee/employee-settings/employee-settings.component';
 import { ReportsComponent } from './pages/employee/reports/reports.component';
+import { UnauthorizedComponent } from './shared/unauthorized/unauthorized.component';
+import { AuthGuard } from './guards/auth.guard';
+import { RoleGuard } from './guards/role.guard';
+import { LoggedInGuard } from './guards/logged-in.guard';
+import { UnauthorizedAccessGuard } from './guards/unauthorized-access.guard';
 
 export const routes: Routes = [
-  { path: '', component: LoginComponent },
-  { path: 'landing', component: LandingComponent },
-  { path: 'dashboard', component: DashboardComponent },
-  { path: 'employee-dashboard', component: EmployeeDashboardComponent },
-  { path: 'department-management', component: DepartmentManagementComponent },
-  { path: 'user-management', component: UserManagementComponent },
-  { path: 'org-management', component: OrgManagementComponent },
-  { path: 'employee-management', component: EmployeeManagementComponent },
-  { path: 'final-pay-process', component: FinalPayProcessComponent },
-  { path: 'payslip-center', component: PayslipCenterComponent },
-  { path: 'run-payroll', component: RunPayrollComponent },
-  { path: 'thirteen-month-pay', component: ThirteenMonthPayComponent },
-  { path: 'payroll-management', component: PayrollManagementComponent },
-  { path: 'contributions-deductions', component: ContirbutionsDeductionsComponent },
-  { path: 'mandatory-contributions', component: MandatoryContributionsComponent }, 
-  { path: 'deductions', component: DeductionsComponent },
-  { path: 'loans', component: LoansComponent },
-  { path: 'leave-requests', component: LeaveRequestsComponent },
-  { path: 'leave-settings', component: LeaveSettingsComponent },
-  { path: 'leave-reports', component: LeaveReportsComponent },
-  { path: 'reports-remittances', component: ReportsRemittancesComponent },
-  { path: 'payroll-summary', component: PayrollSummaryComponent },
-  { path: 'llc-summary', component: LlcSummaryComponent },
-  { path: 'govt-reports', component: GovtReportsComponent },
-  { path: 'bank-file-generation', component: BankFileGenerationComponent },
-  { path: 'audit-trail', component: AuditTrailComponent },
-  { path: 'activity-logs', component: ActivityLogsComponent },
-  { path: 'access-logs', component: AccessLogsComponent },
-  { path: 'request-loan', component: RequestLoanComponent },
-  { path: 'employee/profile', component: ProfileComponent },
-  { path: 'employee/payslip', component: PayslipComponent },
-  { path: 'employee/contributions', component: EmployeeContributionsComponent },
-  { path: 'employee/leave-management', component: EmployeeLeaveManagementComponent },
-  { path: 'employee/13th-final-pay', component: ThirteenthFinalPayComponent },
-  { path: 'employee/settings', component: EmployeeSettingsComponent },
-  { path: 'employee/reports', component: ReportsComponent },
-  { path: '**', redirectTo: '' },
+  // Public routes (no authentication required, but logged-in users cannot access)
+  { path: '', component: LoginComponent, canActivate: [LoggedInGuard] },
+  { path: 'login', component: LoginComponent, canActivate: [LoggedInGuard] },
+  
+  // Landing page (requires authentication)
+  { 
+    path: 'landing', 
+    component: LandingComponent,
+    canActivate: [AuthGuard]
+  },
+  
+  // Admin routes (admin, hrStaff, payrollManager roles)
+  { 
+    path: 'dashboard', 
+    component: DashboardComponent,
+    canActivate: [AuthGuard, RoleGuard],
+    data: { roles: ['admin', 'hrStaff', 'payrollManager'] }
+  },
+  { 
+    path: 'department-management', 
+    component: DepartmentManagementComponent,
+    canActivate: [AuthGuard, RoleGuard],
+    data: { roles: ['admin', 'hrStaff'] }
+  },
+  { 
+    path: 'user-management', 
+    component: UserManagementComponent,
+    canActivate: [AuthGuard, RoleGuard],
+    data: { roles: ['admin'] }
+  },
+  { 
+    path: 'org-management', 
+    component: OrgManagementComponent,
+    canActivate: [AuthGuard, RoleGuard],
+    data: { roles: ['admin'] }
+  },
+  { 
+    path: 'employee-management', 
+    component: EmployeeManagementComponent,
+    canActivate: [AuthGuard, RoleGuard],
+    data: { roles: ['admin', 'hrStaff'] }
+  },
+  
+  // Payroll Management routes (admin, payrollManager roles)
+  { 
+    path: 'final-pay-process', 
+    component: FinalPayProcessComponent,
+    canActivate: [AuthGuard, RoleGuard],
+    data: { roles: ['admin', 'payrollManager'] }
+  },
+  { 
+    path: 'payslip-center', 
+    component: PayslipCenterComponent,
+    canActivate: [AuthGuard, RoleGuard],
+    data: { roles: ['admin', 'payrollManager'] }
+  },
+  { 
+    path: 'run-payroll', 
+    component: RunPayrollComponent,
+    canActivate: [AuthGuard, RoleGuard],
+    data: { roles: ['admin', 'payrollManager'] }
+  },
+  { 
+    path: 'thirteen-month-pay', 
+    component: ThirteenMonthPayComponent,
+    canActivate: [AuthGuard, RoleGuard],
+    data: { roles: ['admin', 'payrollManager'] }
+  },
+  { 
+    path: 'payroll-management', 
+    component: PayrollManagementComponent,
+    canActivate: [AuthGuard, RoleGuard],
+    data: { roles: ['admin', 'payrollManager'] }
+  },
+  
+  // Contributions & Deductions routes (admin, hrStaff, payrollManager roles)
+  { 
+    path: 'contributions-deductions', 
+    component: ContirbutionsDeductionsComponent,
+    canActivate: [AuthGuard, RoleGuard],
+    data: { roles: ['admin', 'hrStaff', 'payrollManager'] }
+  },
+  { 
+    path: 'mandatory-contributions', 
+    component: MandatoryContributionsComponent,
+    canActivate: [AuthGuard, RoleGuard],
+    data: { roles: ['admin', 'hrStaff', 'payrollManager'] }
+  },
+  { 
+    path: 'deductions', 
+    component: DeductionsComponent,
+    canActivate: [AuthGuard, RoleGuard],
+    data: { roles: ['admin', 'hrStaff', 'payrollManager'] }
+  },
+  { 
+    path: 'loans', 
+    component: LoansComponent,
+    canActivate: [AuthGuard, RoleGuard],
+    data: { roles: ['admin', 'hrStaff', 'payrollManager'] }
+  },
+  
+  // Leave Management routes (admin, hrStaff roles)
+  { 
+    path: 'leave-requests', 
+    component: LeaveRequestsComponent,
+    canActivate: [AuthGuard, RoleGuard],
+    data: { roles: ['admin', 'hrStaff'] }
+  },
+  { 
+    path: 'leave-settings', 
+    component: LeaveSettingsComponent,
+    canActivate: [AuthGuard, RoleGuard],
+    data: { roles: ['admin', 'hrStaff'] }
+  },
+  { 
+    path: 'leave-reports', 
+    component: LeaveReportsComponent,
+    canActivate: [AuthGuard, RoleGuard],
+    data: { roles: ['admin', 'hrStaff'] }
+  },
+  
+  // Reports & Remittances routes (admin, payrollManager roles)
+  { 
+    path: 'reports-remittances', 
+    component: ReportsRemittancesComponent,
+    canActivate: [AuthGuard, RoleGuard],
+    data: { roles: ['admin', 'payrollManager'] }
+  },
+  { 
+    path: 'payroll-summary', 
+    component: PayrollSummaryComponent,
+    canActivate: [AuthGuard, RoleGuard],
+    data: { roles: ['admin', 'payrollManager'] }
+  },
+  { 
+    path: 'llc-summary', 
+    component: LlcSummaryComponent,
+    canActivate: [AuthGuard, RoleGuard],
+    data: { roles: ['admin', 'payrollManager'] }
+  },
+  { 
+    path: 'govt-reports', 
+    component: GovtReportsComponent,
+    canActivate: [AuthGuard, RoleGuard],
+    data: { roles: ['admin', 'payrollManager'] }
+  },
+  
+  // Bank File Generation (admin, payrollManager roles)
+  { 
+    path: 'bank-file-generation', 
+    component: BankFileGenerationComponent,
+    canActivate: [AuthGuard, RoleGuard],
+    data: { roles: ['admin', 'payrollManager'] }
+  },
+  
+  // Audit Trail (admin role only)
+  { 
+    path: 'audit-trail', 
+    component: AuditTrailComponent,
+    canActivate: [AuthGuard, RoleGuard],
+    data: { roles: ['admin'] }
+  },
+  { 
+    path: 'activity-logs', 
+    component: ActivityLogsComponent,
+    canActivate: [AuthGuard, RoleGuard],
+    data: { roles: ['admin'] }
+  },
+  { 
+    path: 'access-logs', 
+    component: AccessLogsComponent,
+    canActivate: [AuthGuard, RoleGuard],
+    data: { roles: ['admin'] }
+  },
+  
+  // Employee routes (employee role)
+  { 
+    path: 'employee-dashboard', 
+    component: EmployeeDashboardComponent,
+    canActivate: [AuthGuard, RoleGuard],
+    data: { roles: ['employee'] }
+  },
+  { 
+    path: 'request-loan', 
+    component: RequestLoanComponent,
+    canActivate: [AuthGuard, RoleGuard],
+    data: { roles: ['employee'] }
+  },
+  { 
+    path: 'employee/profile', 
+    component: ProfileComponent,
+    canActivate: [AuthGuard, RoleGuard],
+    data: { roles: ['employee'] }
+  },
+  { 
+    path: 'employee/payslip', 
+    component: PayslipComponent,
+    canActivate: [AuthGuard, RoleGuard],
+    data: { roles: ['employee'] }
+  },
+  { 
+    path: 'employee/contributions', 
+    component: EmployeeContributionsComponent,
+    canActivate: [AuthGuard, RoleGuard],
+    data: { roles: ['employee'] }
+  },
+  { 
+    path: 'employee/leave-management', 
+    component: EmployeeLeaveManagementComponent,
+    canActivate: [AuthGuard, RoleGuard],
+    data: { roles: ['employee'] }
+  },
+  { 
+    path: 'employee/13th-final-pay', 
+    component: ThirteenthFinalPayComponent,
+    canActivate: [AuthGuard, RoleGuard],
+    data: { roles: ['employee'] }
+  },
+  { 
+    path: 'employee/settings', 
+    component: EmployeeSettingsComponent,
+    canActivate: [AuthGuard, RoleGuard],
+    data: { roles: ['employee'] }
+  },
+  { 
+    path: 'employee/reports', 
+    component: ReportsComponent,
+    canActivate: [AuthGuard, RoleGuard],
+    data: { roles: ['employee'] }
+  },
+  
+  // Unauthorized page
+  { 
+    path: 'unauthorized', 
+    component: UnauthorizedComponent,
+    canActivate: [AuthGuard, UnauthorizedAccessGuard]
+  },
+  
+  
+  // Catch all route - redirect to login
+  { path: '**', redirectTo: '' }
 ];

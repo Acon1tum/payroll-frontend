@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { AuthService } from './auth.service';
+import { environment } from '../../environment/environment';
 
 export interface PersonalInfo {
   firstName: string;
@@ -64,7 +65,7 @@ export interface ProfileResponse {
   providedIn: 'root'
 })
 export class ProfileService {
-  private readonly API_URL = 'http://localhost:3000/api';
+  private readonly API_URL = environment.apiUrl;
 
   constructor(
     private http: HttpClient,

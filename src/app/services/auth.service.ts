@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject, Observable, tap, map } from 'rxjs';
 import { Router } from '@angular/router';
+import { environment } from '../../environment/environment';
 
 export interface User {
   id: string;
@@ -40,7 +41,7 @@ export class AuthService {
   private currentUserSubject = new BehaviorSubject<User | null>(null);
   public currentUser$ = this.currentUserSubject.asObservable();
 
-  private readonly API_URL = 'http://localhost:3000/api';
+    private readonly API_URL = environment.apiUrl;
 
   constructor(
     private http: HttpClient,
@@ -78,7 +79,9 @@ export class AuthService {
     localStorage.removeItem('auth_token');
     localStorage.removeItem('current_user');
     this.currentUserSubject.next(null);
-    this.router.navigate(['/login']);
+    
+    // Force navigation to login page and clear any cached routes
+    this.router.navigate(['/login'], { replaceUrl: true });
   }
 
   private setSession(response: LoginResponse): void {
