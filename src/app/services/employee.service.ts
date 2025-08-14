@@ -9,6 +9,7 @@ export interface EmployeeDto {
   employeeId: string;
   firstName: string;
   lastName: string;
+  middleName?: string;
   email: string;
   phone?: string;
   photoUrl?: string | null;
@@ -23,16 +24,26 @@ export interface EmployeeDto {
   payFrequency?: string; // e.g., 'semiMonthly', 'monthly', 'biweekly', 'weekly'
   createdAt: string | Date;
   updatedAt: string | Date;
+  
+  // Additional fields from Prisma schema
+  employeeNumber?: string;
+  sssNumber?: string;
+  philHealthNumber?: string;
+  pagIbigNumber?: string;
+  tinNumber?: string;
+  organizationId?: string;
+  organizationName?: string;
 }
 
 export interface CreateEmployeeDto {
   employeeId: string;
-  firstName: string;
+  firstName: string
   lastName: string;
+  middleName?: string;
   email: string;
   dateOfBirth: string;
   hireDate: string;
-  departmentId: number | null;
+  departmentId: string | null;
   departmentName?: string;
   position: string;
   salary: number;
@@ -40,15 +51,23 @@ export interface CreateEmployeeDto {
   systemRole: 'admin' | 'hrStaff' | 'payrollManager' | 'employee';
   payFrequency?: string;
   photoUrl?: string | null; // base64
+  
+  // Additional fields from Prisma schema
+  sssNumber?: string;
+  philHealthNumber?: string;
+  pagIbigNumber?: string;
+  tinNumber?: string;
+  organizationId?: string;
 }
 
 export interface UpdateEmployeeDto {
   firstName: string;
   lastName: string;
+  middleName?: string;
   email: string;
   dateOfBirth: string;
   hireDate: string;
-  departmentId: number | null;
+  departmentId: string | null;
   departmentName?: string;
   position: string;
   salary: number;
@@ -56,6 +75,13 @@ export interface UpdateEmployeeDto {
   systemRole: 'admin' | 'hrStaff' | 'payrollManager' | 'employee';
   payFrequency?: string;
   photoUrl?: string | null; // base64
+  
+  // Additional fields from Prisma schema
+  sssNumber?: string;
+  philHealthNumber?: string;
+  pagIbigNumber?: string;
+  tinNumber?: string;
+  organizationId?: string;
 }
 
 @Injectable({ providedIn: 'root' })

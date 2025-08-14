@@ -9,6 +9,7 @@ export interface Department {
   code?: string;
   organizationId: string;
   organizationName: string;
+  organizationCode?: string;
   departmentHeadId?: string;
   departmentHeadName?: string;
   memberCount: number;

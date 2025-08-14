@@ -4,24 +4,26 @@ import { FormsModule } from '@angular/forms';
 import { HeaderComponent } from '../../../../shared/header/header.component';
 import { SidebarComponent } from '../../../../shared/sidebar/sidebar.component';
 import { EmployeeService, EmployeeDto, CreateEmployeeDto, UpdateEmployeeDto } from '../../../../services/employee.service';
+import { DepartmentService, Department } from '../../../../services/department.service';
 
 interface Employee {
-  id: string; // Changed from number to string to match backend UUID
+  id: string;
   employeeId: string;
   firstName: string;
   lastName: string;
+  middleName?: string;
   email: string;
   phone: string;
   photoUrl?: string | null;
   dateOfBirth: Date;
   hireDate: Date;
-  departmentId: number | null;
+  departmentId: string | null;
   departmentName: string;
   position: string;
   salary: number;
   employmentStatus: 'active' | 'resigned' | 'suspended' | 'terminated';
   systemRole: 'admin' | 'hr' | 'payroll_manager' | 'employee';
-  payFrequency?: string; // e.g., 'semiMonthly', 'monthly', 'biweekly', 'weekly'
+  payFrequency?: string;
   managerId?: number;
   managerName?: string;
   address: string;
@@ -33,6 +35,15 @@ interface Employee {
   employmentHistory: EmploymentRecord[];
   createdAt: Date;
   updatedAt: Date;
+  
+  // Additional fields from Prisma schema
+  employeeNumber?: string;
+  sssNumber?: string;
+  philHealthNumber?: string;
+  pagIbigNumber?: string;
+  tinNumber?: string;
+  organizationId?: string;
+  organizationName?: string;
 }
 
 interface EmploymentRecord {
@@ -43,11 +54,6 @@ interface EmploymentRecord {
   endDate?: Date;
   salary: number;
   reason?: string;
-}
-
-interface Department {
-  id: number;
-  name: string;
 }
 
 interface Breadcrumb {
@@ -119,16 +125,23 @@ export class EmployeeManagementComponent implements OnInit {
     employeeId: '',
     firstName: '',
     lastName: '',
+    middleName: '',
     email: '',
     dateOfBirth: '',
     hireDate: '',
-    departmentId: null as number | null,
+    departmentId: null as string | null,
     position: '',
     salary: null as number | null,
     employmentStatus: 'active' as 'active' | 'resigned' | 'suspended' | 'terminated',
     systemRole: 'employee' as 'admin' | 'hr' | 'payroll_manager' | 'employee',
     payFrequency: '' as string,
-    photoUrl: '' as string | null
+    photoUrl: '' as string | null,
+    // Additional fields from Prisma schema
+    sssNumber: '',
+    philHealthNumber: '',
+    pagIbigNumber: '',
+    tinNumber: '',
+    organizationId: null as string | null
   };
 
   roleAssignmentForm = {
@@ -143,9 +156,13 @@ export class EmployeeManagementComponent implements OnInit {
     newPassword: ''
   };
 
-  constructor(private employeeService: EmployeeService) {}
+  constructor(
+    private employeeService: EmployeeService,
+    private departmentService: DepartmentService
+  ) {}
 
   ngOnInit() {
+    this.loadDepartments();
     this.loadEmployees();
     
     // Debug: Log initial state after loading
@@ -172,16 +189,17 @@ export class EmployeeManagementComponent implements OnInit {
       next: (resp) => {
         const apiEmployees: EmployeeDto[] = resp.data || [];
         this.employees = apiEmployees.map((e) => ({
-          id: e.id, // Use the UUID string directly from backend
+          id: e.id,
           employeeId: e.employeeId,
           firstName: e.firstName,
           lastName: e.lastName,
+          middleName: e.middleName || undefined,
           email: e.email,
           phone: e.phone || '',
           photoUrl: e.photoUrl || null,
           dateOfBirth: new Date(e.dateOfBirth),
           hireDate: new Date(e.hireDate),
-          departmentId: e.departmentName ? this.getDepartmentIdByName(e.departmentName) : null, // Map department name to numeric ID
+          departmentId: e.departmentId || null,
           departmentName: e.departmentName || '',
           position: e.position,
           salary: e.salary,
@@ -193,12 +211,17 @@ export class EmployeeManagementComponent implements OnInit {
           employmentHistory: [],
           createdAt: new Date(e.createdAt),
           updatedAt: new Date(e.updatedAt),
+          // Additional fields from Prisma schema (with fallbacks)
+          employeeNumber: e.employeeNumber || e.employeeId || undefined,
+          sssNumber: e.sssNumber || undefined,
+          philHealthNumber: e.philHealthNumber || undefined,
+          pagIbigNumber: e.pagIbigNumber || undefined,
+          tinNumber: e.tinNumber || undefined,
+          organizationId: e.organizationId || undefined,
+          organizationName: e.organizationName || undefined,
         }));
         this.filteredEmployees = [...this.employees];
         this.isLoading = false;
-        
-        // Generate departments from employee data and update department IDs
-        this.loadDepartments();
         
         // Update pagination after loading data
         this.updatePagination();
@@ -208,6 +231,19 @@ export class EmployeeManagementComponent implements OnInit {
         this.errorMessage = 'Failed to load employees';
         this.isLoading = false;
       },
+    });
+  }
+
+  loadDepartments() {
+    this.departmentService.getDepartments().subscribe({
+      next: (resp) => {
+        this.departments = resp.data || [];
+        console.log('Loaded departments:', this.departments);
+      },
+      error: (err) => {
+        console.error('Failed to load departments', err);
+        this.errorMessage = 'Failed to load departments';
+      }
     });
   }
 
@@ -235,65 +271,6 @@ export class EmployeeManagementComponent implements OnInit {
       default:
         return 'employee';
     }
-  }
-
-  private getDepartmentIdByName(departmentName: string): number | null {
-    if (!departmentName || !this.departments || this.departments.length === 0) {
-      console.log('getDepartmentIdByName: No department name or no departments available');
-      return null;
-    }
-    
-    const dept = this.departments.find(d => d.name === departmentName);
-    if (dept) {
-      console.log(`getDepartmentIdByName: Found department "${departmentName}" with ID ${dept.id}`);
-      return dept.id;
-    } else {
-      console.log(`getDepartmentIdByName: Department "${departmentName}" not found`);
-      console.log('Available departments:', this.departments.map(d => `${d.name} (ID: ${d.id})`));
-      return null;
-    }
-  }
-
-  loadDepartments() {
-    // Generate departments dynamically from employee data
-    this.generateDepartmentsFromEmployees();
-  }
-
-  private generateDepartmentsFromEmployees() {
-    // Extract unique department names from employee data
-    const uniqueDepartments = new Set<string>();
-    
-    this.employees.forEach(emp => {
-      if (emp.departmentName && emp.departmentName.trim()) {
-        uniqueDepartments.add(emp.departmentName.trim());
-      }
-    });
-
-    // Convert to department objects with sequential IDs
-    this.departments = Array.from(uniqueDepartments).map((deptName, index) => ({
-      id: index + 1,
-      name: deptName
-    }));
-
-    console.log('Generated departments from employee data:', this.departments);
-    
-    // Update employee department IDs and apply filters
-    if (this.employees.length > 0) {
-      this.updateEmployeeDepartmentIds();
-      this.applyFilters();
-    }
-  }
-
-  private updateEmployeeDepartmentIds() {
-    console.log('Updating employee department IDs...');
-    this.employees.forEach(emp => {
-      if (emp.departmentName) {
-        const oldId = emp.departmentId;
-        emp.departmentId = this.getDepartmentIdByName(emp.departmentName);
-        console.log(`Employee ${emp.firstName} ${emp.lastName}: ${emp.departmentName} -> ID ${oldId} -> ${emp.departmentId}`);
-      }
-    });
-    console.log('Finished updating department IDs');
   }
 
   cancelEdit() {
@@ -348,7 +325,7 @@ export class EmployeeManagementComponent implements OnInit {
         email: this.employeeForm.email.trim().toLowerCase(),
         dateOfBirth: this.employeeForm.dateOfBirth,
         hireDate: this.employeeForm.hireDate,
-        departmentId: this.employeeForm.departmentId,
+        departmentId: this.employeeForm.departmentId, // Use string ID directly
         departmentName: departmentName,
         position: this.employeeForm.position.trim(),
         salary: this.employeeForm.salary || 0,
@@ -376,7 +353,7 @@ export class EmployeeManagementComponent implements OnInit {
             photoUrl: response.data.photoUrl || null,
             dateOfBirth: new Date(response.data.dateOfBirth),
             hireDate: new Date(response.data.hireDate),
-            departmentId: response.data.departmentId ? parseInt(response.data.departmentId) : null,
+            departmentId: response.data.departmentId || null,
             departmentName: response.data.departmentName || '',
             position: response.data.position,
             salary: response.data.salary,
@@ -398,8 +375,8 @@ export class EmployeeManagementComponent implements OnInit {
           this.employees.push(newEmployee);
           console.log('Employee added to local array. Total employees:', this.employees.length);
           
-          // Refresh departments and apply filters
-          this.refreshDepartments();
+          // Apply filters
+          this.applyFilters();
           
           // Update pagination after adding employee
           this.updatePagination();
@@ -455,7 +432,7 @@ export class EmployeeManagementComponent implements OnInit {
         email: this.employeeForm.email.trim().toLowerCase(),
         dateOfBirth: this.employeeForm.dateOfBirth,
         hireDate: this.employeeForm.hireDate,
-        departmentId: this.employeeForm.departmentId,
+        departmentId: this.employeeForm.departmentId, // Use string ID directly
         departmentName: departmentName,
         position: this.employeeForm.position.trim(),
         salary: this.employeeForm.salary || 0,
@@ -483,7 +460,7 @@ export class EmployeeManagementComponent implements OnInit {
               photoUrl: response.data.photoUrl || null,
               dateOfBirth: new Date(response.data.dateOfBirth),
               hireDate: new Date(response.data.hireDate),
-              departmentId: response.data.departmentId ? parseInt(response.data.departmentId) : null,
+              departmentId: response.data.departmentId || null,
               departmentName: response.data.departmentName || '',
               position: response.data.position,
               salary: response.data.salary,
@@ -496,8 +473,8 @@ export class EmployeeManagementComponent implements OnInit {
 
           console.log('Employee updated in local array');
 
-          // Refresh departments and apply filters
-          this.refreshDepartments();
+          // Apply filters
+          this.applyFilters();
           
           // Update pagination after updating employee
           this.updatePagination();
@@ -506,7 +483,7 @@ export class EmployeeManagementComponent implements OnInit {
           this.showSuccessMessage(response.message || 'Employee updated successfully!');
           
           // Close modal
-    this.cancelEdit();
+          this.cancelEdit();
         },
         error: (error) => {
           console.error('Error updating employee:', error);
@@ -569,7 +546,7 @@ export class EmployeeManagementComponent implements OnInit {
     return true;
   }
 
-  private getDepartmentNameById(departmentId: number | null): string {
+  private getDepartmentNameById(departmentId: string | null): string {
     if (!departmentId) {
       console.log('getDepartmentNameById: No department ID provided');
       return '';
@@ -618,6 +595,7 @@ export class EmployeeManagementComponent implements OnInit {
       employeeId: '',
       firstName: '',
       lastName: '',
+      middleName: '',
       email: '',
       dateOfBirth: '',
       hireDate: '',
@@ -627,7 +605,13 @@ export class EmployeeManagementComponent implements OnInit {
       employmentStatus: 'active',
       systemRole: 'employee',
       payFrequency: '',
-      photoUrl: ''
+      photoUrl: '',
+      // Additional fields from Prisma schema
+      sssNumber: '',
+      philHealthNumber: '',
+      pagIbigNumber: '',
+      tinNumber: '',
+      organizationId: null
     };
   }
 
@@ -646,8 +630,6 @@ export class EmployeeManagementComponent implements OnInit {
       newPassword: ''
     };
   }
-
-
 
   getRoleLabel(role: string): string {
     const roleObj = this.systemRoles.find(r => r.value === role);
@@ -731,7 +713,7 @@ export class EmployeeManagementComponent implements OnInit {
   applyFilters() {
     console.log('Applying filters:', {
       searchTerm: this.searchTerm,
-          selectedOrganizationId: this.selectedOrganizationId,
+      selectedOrganizationId: this.selectedOrganizationId,
       selectedStatus: this.selectedStatus,
       selectedPayFrequency: this.selectedPayFrequency
     });
@@ -747,7 +729,7 @@ export class EmployeeManagementComponent implements OnInit {
 
       // Department filter
       const departmentMatch = !this.selectedOrganizationId ||
-        employee.departmentId === parseInt(this.selectedOrganizationId, 10);
+        employee.departmentId === this.selectedOrganizationId;
       
       console.log(`Employee ${employee.firstName} ${employee.lastName}: departmentId=${employee.departmentId}, selectedOrganizationId=${this.selectedOrganizationId}, departmentMatch=${departmentMatch}`);
 
@@ -871,27 +853,74 @@ export class EmployeeManagementComponent implements OnInit {
 
   // Method to populate form for editing
   populateEmployeeForm(employee: Employee) {
-    const mappedDepartmentId = this.getDepartmentIdByName(employee.departmentName);
     console.log('Populating form for employee:', employee.firstName, employee.lastName);
-    console.log('Employee department name:', employee.departmentName);
-    console.log('Mapped department ID:', mappedDepartmentId);
+    console.log('Employee department ID:', employee.departmentId);
     console.log('Available departments:', this.departments);
     
     this.employeeForm = {
       employeeId: employee.employeeId,
       firstName: employee.firstName,
       lastName: employee.lastName,
+      middleName: employee.middleName || '',
       email: employee.email,
       dateOfBirth: this.formatDateForInput(employee.dateOfBirth),
       hireDate: this.formatDateForInput(employee.hireDate),
-      departmentId: mappedDepartmentId, // Use the correct department ID mapping
+      departmentId: employee.departmentId,
       position: employee.position,
       salary: employee.salary,
       employmentStatus: employee.employmentStatus,
       systemRole: employee.systemRole,
       payFrequency: employee.payFrequency || '',
-      photoUrl: (employee as any).photoUrl || ''
+      photoUrl: (employee as any).photoUrl || '',
+      // Additional fields from Prisma schema
+      sssNumber: employee.sssNumber || '',
+      philHealthNumber: employee.philHealthNumber || '',
+      pagIbigNumber: employee.pagIbigNumber || '',
+      tinNumber: employee.tinNumber || '',
+      organizationId: employee.organizationId || null
     };
+  }
+
+  // Method to format date for display
+  formatDateForDisplay(date: Date): string {
+    if (!date) return '-';
+    return new Intl.DateTimeFormat('en-PH', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    }).format(new Date(date));
+  }
+
+  // Method to format date and time for display
+  formatDateTimeForDisplay(date: Date): string {
+    if (!date) return '-';
+    return new Intl.DateTimeFormat('en-PH', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    }).format(new Date(date));
+  }
+
+  // Method to get full name with middle name
+  getFullNameWithMiddle(employee: Employee): string {
+    if (employee.middleName) {
+      return `${employee.firstName} ${employee.middleName} ${employee.lastName}`;
+    }
+    return `${employee.firstName} ${employee.lastName}`;
+  }
+
+  // Method to get organization name
+  getOrganizationName(employee: Employee): string {
+    if (employee.organizationName) {
+      return employee.organizationName;
+    }
+    if (employee.organizationId) {
+      const dept = this.departments.find(d => d.id === employee.organizationId);
+      return dept?.organizationName || '-';
+    }
+    return '-';
   }
 
   // Method to handle edit button click
@@ -916,8 +945,8 @@ export class EmployeeManagementComponent implements OnInit {
             this.employees.splice(index, 1);
           }
           
-          // Refresh departments and apply filters
-          this.refreshDepartments();
+          // Apply filters
+          this.applyFilters();
           
           // Update pagination after deleting employee
           this.updatePagination();
@@ -944,46 +973,17 @@ export class EmployeeManagementComponent implements OnInit {
     }
   }
 
-  // Debug method to test department filtering
-  testDepartmentFilter() {
-    console.log('Testing department filter...');
-    console.log('Current employees:', this.employees.map(e => ({
-      name: `${e.firstName} ${e.lastName}`,
-      departmentId: e.departmentId,
-      departmentName: e.departmentName
-    })));
-    console.log('Current departments:', this.departments);
-    console.log('Selected department ID:', this.selectedOrganizationId);
-    
-    // Test with first department
-    if (this.departments.length > 0) {
-      this.selectedOrganizationId = this.departments[0].id.toString();
-      console.log('Setting department filter to:', this.selectedOrganizationId);
-      this.applyFilters();
-    }
-  }
-
-  // Debug method to show department mapping
-  showDepartmentMapping() {
-    console.log('=== Department Mapping Debug ===');
-    console.log('Departments:', this.departments);
-    console.log('Employees with department info:', this.employees.map(e => ({
-      name: `${e.firstName} ${e.lastName}`,
-      departmentId: e.departmentId,
-      departmentName: e.departmentName,
-      mappedId: this.getDepartmentIdByName(e.departmentName)
-    })));
-  }
-
-  // Method to refresh departments from current employee data
-  refreshDepartments() {
-    console.log('Refreshing departments from employee data...');
-    this.generateDepartmentsFromEmployees();
-  }
-
   // Method to get employee count for a specific department
-  getEmployeeCountByDepartment(departmentId: number): number {
+  getEmployeeCountByDepartment(departmentId: string): number {
     return this.employees.filter(emp => emp.departmentId === departmentId).length;
+  }
+
+  // Method to get department display name with organization code
+  getDepartmentDisplayName(department: Department): string {
+    if (department.organizationCode) {
+      return `${department.name}(${department.organizationCode})`;
+    }
+    return department.name;
   }
 
   // Method to export department data for debugging

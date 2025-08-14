@@ -41,7 +41,7 @@ describe('EmployeeManagementComponent', () => {
         photoUrl: null,
         dateOfBirth: new Date('1990-01-01'),
         hireDate: new Date('2020-01-01'),
-        departmentId: 1,
+        departmentId: '1',
         departmentName: 'Engineering',
         position: 'Developer',
         salary: 50000,
@@ -113,7 +113,7 @@ describe('EmployeeManagementComponent', () => {
       photoUrl: null,
       dateOfBirth: new Date('1990-01-01'),
       hireDate: new Date('2020-01-01'),
-      departmentId: 1,
+      departmentId: '1',
       departmentName: 'Engineering',
       position: 'Developer',
       salary: 50000,
@@ -147,7 +147,7 @@ describe('EmployeeManagementComponent', () => {
       photoUrl: null,
       dateOfBirth: new Date('1990-01-01'),
       hireDate: new Date('2020-01-01'),
-      departmentId: 1,
+      departmentId: '1',
       departmentName: 'Engineering',
       position: 'Developer',
       salary: 50000,
@@ -180,7 +180,7 @@ describe('EmployeeManagementComponent', () => {
       photoUrl: null,
       dateOfBirth: new Date('1990-01-01'),
       hireDate: new Date('2020-01-01'),
-      departmentId: 1,
+      departmentId: '1',
       departmentName: 'Engineering',
       position: 'Developer',
       salary: 50000,
@@ -211,16 +211,23 @@ describe('EmployeeManagementComponent', () => {
       employeeId: 'EMP001',
       firstName: 'John',
       lastName: 'Doe',
+      middleName: '',
       email: 'john.doe@example.com',
       dateOfBirth: '1990-01-01',
       hireDate: '2020-01-01',
-      departmentId: 1,
+      departmentId: '1',
       position: 'Developer',
       salary: 50000,
       employmentStatus: 'active',
       systemRole: 'employee',
       payFrequency: 'semiMonthly',
-      photoUrl: ''
+      photoUrl: '',
+      // Additional fields from Prisma schema
+      sssNumber: '',
+      philHealthNumber: '',
+      pagIbigNumber: '',
+      tinNumber: '',
+      organizationId: null
     };
 
     expect(component['validateEmployeeForm']()).toBe(true);
@@ -232,20 +239,41 @@ describe('EmployeeManagementComponent', () => {
       employeeId: 'EMP002',
       firstName: 'Jane',
       lastName: 'Smith',
+      middleName: '',
       email: 'jane.smith@example.com',
       dateOfBirth: '1992-05-15',
       hireDate: '2021-03-01',
-      departmentId: 1,
+      departmentId: '1',
       position: 'Designer',
       salary: 60000,
       employmentStatus: 'active',
       systemRole: 'employee',
       payFrequency: 'monthly',
-      photoUrl: ''
+      photoUrl: '',
+      // Additional fields from Prisma schema
+      sssNumber: '',
+      philHealthNumber: '',
+      pagIbigNumber: '',
+      tinNumber: '',
+      organizationId: null
     };
 
     // Mock departments
-    component.departments = [{ id: 1, name: 'Design' }];
+    component.departments = [{ 
+      id: '1', 
+      name: 'Design',
+      code: 'DES',
+      organizationId: 'org1',
+      organizationName: 'Tech Corp',
+      organizationCode: 'QNBY',
+      departmentHeadId: undefined,
+      departmentHeadName: undefined,
+      memberCount: 5,
+      description: 'Design department',
+      status: 'active' as const,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    }];
 
     // Test save
     component.saveEmployee();
@@ -268,7 +296,7 @@ describe('EmployeeManagementComponent', () => {
       photoUrl: null,
       dateOfBirth: new Date('1990-01-01'),
       hireDate: new Date('2020-01-01'),
-      departmentId: 1,
+      departmentId: '1',
       departmentName: 'Engineering',
       position: 'Developer',
       salary: 50000,
@@ -287,19 +315,40 @@ describe('EmployeeManagementComponent', () => {
       employeeId: 'EMP001', // Same ID
       firstName: 'Jane',
       lastName: 'Smith',
+      middleName: '',
       email: 'jane.smith@example.com',
       dateOfBirth: '1992-05-15',
       hireDate: '2021-03-01',
-      departmentId: 1,
+      departmentId: '1',
       position: 'Designer',
       salary: 60000,
       employmentStatus: 'active',
       systemRole: 'employee',
       payFrequency: 'weekly',
-      photoUrl: ''
+      photoUrl: '',
+      // Additional fields from Prisma schema
+      sssNumber: '',
+      philHealthNumber: '',
+      pagIbigNumber: '',
+      tinNumber: '',
+      organizationId: null
     };
 
-    component.departments = [{ id: 1, name: 'Design' }];
+    component.departments = [{ 
+      id: '1', 
+      name: 'Design',
+      code: 'DES',
+      organizationId: 'org1',
+      organizationName: 'Tech Corp',
+      organizationCode: 'QNBY',
+      departmentHeadId: undefined,
+      departmentHeadName: undefined,
+      memberCount: 5,
+      description: 'Design department',
+      status: 'active' as const,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    }];
 
     // Save should fail due to duplicate ID
     component.saveEmployee();
@@ -321,7 +370,7 @@ describe('EmployeeManagementComponent', () => {
       photoUrl: null,
       dateOfBirth: new Date('1990-01-01'),
       hireDate: new Date('2020-01-01'),
-      departmentId: 1,
+      departmentId: '1',
       departmentName: 'Engineering',
       position: 'Developer',
       salary: 50000,
@@ -355,16 +404,235 @@ describe('EmployeeManagementComponent', () => {
     expect(component.getPayFrequencyLabel(undefined)).toBe('-');
   });
 
+  it('should get department display name with organization code', () => {
+    const mockDepartment = {
+      id: '1',
+      name: 'Engineering',
+      code: 'ENG',
+      organizationId: 'org1',
+      organizationName: 'Tech Corp',
+      organizationCode: 'QNBY',
+      departmentHeadId: undefined,
+      departmentHeadName: undefined,
+      memberCount: 5,
+      description: 'Engineering department',
+      status: 'active' as const,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+
+    expect(component.getDepartmentDisplayName(mockDepartment)).toBe('Engineering(QNBY)');
+  });
+
+  it('should get department display name without organization code', () => {
+    const mockDepartment = {
+      id: '1',
+      name: 'Engineering',
+      code: 'ENG',
+      organizationId: 'org1',
+      organizationName: 'Tech Corp',
+      organizationCode: undefined,
+      departmentHeadId: undefined,
+      departmentHeadName: undefined,
+      memberCount: 5,
+      description: 'Engineering department',
+      status: 'active' as const,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+
+    expect(component.getDepartmentDisplayName(mockDepartment)).toBe('Engineering');
+  });
+
+  it('should format date for display correctly', () => {
+    const testDate = new Date('1990-01-01');
+    const formattedDate = component.formatDateForDisplay(testDate);
+    expect(formattedDate).toContain('January 1, 1990');
+  });
+
+  it('should format date and time for display correctly', () => {
+    const testDate = new Date('1990-01-01T10:30:00');
+    const formattedDateTime = component.formatDateTimeForDisplay(testDate);
+    expect(formattedDateTime).toContain('January 1, 1990');
+    expect(formattedDateTime).toContain('10:30');
+  });
+
+  it('should get full name with middle name when available', () => {
+    const mockEmployee = {
+      id: '1',
+      employeeId: 'EMP001',
+      firstName: 'John',
+      lastName: 'Doe',
+      middleName: 'Michael',
+      email: 'john.doe@example.com',
+      phone: '1234567890',
+      photoUrl: null,
+      dateOfBirth: new Date('1990-01-01'),
+      hireDate: new Date('2020-01-01'),
+      departmentId: '1',
+      departmentName: 'Engineering',
+      position: 'Developer',
+      salary: 50000,
+      employmentStatus: 'active' as const,
+      systemRole: 'employee' as const,
+      payFrequency: 'semiMonthly',
+      address: '123 Main St',
+      emergencyContact: { name: 'Jane Doe', relationship: 'Spouse', phone: '0987654321' },
+      employmentHistory: [],
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+
+    expect(component.getFullNameWithMiddle(mockEmployee)).toBe('John Michael Doe');
+  });
+
+  it('should get full name without middle name when not available', () => {
+    const mockEmployee = {
+      id: '1',
+      employeeId: 'EMP001',
+      firstName: 'John',
+      lastName: 'Doe',
+      middleName: undefined,
+      email: 'john.doe@example.com',
+      phone: '1234567890',
+      photoUrl: null,
+      dateOfBirth: new Date('1990-01-01'),
+      hireDate: new Date('2020-01-01'),
+      departmentId: '1',
+      departmentName: 'Engineering',
+      position: 'Developer',
+      salary: 50000,
+      employmentStatus: 'active' as const,
+      systemRole: 'employee' as const,
+      payFrequency: 'semiMonthly',
+      address: '123 Main St',
+      emergencyContact: { name: 'Jane Doe', relationship: 'Spouse', phone: '0987654321' },
+      employmentHistory: [],
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+
+    expect(component.getFullNameWithMiddle(mockEmployee)).toBe('John Doe');
+  });
+
+  it('should get organization name from employee data', () => {
+    const mockEmployee = {
+      id: '1',
+      employeeId: 'EMP001',
+      firstName: 'John',
+      lastName: 'Doe',
+      email: 'john.doe@example.com',
+      phone: '1234567890',
+      photoUrl: null,
+      dateOfBirth: new Date('1990-01-01'),
+      hireDate: new Date('2020-01-01'),
+      departmentId: '1',
+      departmentName: 'Engineering',
+      position: 'Developer',
+      salary: 50000,
+      employmentStatus: 'active' as const,
+      systemRole: 'employee' as const,
+      payFrequency: 'semiMonthly',
+      address: '123 Main St',
+      emergencyContact: { name: 'Jane Doe', relationship: 'Spouse', phone: '0987654321' },
+      employmentHistory: [],
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      organizationName: 'Tech Corp'
+    };
+
+    expect(component.getOrganizationName(mockEmployee)).toBe('Tech Corp');
+  });
+
+  it('should get organization name from department when not in employee data', () => {
+    // Mock departments with organization info
+    component.departments = [{
+      id: '1',
+      name: 'Engineering',
+      code: 'ENG',
+      organizationId: 'org1',
+      organizationName: 'Tech Corp',
+      organizationCode: 'TECH',
+      departmentHeadId: undefined,
+      departmentHeadName: undefined,
+      memberCount: 5,
+      description: 'Engineering department',
+      status: 'active' as const,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    }];
+
+    const mockEmployee = {
+      id: '1',
+      employeeId: 'EMP001',
+      firstName: 'John',
+      lastName: 'Doe',
+      email: 'john.doe@example.com',
+      phone: '1234567890',
+      photoUrl: null,
+      dateOfBirth: new Date('1990-01-01'),
+      hireDate: new Date('2020-01-01'),
+      departmentId: '1',
+      departmentName: 'Engineering',
+      position: 'Developer',
+      salary: 50000,
+      employmentStatus: 'active' as const,
+      systemRole: 'employee' as const,
+      payFrequency: 'semiMonthly',
+      address: '123 Main St',
+      emergencyContact: { name: 'Jane Doe', relationship: 'Spouse', phone: '0987654321' },
+      employmentHistory: [],
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      organizationId: 'org1'
+    };
+
+    expect(component.getOrganizationName(mockEmployee)).toBe('Tech Corp');
+  });
+
+  it('should return dash when no organization information available', () => {
+    const mockEmployee = {
+      id: '1',
+      employeeId: 'EMP001',
+      firstName: 'John',
+      lastName: 'Doe',
+      email: 'john.doe@example.com',
+      phone: '1234567890',
+      photoUrl: null,
+      dateOfBirth: new Date('1990-01-01'),
+      hireDate: new Date('2020-01-01'),
+      departmentId: '1',
+      departmentName: 'Engineering',
+      position: 'Developer',
+      salary: 50000,
+      employmentStatus: 'active' as const,
+      systemRole: 'employee' as const,
+      payFrequency: 'semiMonthly',
+      address: '123 Main St',
+      emergencyContact: { name: 'Jane Doe', relationship: 'Spouse', phone: '0987654321' },
+      employmentHistory: [],
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+
+    expect(component.getOrganizationName(mockEmployee)).toBe('-');
+  });
+
+  it('should handle date formatting for null dates', () => {
+    expect(component.formatDateForDisplay(null as any)).toBe('-');
+    expect(component.formatDateTimeForDisplay(null as any)).toBe('-');
+  });
+
   describe('Pagination', () => {
     beforeEach(() => {
       // Mock employee data for pagination tests
       component.employees = [
-        { id: '1', employeeId: 'EMP001', firstName: 'John', lastName: 'Doe', email: 'john@example.com', phone: '1234567890', photoUrl: null, dateOfBirth: new Date('1990-01-01'), hireDate: new Date('2020-01-01'), departmentId: 1, departmentName: 'Engineering', position: 'Developer', salary: 50000, employmentStatus: 'active' as const, systemRole: 'employee' as const, payFrequency: 'semiMonthly', address: '123 Main St', emergencyContact: { name: 'Jane Doe', relationship: 'Spouse', phone: '0987654321' }, employmentHistory: [], createdAt: new Date(), updatedAt: new Date() },
-        { id: '2', employeeId: 'EMP002', firstName: 'Jane', lastName: 'Smith', email: 'jane@example.com', phone: '1234567891', photoUrl: null, dateOfBirth: new Date('1992-05-15'), hireDate: new Date('2021-03-01'), departmentId: 1, departmentName: 'Engineering', position: 'Designer', salary: 60000, employmentStatus: 'active' as const, systemRole: 'employee' as const, payFrequency: 'monthly', address: '456 Oak St', emergencyContact: { name: 'John Smith', relationship: 'Spouse', phone: '0987654322' }, employmentHistory: [], createdAt: new Date(), updatedAt: new Date() },
-        { id: '3', employeeId: 'EMP003', firstName: 'Bob', lastName: 'Johnson', email: 'bob@example.com', phone: '1234567892', photoUrl: null, dateOfBirth: new Date('1988-12-10'), hireDate: new Date('2019-06-15'), departmentId: 2, departmentName: 'Marketing', position: 'Manager', salary: 70000, employmentStatus: 'active' as const, systemRole: 'hr' as const, payFrequency: 'weekly', address: '789 Pine St', emergencyContact: { name: 'Alice Johnson', relationship: 'Spouse', phone: '0987654323' }, employmentHistory: [], createdAt: new Date(), updatedAt: new Date() },
-        { id: '4', employeeId: 'EMP004', firstName: 'Alice', lastName: 'Brown', email: 'alice@example.com', phone: '1234567893', photoUrl: null, dateOfBirth: new Date('1995-08-20'), hireDate: new Date('2022-01-10'), departmentId: 2, departmentName: 'Marketing', position: 'Coordinator', salary: 45000, employmentStatus: 'active' as const, systemRole: 'employee' as const, payFrequency: 'semiMonthly', address: '321 Elm St', emergencyContact: { name: 'Charlie Brown', relationship: 'Spouse', phone: '0987654324' }, employmentHistory: [], createdAt: new Date(), updatedAt: new Date() },
-        { id: '5', employeeId: 'EMP005', firstName: 'Charlie', lastName: 'Wilson', email: 'charlie@example.com', phone: '1234567894', photoUrl: null, dateOfBirth: new Date('1985-03-25'), hireDate: new Date('2018-09-01'), departmentId: 3, departmentName: 'Finance', position: 'Analyst', salary: 55000, employmentStatus: 'active' as const, systemRole: 'employee' as const, payFrequency: 'monthly', address: '654 Maple St', emergencyContact: { name: 'Diana Wilson', relationship: 'Spouse', phone: '0987654325' }, employmentHistory: [], createdAt: new Date(), updatedAt: new Date() },
-        { id: '6', employeeId: 'EMP006', firstName: 'Diana', lastName: 'Davis', email: 'diana@example.com', phone: '1234567895', photoUrl: null, dateOfBirth: new Date('1993-11-05'), hireDate: new Date('2023-02-15'), departmentId: 3, departmentName: 'Finance', position: 'Assistant', salary: 40000, employmentStatus: 'active' as const, systemRole: 'employee' as const, payFrequency: 'weekly', address: '987 Cedar St', emergencyContact: { name: 'Edward Davis', relationship: 'Spouse', phone: '0987654326' }, employmentHistory: [], createdAt: new Date(), updatedAt: new Date() }
+        { id: '1', employeeId: 'EMP001', firstName: 'John', lastName: 'Doe', email: 'john@example.com', phone: '1234567890', photoUrl: null, dateOfBirth: new Date('1990-01-01'), hireDate: new Date('2020-01-01'), departmentId: '1', departmentName: 'Engineering', position: 'Developer', salary: 50000, employmentStatus: 'active' as const, systemRole: 'employee' as const, payFrequency: 'semiMonthly', address: '123 Main St', emergencyContact: { name: 'Jane Doe', relationship: 'Spouse', phone: '0987654321' }, employmentHistory: [], createdAt: new Date(), updatedAt: new Date() },
+        { id: '2', employeeId: 'EMP002', firstName: 'Jane', lastName: 'Smith', email: 'jane@example.com', phone: '1234567891', photoUrl: null, dateOfBirth: new Date('1992-05-15'), hireDate: new Date('2021-03-01'), departmentId: '1', departmentName: 'Engineering', position: 'Designer', salary: 60000, employmentStatus: 'active' as const, systemRole: 'employee' as const, payFrequency: 'monthly', address: '456 Oak St', emergencyContact: { name: 'John Smith', relationship: 'Spouse', phone: '0987654322' }, employmentHistory: [], createdAt: new Date(), updatedAt: new Date() },
+        { id: '3', employeeId: 'EMP003', firstName: 'Bob', lastName: 'Johnson', email: 'bob@example.com', phone: '1234567892', photoUrl: null, dateOfBirth: new Date('1988-12-10'), hireDate: new Date('2019-06-15'), departmentId: '2', departmentName: 'Marketing', position: 'Manager', salary: 70000, employmentStatus: 'active' as const, systemRole: 'hr' as const, payFrequency: 'weekly', address: '789 Pine St', emergencyContact: { name: 'Alice Johnson', relationship: 'Spouse', phone: '0987654323' }, employmentHistory: [], createdAt: new Date(), updatedAt: new Date() },
+        { id: '4', employeeId: 'EMP004', firstName: 'Alice', lastName: 'Brown', email: 'alice@example.com', phone: '1234567893', photoUrl: null, dateOfBirth: new Date('1995-08-20'), hireDate: new Date('2022-01-10'), departmentId: '2', departmentName: 'Marketing', position: 'Coordinator', salary: 45000, employmentStatus: 'active' as const, systemRole: 'employee' as const, payFrequency: 'semiMonthly', address: '321 Elm St', emergencyContact: { name: 'Charlie Brown', relationship: 'Spouse', phone: '0987654324' }, employmentHistory: [], createdAt: new Date(), updatedAt: new Date() },
+        { id: '5', employeeId: 'EMP005', firstName: 'Charlie', lastName: 'Wilson', email: 'charlie@example.com', phone: '1234567894', photoUrl: null, dateOfBirth: new Date('1985-03-25'), hireDate: new Date('2018-09-01'), departmentId: '3', departmentName: 'Finance', position: 'Analyst', salary: 55000, employmentStatus: 'active' as const, systemRole: 'employee' as const, payFrequency: 'monthly', address: '654 Maple St', emergencyContact: { name: 'Diana Wilson', relationship: 'Spouse', phone: '0987654325' }, employmentHistory: [], createdAt: new Date(), updatedAt: new Date() },
+        { id: '6', employeeId: 'EMP006', firstName: 'Diana', lastName: 'Davis', email: 'diana@example.com', phone: '1234567895', photoUrl: null, dateOfBirth: new Date('1993-11-05'), hireDate: new Date('2023-02-15'), departmentId: '3', departmentName: 'Finance', position: 'Assistant', salary: 40000, employmentStatus: 'active' as const, systemRole: 'employee' as const, payFrequency: 'weekly', address: '987 Cedar St', emergencyContact: { name: 'Edward Davis', relationship: 'Spouse', phone: '0987654326' }, employmentHistory: [], createdAt: new Date(), updatedAt: new Date() }
       ];
       component.filteredEmployees = [...component.employees];
       component.updatePagination();
