@@ -82,7 +82,7 @@ export class ThirteenthFinalPayComponent implements OnInit {
         }),
         finalize(() => this.loading = false)
       )
-      .subscribe(response => {
+      .subscribe((response: any) => {
         if (response.success) {
           this.thirteenthMonthRecords = response.data;
           this.summary = response.summary;
@@ -120,8 +120,9 @@ export class ThirteenthFinalPayComponent implements OnInit {
     return new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP' }).format(amount);
   }
 
-  formatDate(dateString: string): string {
-    return new Date(dateString).toLocaleDateString('en-PH', {
+  formatDate(dateString: string | Date): string {
+    const date = typeof dateString === 'string' ? new Date(dateString) : dateString;
+    return date.toLocaleDateString('en-PH', {
       year: 'numeric',
       month: 'long',
       day: 'numeric'
