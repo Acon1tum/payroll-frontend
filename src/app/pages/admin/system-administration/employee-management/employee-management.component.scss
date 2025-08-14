@@ -367,3 +367,211 @@
     transform: translateX(0);
   }
 }
+
+// Pagination styles
+.pagination-controls {
+  .pagination-info {
+    .pagination-select {
+      transition: all 0.2s ease;
+      
+      &:focus {
+        transform: scale(1.02);
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+      }
+    }
+  }
+  
+  .pagination-navigation {
+    .pagination-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 32px;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 500;
+      transition: all 0.2s ease;
+      border: 1px solid transparent;
+      
+      &.pagination-btn-enabled {
+        color: #374151;
+        background-color: white;
+        border-color: #d1d5db;
+        
+        &:hover {
+          background-color: #f9fafb;
+          border-color: #9ca3af;
+          transform: translateY(-1px);
+          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        &:active {
+          transform: translateY(0);
+        }
+      }
+      
+      &.pagination-btn-disabled {
+        color: #9ca3af;
+        background-color: #f3f4f6;
+        border-color: #e5e7eb;
+        cursor: not-allowed;
+        
+        &:hover {
+          transform: none;
+          box-shadow: none;
+        }
+      }
+    }
+    
+    .pagination-page-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 32px;
+      height: 32px;
+      padding: 0 8px;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 500;
+      transition: all 0.2s ease;
+      border: 1px solid transparent;
+      
+      &.pagination-page-btn-active {
+        color: white;
+        background-color: #3b82f6;
+        border-color: #3b82f6;
+        
+        &:hover {
+          background-color: #2563eb;
+          border-color: #2563eb;
+          transform: translateY(-1px);
+          box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3);
+        }
+      }
+      
+      &.pagination-page-btn-inactive {
+        color: #374151;
+        background-color: white;
+        border-color: #d1d5db;
+        
+        &:hover {
+          background-color: #f9fafb;
+          border-color: #9ca3af;
+          transform: translateY(-1px);
+          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+      }
+    }
+  }
+}
+
+// Responsive pagination
+@media (max-width: 640px) {
+  .pagination-controls {
+    .pagination-info {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 1rem;
+    }
+    
+    .pagination-navigation {
+      .pagination-page-btn {
+        min-width: 28px;
+        height: 28px;
+        font-size: 12px;
+      }
+      
+      .pagination-btn {
+        width: 28px;
+        height: 28px;
+      }
+    }
+  }
+}
+
+// Action button styles
+.action-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  border: 1px solid transparent;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  
+  &:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  }
+  
+  &:active {
+    transform: translateY(0);
+  }
+  
+  &.view-btn {
+    color: #3b82f6;
+    background-color: rgba(59, 130, 246, 0.1);
+    border-color: rgba(59, 130, 246, 0.2);
+    
+    &:hover {
+      background-color: rgba(59, 130, 246, 0.15);
+      border-color: rgba(59, 130, 246, 0.3);
+      color: #2563eb;
+    }
+    
+    &:focus {
+      outline: none;
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+  }
+  
+  &.edit-btn {
+    color: #8b5cf6;
+    background-color: rgba(139, 92, 246, 0.1);
+    border-color: rgba(139, 92, 246, 0.2);
+    
+    &:hover {
+      background-color: rgba(139, 92, 246, 0.15);
+      border-color: rgba(139, 92, 246, 0.3);
+      color: #7c3aed;
+    }
+    
+    &:focus {
+      outline: none;
+      box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+    }
+  }
+  
+  &.delete-btn {
+    color: #ef4444;
+    background-color: rgba(239, 68, 68, 0.1);
+    border-color: rgba(239, 68, 68, 0.2);
+    
+    &:hover {
+      background-color: rgba(239, 68, 68, 0.15);
+      border-color: rgba(239, 68, 68, 0.3);
+      color: #dc2626;
+    }
+    
+    &:focus {
+      outline: none;
+      box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+    }
+  }
+}
+
+// Responsive action buttons
+@media (max-width: 768px) {
+  .action-btn {
+    width: 28px;
+    height: 28px;
+    
+    svg {
+      width: 16px;
+      height: 16px;
+    }
+  }
+}

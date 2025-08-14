@@ -90,6 +90,15 @@ export class EmployeeManagementComponent implements OnInit {
   successMessage = '';
   currentTab = 'list'; // 'list', 'roles', 'status'
 
+  // Pagination properties
+  currentPage = 1;
+  itemsPerPage = 5;
+  itemsPerPageOptions = [5, 10, 15, 20];
+  totalItems = 0;
+  totalPages = 0;
+  paginatedEmployees: Employee[] = [];
+  Math = Math;
+
   // Breadcrumbs for header
   breadcrumbs: Breadcrumb[] = [
     { label: 'Dashboard', path: '/dashboard' },
@@ -189,6 +198,9 @@ export class EmployeeManagementComponent implements OnInit {
         
         // Generate departments from employee data and update department IDs
         this.loadDepartments();
+        
+        // Update pagination after loading data
+        this.updatePagination();
       },
       error: (err) => {
         console.error('Failed to load employees', err);
@@ -387,6 +399,9 @@ export class EmployeeManagementComponent implements OnInit {
           // Refresh departments and apply filters
           this.refreshDepartments();
           
+          // Update pagination after adding employee
+          this.updatePagination();
+          
           // Show success message
           this.showSuccessMessage(response.message || 'Employee added successfully!');
           
@@ -480,6 +495,9 @@ export class EmployeeManagementComponent implements OnInit {
 
           // Refresh departments and apply filters
           this.refreshDepartments();
+          
+          // Update pagination after updating employee
+          this.updatePagination();
           
           // Show success message
           this.showSuccessMessage(response.message || 'Employee updated successfully!');
@@ -741,6 +759,9 @@ export class EmployeeManagementComponent implements OnInit {
     });
     
     console.log(`Filtered employees: ${this.filteredEmployees.length} of ${this.employees.length}`);
+    
+    // Update pagination after filtering
+    this.updatePagination();
   }
 
   // Method to handle search term changes
@@ -772,6 +793,76 @@ export class EmployeeManagementComponent implements OnInit {
     this.selectedRole = '';
     this.selectedPayFrequency = '';
     this.applyFilters();
+  }
+
+  // Pagination methods
+  updatePagination() {
+    this.totalItems = this.filteredEmployees.length;
+    this.totalPages = Math.ceil(this.totalItems / this.itemsPerPage);
+    
+    // Ensure current page is within valid range
+    if (this.currentPage > this.totalPages) {
+      this.currentPage = this.totalPages || 1;
+    }
+    
+    const startIndex = (this.currentPage - 1) * this.itemsPerPage;
+    const endIndex = startIndex + this.itemsPerPage;
+    this.paginatedEmployees = this.filteredEmployees.slice(startIndex, endIndex);
+  }
+
+  onItemsPerPageChange() {
+    this.currentPage = 1;
+    this.updatePagination();
+  }
+
+  goToPage(page: number) {
+    if (page >= 1 && page <= this.totalPages) {
+      this.currentPage = page;
+      this.updatePagination();
+    }
+  }
+
+  goToFirstPage() {
+    this.goToPage(1);
+  }
+
+  goToLastPage() {
+    this.goToPage(this.totalPages);
+  }
+
+  goToPreviousPage() {
+    this.goToPage(this.currentPage - 1);
+  }
+
+  goToNextPage() {
+    this.goToPage(this.currentPage + 1);
+  }
+
+  getPageNumbers(): number[] {
+    const pages: number[] = [];
+    const maxVisiblePages = 5;
+    
+    if (this.totalPages <= maxVisiblePages) {
+      // Show all pages if total is less than or equal to max visible
+      for (let i = 1; i <= this.totalPages; i++) {
+        pages.push(i);
+      }
+    } else {
+      // Show a subset of pages around the current page
+      let startPage = Math.max(1, this.currentPage - Math.floor(maxVisiblePages / 2));
+      let endPage = Math.min(this.totalPages, startPage + maxVisiblePages - 1);
+      
+      // Adjust if we're near the end
+      if (endPage - startPage + 1 < maxVisiblePages) {
+        startPage = Math.max(1, endPage - maxVisiblePages + 1);
+      }
+      
+      for (let i = startPage; i <= endPage; i++) {
+        pages.push(i);
+      }
+    }
+    
+    return pages;
   }
 
   // Method to populate form for editing
@@ -822,6 +913,9 @@ export class EmployeeManagementComponent implements OnInit {
           
           // Refresh departments and apply filters
           this.refreshDepartments();
+          
+          // Update pagination after deleting employee
+          this.updatePagination();
           
           // Show success message
           this.showSuccessMessage(response.message || 'Employee deleted successfully!');
