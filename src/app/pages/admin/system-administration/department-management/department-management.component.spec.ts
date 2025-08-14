@@ -14,6 +14,7 @@ describe('DepartmentManagementComponent', () => {
       'getDepartments',
       'getOrganizations',
       'getAvailableEmployees',
+      'getEmployeesByDepartment',
       'createDepartment',
       'updateDepartment',
       'deleteDepartment',
@@ -331,6 +332,192 @@ describe('DepartmentManagementComponent', () => {
       component.onOrganizationFilterChange(); // Change filter
       
       expect(component.currentPage).toBe(1);
+    });
+  });
+
+  // Department Employees Tests
+  describe('Department Employees', () => {
+    const mockDepartment = {
+      id: '1',
+      name: 'Test Department',
+      organizationId: '1',
+      organizationName: 'Test Org',
+      memberCount: 3,
+      description: '',
+      status: 'active' as const,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+
+    const mockEmployees = [
+      {
+        id: '1',
+        employeeNumber: 'EMP001',
+        name: 'John Doe',
+        fullName: 'John Doe',
+        position: 'Developer',
+        baseSalary: 50000,
+        hireDate: new Date('2023-01-01'),
+        employmentStatus: 'active',
+        photoUrl: 'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEAYABgAAD/2wBDAAEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQH/2wBDAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQH/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwA/8A',
+        createdAt: new Date()
+      },
+      {
+        id: '2',
+        employeeNumber: 'EMP002',
+        name: 'Jane Smith',
+        fullName: 'Jane Smith',
+        position: 'Designer',
+        baseSalary: 45000,
+        hireDate: new Date('2023-02-01'),
+        employmentStatus: 'active',
+        photoUrl: undefined,
+        createdAt: new Date()
+      }
+    ];
+
+    it('should initialize department employees properties', () => {
+      expect(component.isViewEmployeesMode).toBeFalse();
+      expect(component.departmentEmployees).toEqual([]);
+      expect(component.selectedDepartmentForEmployees).toBeNull();
+      expect(component.isLoadingEmployees).toBeFalse();
+    });
+
+    it('should view department employees', () => {
+      // Mock the service response
+      const mockResponse = {
+        success: true,
+        data: {
+          department: {
+            id: '1',
+            name: 'Test Department',
+            organization: { id: '1', name: 'Test Org' }
+          },
+          employees: mockEmployees,
+          totalCount: 2
+        }
+      };
+      (departmentService.getEmployeesByDepartment as jasmine.Spy).and.returnValue({
+        subscribe: (fn: any) => fn.next(mockResponse)
+      } as any);
+
+      component.viewDepartmentEmployees(mockDepartment);
+
+      expect(component.isViewEmployeesMode).toBeTrue();
+      expect(component.isAddMode).toBeFalse();
+      expect(component.isEditMode).toBeFalse();
+      expect(component.isAssignHeadMode).toBeFalse();
+      expect(component.selectedDepartmentForEmployees).toEqual(mockDepartment);
+      expect(departmentService.getEmployeesByDepartment).toHaveBeenCalledWith('1');
+    });
+
+    it('should load department employees successfully', () => {
+      const mockResponse = {
+        success: true,
+        data: {
+          department: {
+            id: '1',
+            name: 'Test Department',
+            organization: { id: '1', name: 'Test Org' }
+          },
+          employees: mockEmployees,
+          totalCount: 2
+        }
+      };
+      (departmentService.getEmployeesByDepartment as jasmine.Spy).and.returnValue({
+        subscribe: (fn: any) => fn.next(mockResponse)
+      } as any);
+
+      component.loadDepartmentEmployees('1');
+
+      expect(component.isLoadingEmployees).toBeFalse();
+      expect(component.departmentEmployees).toEqual(mockEmployees);
+      expect(component.errorMessage).toBe('');
+    });
+
+    it('should handle error when loading department employees', () => {
+      const mockError = { status: 500, message: 'Server error' };
+      (departmentService.getEmployeesByDepartment as jasmine.Spy).and.returnValue({
+        subscribe: (fn: any, errorFn: any) => errorFn(mockError)
+      } as any);
+
+      component.loadDepartmentEmployees('1');
+
+      expect(component.isLoadingEmployees).toBeFalse();
+      expect(component.errorMessage).toBe('Failed to load department employees');
+    });
+
+    it('should close modal and reset department employees state', () => {
+      component.isViewEmployeesMode = true;
+      component.selectedDepartmentForEmployees = mockDepartment;
+      component.departmentEmployees = mockEmployees;
+
+      component.cancelEdit();
+
+      expect(component.isViewEmployeesMode).toBeFalse();
+      expect(component.selectedDepartmentForEmployees).toBeNull();
+      expect(component.departmentEmployees).toEqual([]);
+    });
+
+    it('should handle image loading errors', () => {
+      const mockEvent = {
+        target: {
+          style: {
+            display: ''
+          }
+        }
+      } as any;
+
+      component.onImageError(mockEvent);
+
+      expect(mockEvent.target.style.display).toBe('none');
+    });
+
+    it('should open employee photo in new window', () => {
+      const employee = {
+        id: '1',
+        employeeNumber: 'EMP001',
+        name: 'John Doe',
+        fullName: 'John Doe',
+        position: 'Developer',
+        baseSalary: 50000,
+        hireDate: new Date('2023-01-01'),
+        employmentStatus: 'active',
+        photoUrl: 'data:image/jpeg;base64,test',
+        createdAt: new Date()
+      };
+
+      spyOn(window, 'open').and.returnValue({
+        document: {
+          write: jasmine.createSpy('write'),
+          close: jasmine.createSpy('close')
+        }
+      } as any);
+
+      component.viewEmployeePhoto(employee);
+
+      expect(window.open).toHaveBeenCalledWith('', '_blank');
+    });
+
+    it('should not open window if employee has no photo', () => {
+      const employee = {
+        id: '1',
+        employeeNumber: 'EMP001',
+        name: 'John Doe',
+        fullName: 'John Doe',
+        position: 'Developer',
+        baseSalary: 50000,
+        hireDate: new Date('2023-01-01'),
+        employmentStatus: 'active',
+        photoUrl: undefined,
+        createdAt: new Date()
+      };
+
+      spyOn(window, 'open');
+
+      component.viewEmployeePhoto(employee);
+
+      expect(window.open).not.toHaveBeenCalled();
     });
   });
 });

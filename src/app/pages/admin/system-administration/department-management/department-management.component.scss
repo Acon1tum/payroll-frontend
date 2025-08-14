@@ -488,3 +488,108 @@
     }
   }
 }
+
+// Department Employees Modal Styles
+.department-employees-modal {
+  .modal-content {
+    max-width: 80vw;
+    min-width: 800px;
+  }
+  
+  .employee-table {
+    .employee-avatar {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      font-weight: 600;
+      font-size: 0.875rem;
+    }
+    
+    .employee-name {
+      font-weight: 500;
+      color: #1f2937;
+    }
+    
+    .employee-position {
+      color: #6b7280;
+      font-size: 0.875rem;
+    }
+  }
+}
+
+// Clickable Member Count Badge
+.member-count-badge {
+  transition: all 0.2s ease;
+  cursor: pointer;
+  
+  &:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+  }
+  
+  &:active {
+    transform: translateY(0);
+  }
+}
+
+// Employee Status Badge
+.employee-status {
+  &.active {
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: white;
+  }
+  
+  &.inactive {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    color: white;
+  }
+  
+  &.resigned {
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    color: white;
+  }
+  
+  &.terminated {
+    background: linear-gradient(135deg, #6b7280, #4b5563);
+    color: white;
+  }
+}
+
+// Employee Photo Styles
+.employee-photo {
+  transition: all 0.2s ease;
+  
+  &:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  }
+}
+
+.employee-avatar-container {
+  position: relative;
+  
+  &::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    border-radius: 50%;
+    border: 2px solid transparent;
+    transition: border-color 0.2s ease;
+  }
+  
+  &:hover::after {
+    border-color: #3b82f6;
+  }
+}
+
+.default-avatar {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  font-weight: 600;
+  font-size: 0.875rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
