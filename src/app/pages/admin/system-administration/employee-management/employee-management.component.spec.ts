@@ -219,6 +219,7 @@ describe('EmployeeManagementComponent', () => {
       salary: 50000,
       employmentStatus: 'active',
       systemRole: 'employee',
+      payFrequency: 'semiMonthly',
       photoUrl: ''
     };
 
@@ -239,6 +240,7 @@ describe('EmployeeManagementComponent', () => {
       salary: 60000,
       employmentStatus: 'active',
       systemRole: 'employee',
+      payFrequency: 'monthly',
       photoUrl: ''
     };
 
@@ -293,6 +295,7 @@ describe('EmployeeManagementComponent', () => {
       salary: 60000,
       employmentStatus: 'active',
       systemRole: 'employee',
+      payFrequency: 'weekly',
       photoUrl: ''
     };
 

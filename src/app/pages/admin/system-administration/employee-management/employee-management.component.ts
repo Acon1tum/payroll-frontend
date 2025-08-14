@@ -127,6 +127,7 @@ export class EmployeeManagementComponent implements OnInit {
     salary: null as number | null,
     employmentStatus: 'active' as 'active' | 'resigned' | 'suspended' | 'terminated',
     systemRole: 'employee' as 'admin' | 'hr' | 'payroll_manager' | 'employee',
+    payFrequency: '' as string,
     photoUrl: '' as string | null
   };
 
@@ -353,6 +354,7 @@ export class EmployeeManagementComponent implements OnInit {
         salary: this.employeeForm.salary || 0,
         employmentStatus: this.employeeForm.employmentStatus,
         systemRole: this.mapClientRoleToServerRole(this.employeeForm.systemRole),
+        payFrequency: this.employeeForm.payFrequency,
         photoUrl: this.employeeForm.photoUrl || undefined
       };
 
@@ -459,6 +461,7 @@ export class EmployeeManagementComponent implements OnInit {
         salary: this.employeeForm.salary || 0,
         employmentStatus: this.employeeForm.employmentStatus,
         systemRole: this.mapClientRoleToServerRole(this.employeeForm.systemRole),
+        payFrequency: this.employeeForm.payFrequency,
         photoUrl: this.employeeForm.photoUrl || undefined
       };
 
@@ -534,7 +537,7 @@ export class EmployeeManagementComponent implements OnInit {
     
     const requiredFields = [
       'employeeId', 'firstName', 'lastName', 'email',
-      'dateOfBirth', 'hireDate', 'departmentId', 'position', 'salary'
+      'dateOfBirth', 'hireDate', 'departmentId', 'position', 'salary', 'payFrequency'
     ];
 
     for (const field of requiredFields) {
@@ -623,6 +626,7 @@ export class EmployeeManagementComponent implements OnInit {
       salary: null,
       employmentStatus: 'active',
       systemRole: 'employee',
+      payFrequency: '',
       photoUrl: ''
     };
   }
@@ -885,6 +889,7 @@ export class EmployeeManagementComponent implements OnInit {
       salary: employee.salary,
       employmentStatus: employee.employmentStatus,
       systemRole: employee.systemRole,
+      payFrequency: employee.payFrequency || '',
       photoUrl: (employee as any).photoUrl || ''
     };
   }

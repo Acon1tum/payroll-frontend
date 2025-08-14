@@ -38,6 +38,7 @@ export interface CreateEmployeeDto {
   salary: number;
   employmentStatus: 'active' | 'resigned' | 'suspended' | 'terminated';
   systemRole: 'admin' | 'hrStaff' | 'payrollManager' | 'employee';
+  payFrequency?: string;
   photoUrl?: string | null; // base64
 }
 
@@ -53,6 +54,7 @@ export interface UpdateEmployeeDto {
   salary: number;
   employmentStatus: 'active' | 'resigned' | 'suspended' | 'terminated';
   systemRole: 'admin' | 'hrStaff' | 'payrollManager' | 'employee';
+  payFrequency?: string;
   photoUrl?: string | null; // base64
 }
 
