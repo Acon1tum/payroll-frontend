@@ -3,10 +3,12 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HeaderComponent } from '../../../../shared/header/header.component';
 import { SidebarComponent } from '../../../../shared/sidebar/sidebar.component';
+import { OrganizationService, OrganizationDto, CreateOrganizationDto, UpdateOrganizationDto } from '../../../../services/organization.service';
 
 interface Organization {
-  id: number;
+  id: string;
   name: string;
+  code: string;
   tin: string;
   address: string;
   contact: string;
@@ -39,6 +41,7 @@ export class OrgManagementComponent implements OnInit {
   searchTerm = '';
   isLoading = false;
   errorMessage = '';
+  successMessage = '';
 
   // Pagination properties
   currentPage = 1;
@@ -59,6 +62,7 @@ export class OrgManagementComponent implements OnInit {
   // Form data
   organizationForm = {
     name: '',
+    code: '',
     tin: '',
     address: '',
     contact: '',
@@ -67,56 +71,42 @@ export class OrgManagementComponent implements OnInit {
     status: 'active' as 'active' | 'inactive'
   };
 
+  constructor(private organizationService: OrganizationService) {}
+
   ngOnInit() {
     this.loadOrganizations();
   }
 
   loadOrganizations() {
     this.isLoading = true;
-    // Simulate API call
-    setTimeout(() => {
-      this.organizations = [
-        {
-          id: 1,
-          name: 'TechCorp Solutions',
-          tin: '123456789',
-          address: '123 Business Ave, Tech City, TC 12345',
-          contact: 'John Smith',
-          email: 'contact@techcorp.com',
-          phone: '+1 (555) 123-4567',
-          status: 'active',
-          createdAt: new Date('2024-01-15'),
-          updatedAt: new Date('2024-01-15')
-        },
-        {
-          id: 2,
-          name: 'Global Industries Ltd',
-          tin: '987654321',
-          address: '456 Corporate Blvd, Business District, BD 67890',
-          contact: 'Sarah Johnson',
-          email: 'info@globalindustries.com',
-          phone: '+1 (555) 987-6543',
-          status: 'active',
-          createdAt: new Date('2024-02-20'),
-          updatedAt: new Date('2024-02-20')
-        },
-        {
-          id: 3,
-          name: 'Startup Ventures Inc',
-          tin: '456789123',
-          address: '789 Innovation St, Startup Valley, SV 11111',
-          contact: 'Mike Chen',
-          email: 'hello@startupventures.com',
-          phone: '+1 (555) 456-7890',
-          status: 'inactive',
-          createdAt: new Date('2024-03-10'),
-          updatedAt: new Date('2024-03-10')
-        }
-      ];
-      this.filteredOrganizations = [...this.organizations];
-      this.updatePagination();
-      this.isLoading = false;
-    }, 1000);
+    this.errorMessage = '';
+    
+    this.organizationService.getOrganizations().subscribe({
+      next: (response) => {
+        const apiOrganizations: OrganizationDto[] = response.data || [];
+        this.organizations = apiOrganizations.map((org) => ({
+          id: org.id,
+          name: org.name,
+          code: org.code,
+          tin: org.tin,
+          address: org.address,
+          contact: org.contact,
+          email: org.email,
+          phone: org.phone || '',
+          status: org.status as 'active' | 'inactive',
+          createdAt: new Date(org.createdAt),
+          updatedAt: new Date(org.updatedAt),
+        }));
+        this.filteredOrganizations = [...this.organizations];
+        this.updatePagination();
+        this.isLoading = false;
+      },
+      error: (error) => {
+        console.error('Failed to load organizations', error);
+        this.errorMessage = 'Failed to load organizations. Please try again.';
+        this.isLoading = false;
+      }
+    });
   }
 
   searchOrganizations() {
@@ -125,11 +115,13 @@ export class OrgManagementComponent implements OnInit {
     } else {
       this.filteredOrganizations = this.organizations.filter(org =>
         org.name.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
+        org.code.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
         org.tin.includes(this.searchTerm) ||
         org.contact.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
         org.email.toLowerCase().includes(this.searchTerm.toLowerCase())
       );
     }
+    this.currentPage = 1; // Reset to first page when searching
     this.updatePagination();
   }
 
@@ -216,6 +208,7 @@ export class OrgManagementComponent implements OnInit {
     this.selectedOrganization = organization;
     this.organizationForm = {
       name: organization.name,
+      code: organization.code,
       tin: organization.tin,
       address: organization.address,
       contact: organization.contact,
@@ -226,37 +219,136 @@ export class OrgManagementComponent implements OnInit {
   }
 
   saveOrganization() {
-    if (this.isAddMode) {
-      const newOrg: Organization = {
-        id: this.organizations.length + 1,
-        ...this.organizationForm,
-        createdAt: new Date(),
-        updatedAt: new Date()
-      };
-      this.organizations.push(newOrg);
-      this.filteredOrganizations = [...this.organizations];
-      this.updatePagination();
-    } else if (this.isEditMode && this.selectedOrganization) {
-      const index = this.organizations.findIndex(org => org.id === this.selectedOrganization!.id);
-      if (index !== -1) {
-        this.organizations[index] = {
-          ...this.selectedOrganization,
-          ...this.organizationForm,
-          updatedAt: new Date()
-        };
-        this.filteredOrganizations = [...this.organizations];
-        this.updatePagination();
-      }
+    if (!this.validateForm()) {
+      return;
     }
-    this.cancelEdit();
+
+    this.isLoading = true;
+    this.errorMessage = '';
+
+    if (this.isAddMode) {
+      const createData: CreateOrganizationDto = {
+        name: this.organizationForm.name.trim(),
+        code: this.organizationForm.code.trim(),
+        tin: this.organizationForm.tin.trim(),
+        address: this.organizationForm.address.trim(),
+        contact: this.organizationForm.contact.trim(),
+        email: this.organizationForm.email.trim().toLowerCase(),
+        phone: this.organizationForm.phone.trim() || undefined,
+        status: this.organizationForm.status
+      };
+
+      this.organizationService.createOrganization(createData).subscribe({
+        next: (response) => {
+          const newOrg: Organization = {
+            id: response.data.id,
+            name: response.data.name,
+            code: response.data.code,
+            tin: response.data.tin,
+            address: response.data.address,
+            contact: response.data.contact,
+            email: response.data.email,
+            phone: response.data.phone || '',
+            status: response.data.status as 'active' | 'inactive',
+            createdAt: new Date(response.data.createdAt),
+            updatedAt: new Date(response.data.updatedAt),
+          };
+          this.organizations.push(newOrg);
+          this.filteredOrganizations = [...this.organizations];
+          this.updatePagination();
+          this.showSuccessMessage(response.message || 'Organization created successfully!');
+          this.cancelEdit();
+        },
+        error: (error) => {
+          console.error('Error creating organization:', error);
+          this.showErrorMessage(this.getErrorMessage(error));
+        }
+      });
+    } else if (this.isEditMode && this.selectedOrganization) {
+      const updateData: UpdateOrganizationDto = {
+        name: this.organizationForm.name.trim(),
+        code: this.organizationForm.code.trim(),
+        tin: this.organizationForm.tin.trim(),
+        address: this.organizationForm.address.trim(),
+        contact: this.organizationForm.contact.trim(),
+        email: this.organizationForm.email.trim().toLowerCase(),
+        phone: this.organizationForm.phone.trim() || undefined,
+        status: this.organizationForm.status
+      };
+
+      this.organizationService.updateOrganization(this.selectedOrganization.id, updateData).subscribe({
+        next: (response) => {
+          const index = this.organizations.findIndex(org => org.id === this.selectedOrganization!.id);
+          if (index !== -1) {
+            this.organizations[index] = {
+              ...this.organizations[index],
+              name: response.data.name,
+              code: response.data.code,
+              tin: response.data.tin,
+              address: response.data.address,
+              contact: response.data.contact,
+              email: response.data.email,
+              phone: response.data.phone || '',
+              status: response.data.status as 'active' | 'inactive',
+              updatedAt: new Date(response.data.updatedAt)
+            };
+            this.filteredOrganizations = [...this.organizations];
+            this.updatePagination();
+          }
+          this.showSuccessMessage(response.message || 'Organization updated successfully!');
+          this.cancelEdit();
+        },
+        error: (error) => {
+          console.error('Error updating organization:', error);
+          this.showErrorMessage(this.getErrorMessage(error));
+        }
+      });
+    }
   }
 
   deleteOrganization(organization: Organization) {
-    if (confirm(`Are you sure you want to delete ${organization.name}?`)) {
-      this.organizations = this.organizations.filter(org => org.id !== organization.id);
-      this.filteredOrganizations = [...this.organizations];
-      this.updatePagination();
+    if (confirm(`Are you sure you want to delete ${organization.name}? This action cannot be undone.`)) {
+      this.isLoading = true;
+      this.errorMessage = '';
+
+      this.organizationService.deleteOrganization(organization.id).subscribe({
+        next: (response) => {
+          this.organizations = this.organizations.filter(org => org.id !== organization.id);
+          this.filteredOrganizations = [...this.organizations];
+          this.updatePagination();
+          this.showSuccessMessage(response.message || 'Organization deleted successfully!');
+        },
+        error: (error) => {
+          console.error('Error deleting organization:', error);
+          this.showErrorMessage(this.getErrorMessage(error));
+        }
+      });
     }
+  }
+
+  toggleStatus(organization: Organization) {
+    this.isLoading = true;
+    this.errorMessage = '';
+
+    this.organizationService.toggleOrganizationStatus(organization.id).subscribe({
+      next: (response) => {
+        const index = this.organizations.findIndex(org => org.id === organization.id);
+        if (index !== -1) {
+          this.organizations[index] = {
+            ...this.organizations[index],
+            status: response.data.status as 'active' | 'inactive',
+            updatedAt: new Date(response.data.updatedAt)
+          };
+          this.filteredOrganizations = [...this.organizations];
+          this.updatePagination();
+        }
+        this.showSuccessMessage(response.message || 'Organization status updated successfully!');
+      },
+      error: (error) => {
+        console.error('Error toggling organization status:', error);
+        this.showErrorMessage(this.getErrorMessage(error));
+      }
+    });
   }
 
   cancelEdit() {
@@ -264,11 +356,13 @@ export class OrgManagementComponent implements OnInit {
     this.isEditMode = false;
     this.selectedOrganization = null;
     this.resetForm();
+    this.errorMessage = '';
   }
 
   resetForm() {
     this.organizationForm = {
       name: '',
+      code: '',
       tin: '',
       address: '',
       contact: '',
@@ -278,8 +372,69 @@ export class OrgManagementComponent implements OnInit {
     };
   }
 
-  toggleStatus(organization: Organization) {
-    organization.status = organization.status === 'active' ? 'inactive' : 'active';
-    organization.updatedAt = new Date();
+  private validateForm(): boolean {
+    if (!this.organizationForm.name.trim()) {
+      this.showErrorMessage('Organization name is required.');
+      return false;
+    }
+    if (!this.organizationForm.code.trim()) {
+      this.showErrorMessage('Organization code is required.');
+      return false;
+    }
+    if (!this.organizationForm.tin.trim()) {
+      this.showErrorMessage('TIN is required.');
+      return false;
+    }
+    if (!this.organizationForm.address.trim()) {
+      this.showErrorMessage('Address is required.');
+      return false;
+    }
+    if (!this.organizationForm.contact.trim()) {
+      this.showErrorMessage('Contact person is required.');
+      return false;
+    }
+    if (!this.organizationForm.email.trim()) {
+      this.showErrorMessage('Email is required.');
+      return false;
+    }
+    
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(this.organizationForm.email)) {
+      this.showErrorMessage('Please enter a valid email address.');
+      return false;
+    }
+
+    return true;
+  }
+
+  private getErrorMessage(error: any): string {
+    if (error.error && error.error.message) {
+      return error.error.message;
+    } else if (error.status === 400) {
+      return 'Invalid data provided. Please check your input.';
+    } else if (error.status === 409) {
+      return 'An organization with this information already exists.';
+    } else if (error.status === 404) {
+      return 'Organization not found.';
+    } else {
+      return 'An error occurred. Please try again.';
+    }
+  }
+
+  private showSuccessMessage(message: string) {
+    this.successMessage = message;
+    this.isLoading = false;
+    setTimeout(() => {
+      this.successMessage = '';
+    }, 5000);
+  }
+
+  private showErrorMessage(message: string) {
+    this.errorMessage = message;
+    this.isLoading = false;
+    setTimeout(() => {
+      this.errorMessage = '';
+    }, 5000);
   }
 }

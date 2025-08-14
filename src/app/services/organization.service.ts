@@ -1,9 +1,10 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../environment/environment';
+import { AuthService } from './auth.service';
 
-export interface Organization {
+export interface OrganizationDto {
   id: string;
   name: string;
   code: string;
@@ -12,12 +13,12 @@ export interface Organization {
   contact: string;
   email: string;
   phone?: string;
-  status: 'active' | 'inactive';
-  createdAt: Date;
-  updatedAt: Date;
+  status: string;
+  createdAt: string | Date;
+  updatedAt: string | Date;
 }
 
-export interface CreateOrganizationRequest {
+export interface CreateOrganizationDto {
   name: string;
   code: string;
   tin: string;
@@ -25,10 +26,10 @@ export interface CreateOrganizationRequest {
   contact: string;
   email: string;
   phone?: string;
-  status?: 'active' | 'inactive';
+  status?: string;
 }
 
-export interface UpdateOrganizationRequest {
+export interface UpdateOrganizationDto {
   name?: string;
   code?: string;
   tin?: string;
@@ -36,65 +37,56 @@ export interface UpdateOrganizationRequest {
   contact?: string;
   email?: string;
   phone?: string;
-  status?: 'active' | 'inactive';
+  status?: string;
 }
 
-export interface DuplicateCheckResponse {
-  success: boolean;
-  isDuplicate: boolean;
-  duplicates: Array<{
-    field: string;
-    message: string;
-  }>;
-  message: string;
-}
-
-@Injectable({
-  providedIn: 'root'
-})
+@Injectable({ providedIn: 'root' })
 export class OrganizationService {
   private apiUrl = `${environment.apiUrl}/system/organizations`;
 
-  constructor(private http: HttpClient) { }
+  constructor(private http: HttpClient, private auth: AuthService) {}
 
-  // Get all organizations
-  getOrganizations(): Observable<{ success: boolean; data: Organization[] }> {
-    return this.http.get<{ success: boolean; data: Organization[] }>(this.apiUrl);
+  private getHeaders(): HttpHeaders {
+    const token = this.auth.token;
+    return new HttpHeaders({
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    });
   }
 
-  // Get organization by ID
-  getOrganization(id: string): Observable<{ success: boolean; data: Organization }> {
-    return this.http.get<{ success: boolean; data: Organization }>(`${this.apiUrl}/${id}`);
+  getOrganizations(): Observable<{ success: boolean; data: OrganizationDto[] }> {
+    return this.http.get<{ success: boolean; data: OrganizationDto[] }>(this.apiUrl, {
+      headers: this.getHeaders(),
+    });
   }
 
-  // Create organization
-  createOrganization(organization: CreateOrganizationRequest): Observable<{ success: boolean; message: string; data: Organization }> {
-    return this.http.post<{ success: boolean; message: string; data: Organization }>(this.apiUrl, organization);
+  getOrganizationById(id: string): Observable<{ success: boolean; data: OrganizationDto }> {
+    return this.http.get<{ success: boolean; data: OrganizationDto }>(`${this.apiUrl}/${id}`, {
+      headers: this.getHeaders(),
+    });
   }
 
-  // Update organization
-  updateOrganization(id: string, organization: UpdateOrganizationRequest): Observable<{ success: boolean; message: string; data: Organization }> {
-    return this.http.put<{ success: boolean; message: string; data: Organization }>(`${this.apiUrl}/${id}`, organization);
+  createOrganization(organizationData: CreateOrganizationDto): Observable<{ success: boolean; data: OrganizationDto; message: string }> {
+    return this.http.post<{ success: boolean; data: OrganizationDto; message: string }>(this.apiUrl, organizationData, {
+      headers: this.getHeaders(),
+    });
   }
 
-  // Toggle organization status
-  toggleOrganizationStatus(id: string): Observable<{ success: boolean; message: string; data: Organization }> {
-    return this.http.patch<{ success: boolean; message: string; data: Organization }>(`${this.apiUrl}/${id}/toggle-status`, {});
+  updateOrganization(id: string, organizationData: UpdateOrganizationDto): Observable<{ success: boolean; data: OrganizationDto; message: string }> {
+    return this.http.put<{ success: boolean; data: OrganizationDto; message: string }>(`${this.apiUrl}/${id}`, organizationData, {
+      headers: this.getHeaders(),
+    });
   }
 
-  // Delete organization
+  toggleOrganizationStatus(id: string): Observable<{ success: boolean; data: OrganizationDto; message: string }> {
+    return this.http.patch<{ success: boolean; data: OrganizationDto; message: string }>(`${this.apiUrl}/${id}/toggle-status`, {}, {
+      headers: this.getHeaders(),
+    });
+  }
+
   deleteOrganization(id: string): Observable<{ success: boolean; message: string }> {
-    return this.http.delete<{ success: boolean; message: string }>(`${this.apiUrl}/${id}`);
-  }
-
-  // Check for duplicate organization name, code, or TIN
-  checkDuplicateOrganization(name?: string, tin?: string, excludeId?: string, code?: string): Observable<DuplicateCheckResponse> {
-    const params: any = {};
-    if (name) params.name = name;
-    if (tin) params.tin = tin;
-    if (code) params.code = code;
-    if (excludeId) params.excludeId = excludeId;
-    
-    return this.http.post<DuplicateCheckResponse>(`${this.apiUrl}/check-duplicate`, params);
+    return this.http.delete<{ success: boolean; message: string }>(`${this.apiUrl}/${id}`, {
+      headers: this.getHeaders(),
+    });
   }
 }
