@@ -125,8 +125,9 @@ export class PayslipComponent implements OnInit {
     return new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP' }).format((amount ?? 0));
   }
 
-  formatDate(dateString: string): string {
-    return new Date(dateString).toLocaleDateString('en-PH', {
+  formatDate(dateString: string | Date): string {
+    const date = typeof dateString === 'string' ? new Date(dateString) : dateString;
+    return date.toLocaleDateString('en-PH', {
       year: 'numeric',
       month: 'short',
       day: 'numeric'

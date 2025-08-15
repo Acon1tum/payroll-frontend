@@ -139,6 +139,7 @@ export interface ContributionSummary {
   pendingAmount: number;
   paidAmount: number;
   overdueAmount: number;
+  count: number;
 }
 
 export interface ContributionResponse {

@@ -32,7 +32,7 @@
               </div>
               <div class="ml-4 flex-1">
                 <h4 class="text-sm font-medium text-gray-900">{{ getContributionCodeLabel(item.code) }}</h4>
-                <p class="text-xs text-gray-500">{{ item.count }} records</p>
+                <p class="text-xs text-gray-500">{{ item.totalRecords }} records</p>
               </div>
             </div>
             <div class="mt-4 space-y-2">
@@ -158,7 +158,7 @@
               </thead>
               <tbody class="bg-white divide-y divide-gray-200">
                 <tr *ngFor="let c of contributions">
-                  <td class="px-4 py-3 text-sm text-gray-600">{{ formatDate(c.payrollRun.periodStart) }} - {{ formatDate(c.payrollRun.periodEnd) }}</td>
+                  <td class="px-4 py-3 text-sm text-gray-600">{{ c.month }}/{{ c.year }}</td>
                   <td class="px-4 py-3 text-sm text-gray-600">{{ formatDate(c.payrollRun.payDate) }}</td>
                   <td class="px-4 py-3 text-sm text-gray-900">
                     <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
