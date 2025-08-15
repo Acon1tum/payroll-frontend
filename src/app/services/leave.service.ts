@@ -47,6 +47,16 @@ export interface LeaveAdjustment {
   leaveType?: LeaveType;
 }
 
+export interface LeaveCreditSetting {
+  id?: string;
+  leaveTypeId: number;
+  employmentType: string; // e.g., 'Regular', 'Probationary', 'Contractual'
+  annualCap: number;
+  monthlyCap: number;
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
 export interface CreateLeaveAdjustmentRequest {
   employeeId: string;
   leaveTypeId: number;
@@ -185,6 +195,34 @@ export class LeaveService {
 
   updateAdjustments(adjustments: LeaveAdjustment[]) {
     this.adjustmentsSubject.next(adjustments);
+  }
+
+  // Leave Credit Settings
+  addLeaveCreditSetting(creditSetting: Partial<LeaveCreditSetting>): Observable<LeaveCreditSetting> {
+    return this.http.post<ApiResponse<LeaveCreditSetting>>(`${this.apiUrl}/credit-settings`, creditSetting)
+      .pipe(map(response => response.data));
+  }
+
+  updateLeaveCreditSetting(id: string, creditSetting: Partial<LeaveCreditSetting>): Observable<LeaveCreditSetting> {
+    return this.http.put<ApiResponse<LeaveCreditSetting>>(`${this.apiUrl}/credit-settings/${id}`, creditSetting)
+      .pipe(map(response => response.data));
+  }
+
+  deleteLeaveCreditSetting(id?: string): Observable<void> {
+    if (!id) {
+      return new Observable(observer => {
+        observer.error(new Error('Credit setting ID is required'));
+        observer.complete();
+      });
+    }
+    return this.http.delete<ApiResponse<void>>(`${this.apiUrl}/credit-settings/${id}`)
+      .pipe(map(response => response.data));
+  }
+
+  updateLeaveCreditSettings(creditSettings: LeaveCreditSetting[]) {
+    // Note: This would need a new BehaviorSubject if you want to track credit settings
+    // For now, just log the update
+    console.log('Credit settings updated:', creditSettings);
   }
 
   // Helper methods
