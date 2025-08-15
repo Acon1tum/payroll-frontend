@@ -35,6 +35,7 @@ import { ThirteenthFinalPayComponent } from './pages/employee/thirteenth-final-p
 import { EmployeeSettingsComponent } from './pages/employee/employee-settings/employee-settings.component';
 import { ReportsComponent } from './pages/employee/reports/reports.component';
 import { UnauthorizedComponent } from './shared/unauthorized/unauthorized.component';
+import { LeaveBalanceComponent } from './pages/admin/leave-management/leave-balance/leave-balance.component';
 import { AuthGuard } from './guards/auth.guard';
 import { RoleGuard } from './guards/role.guard';
 import { LoggedInGuard } from './guards/logged-in.guard';
@@ -158,6 +159,12 @@ export const routes: Routes = [
   { 
     path: 'leave-reports', 
     component: LeaveReportsComponent,
+    canActivate: [AuthGuard, RoleGuard],
+    data: { roles: ['admin', 'hrStaff'] }
+  },
+  {
+    path: 'leave-balance',
+    component: LeaveBalanceComponent,
     canActivate: [AuthGuard, RoleGuard],
     data: { roles: ['admin', 'hrStaff'] }
   },
