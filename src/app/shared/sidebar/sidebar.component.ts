@@ -39,7 +39,7 @@ export class SidebarComponent implements OnInit, OnDestroy, OnChanges {
         { name: 'Department Management', icon: 'apartment', path: '/department-management' },
         { name: 'Employee Management', icon: 'person', path: '/employee-management' }
       ] },
-      { name: 'Payroll Management', icon: 'payments', children: [
+      { name: 'Payroll Management', icon: 'payments', path: '/payroll-management', children: [
         { name: 'Run Payroll', icon: 'assessment', path: '/run-payroll' },
         { name: 'Payslip Center', icon: 'assessment', path: '/payslip-center' },
         { name: 'Thirteen Month Pay', icon: 'assessment', path: '/thirteen-month-pay' },
@@ -155,16 +155,49 @@ export class SidebarComponent implements OnInit, OnDestroy, OnChanges {
 
   private updateMenuItems() {
     this.menuItems = this.currentMenuItems;
+    // Auto-expand parent menu items based on current route
+    this.autoExpandActiveMenu();
+  }
+
+  private autoExpandActiveMenu() {
+    const currentUrl = this.router.url;
+    
+    // Find which parent menu item should be expanded based on current route
+    for (const item of this.menuItems) {
+      if (item.children) {
+        // Check if any child route matches current URL
+        const hasActiveChild = item.children.some(child => 
+          child.path && currentUrl.startsWith(child.path)
+        );
+        
+        // Check if the parent route itself matches current URL
+        const isParentActive = item.path && currentUrl.startsWith(item.path);
+        
+        if (hasActiveChild || isParentActive) {
+          this.expandedItem = item.name;
+          break;
+        }
+      }
+    }
   }
 
   toggleMenuItem(itemName: string, event: Event) {
     event.preventDefault();
     event.stopPropagation();
 
-    if (this.expandedItem === itemName) {
-      this.expandedItem = null;
-    } else {
-      this.expandedItem = itemName;
+    // Find the menu item
+    const menuItem = this.menuItems.find(item => item.name === itemName);
+    
+    if (menuItem) {
+      if (menuItem.children) {
+        // If it has children, toggle expansion
+        if (this.expandedItem === itemName) {
+          this.expandedItem = null;
+        } else {
+          this.expandedItem = itemName;
+        }
+      }
+      // If it has a path, navigation will be handled by routerLink in the template
     }
   }
 
@@ -175,7 +208,9 @@ export class SidebarComponent implements OnInit, OnDestroy, OnChanges {
   onMenuItemClick() {
     if (this.isMobile) {
       // Close sidebar on mobile after menu item click
+      // You can add logic here to close the sidebar on mobile if needed
     }
+    // Don't reset expanded state - let it persist
   }
 
   toggleSidebar() {
