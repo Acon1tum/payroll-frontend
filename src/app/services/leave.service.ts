@@ -57,6 +57,42 @@ export interface LeaveCreditSetting {
   updatedAt?: Date;
 }
 
+export interface LeaveApplication {
+  id: string;
+  employeeId: string;
+  leaveTypeId: number;
+  startDate: Date;
+  endDate: Date;
+  reason: string;
+  status: 'pending' | 'approved' | 'rejected';
+  docUrl?: string;
+  createdAt: Date;
+  approverId?: string;
+  employee?: {
+    id: string;
+    firstName: string;
+    lastName: string;
+    employeeId: string;
+    department?: {
+      name: string;
+    };
+  };
+  leaveType?: LeaveType;
+}
+
+export interface CreateLeaveApplicationRequest {
+  employeeId: string;
+  leaveTypeId: number;
+  startDate: Date;
+  endDate: Date;
+  reason: string;
+  docUrl?: string;
+}
+
+export interface UpdateLeaveApplicationRequest {
+  status: 'approved' | 'rejected';
+}
+
 export interface CreateLeaveAdjustmentRequest {
   employeeId: string;
   leaveTypeId: number;
@@ -223,6 +259,31 @@ export class LeaveService {
     // Note: This would need a new BehaviorSubject if you want to track credit settings
     // For now, just log the update
     console.log('Credit settings updated:', creditSettings);
+  }
+
+  // Leave Applications
+  getLeaveApplications(employeeId?: string, status?: 'pending' | 'approved' | 'rejected'): Observable<LeaveApplication[]> {
+    let params: any = {};
+    if (employeeId) params.employeeId = employeeId;
+    if (status) params.status = status;
+    
+    return this.http.get<ApiResponse<LeaveApplication[]>>(`${this.apiUrl}/applications`, { params })
+      .pipe(map(response => response.data));
+  }
+
+  getLeaveApplication(id: string): Observable<LeaveApplication> {
+    return this.http.get<ApiResponse<LeaveApplication>>(`${this.apiUrl}/applications/${id}`)
+      .pipe(map(response => response.data));
+  }
+
+  createLeaveApplication(application: CreateLeaveApplicationRequest): Observable<LeaveApplication> {
+    return this.http.post<ApiResponse<LeaveApplication>>(`${this.apiUrl}/applications`, application)
+      .pipe(map(response => response.data));
+  }
+
+  updateLeaveApplication(id: string, updateRequest: UpdateLeaveApplicationRequest): Observable<LeaveApplication> {
+    return this.http.put<ApiResponse<LeaveApplication>>(`${this.apiUrl}/applications/${id}`, updateRequest)
+      .pipe(map(response => response.data));
   }
 
   // Helper methods
