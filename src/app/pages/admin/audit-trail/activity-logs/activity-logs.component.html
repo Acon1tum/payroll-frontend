@@ -424,15 +424,6 @@
                   <p class="text-sm text-gray-900 mt-1">{{ selectedLog.details }}</p>
                 </div>
               </div>
-
-              <!-- Additional Metadata -->
-              <div *ngIf="selectedLog.metadata" class="flex items-start space-x-2">
-                <i class="fas fa-cog text-gray-500 mt-1"></i>
-                <div class="flex-1">
-                  <span class="text-sm text-gray-600">Additional Data:</span>
-                  <pre class="text-xs text-gray-700 mt-1 bg-gray-50 p-2 rounded overflow-x-auto">{{ JSON.stringify(selectedLog.metadata, null, 2) }}</pre>
-                </div>
-              </div>
             </div>
 
             <!-- Modal Footer -->
