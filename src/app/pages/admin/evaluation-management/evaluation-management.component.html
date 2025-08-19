@@ -1,0 +1,536 @@
+<div class="h-screen bg-gray-50 flex overflow-hidden">
+  <!-- Sidebar -->
+  <app-sidebar></app-sidebar>
+
+  <!-- Main Content -->
+  <div class="flex-1 flex flex-col overflow-hidden">
+    <!-- Header -->
+    <app-header 
+      [breadcrumbs]="breadcrumbs"
+      title="Evaluation Management"
+    ></app-header>
+
+    <!-- Page Content -->
+    <main class="flex-1 overflow-x-hidden overflow-y-auto bg-gray-50 p-6">
+      <div class="max-w-7xl mx-auto">
+        <!-- Page Header -->
+        <div class="bg-white rounded-lg shadow-lg border border-gray-200 p-6 mb-6">
+          <h1 class="text-3xl font-bold text-gray-900 mb-2">Evaluation Management</h1>
+          <p class="text-gray-600 mb-4">Create and manage evaluation forms for employee assessments</p>
+        </div>
+
+        <!-- Success Message -->
+        <div *ngIf="successMessage" class="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
+          <div class="flex">
+            <div class="flex-shrink-0">
+              <svg class="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+              </svg>
+            </div>
+            <div class="ml-3">
+              <h3 class="text-sm font-medium text-green-800">Success</h3>
+              <div class="mt-2 text-sm text-green-700">{{ successMessage }}</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Error Message -->
+        <div *ngIf="errorMessage" class="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+          <div class="flex">
+            <div class="flex-shrink-0">
+              <svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+              </svg>
+            </div>
+            <div class="ml-3">
+              <h3 class="text-sm font-medium text-red-800">Error</h3>
+              <div class="mt-2 text-sm text-red-700">{{ errorMessage }}</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Loading Spinner -->
+        <div *ngIf="loading && evaluationForms.length === 0" class="text-center py-5">
+          <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+          </div>
+        </div>
+
+        <!-- Search and Add Button Section -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+          <div class="flex flex-col sm:flex-row gap-4 items-center justify-between">
+            <!-- Search Bar -->
+            <div class="flex-1 max-w-md">
+              <div class="relative">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <svg class="h-5 w-5 z-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                  </svg>
+                </div>
+                <input
+                  type="text"
+                  [(ngModel)]="searchTerm"
+                  (ngModelChange)="onSearchInput()"
+                  placeholder="Search evaluation forms by title or description..."
+                  class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+                />
+                <!-- Clear Search Button -->
+                <button
+                  *ngIf="searchTerm"
+                  (click)="clearSearch()"
+                  type="button"
+                  class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 transition-colors duration-200"
+                  title="Clear search"
+                >
+                  <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                  </svg>
+                </button>
+              </div>
+              <!-- Search Results Info -->
+              <div *ngIf="searchTerm" class="mt-2 text-sm text-gray-600">
+                <span *ngIf="hasSearchResults">
+                  Found {{ searchResultCount }} form{{ searchResultCount !== 1 ? 's' : '' }}
+                </span>
+                <span *ngIf="!hasSearchResults" class="text-red-600">
+                  No forms found matching "{{ searchTerm }}"
+                </span>
+              </div>
+            </div>
+
+            <!-- Add Form Button -->
+            <button
+              (click)="openCreateForm()"
+              class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200 hover:scale-105 shadow-sm"
+            >
+              <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+              </svg>
+              Create New Form
+            </button>
+          </div>
+        </div>
+
+        <!-- Forms List -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+          <div class="px-6 py-4 border-b border-gray-200">
+            <h3 class="text-lg font-medium text-gray-900">Evaluation Forms</h3>
+            <p class="text-sm text-gray-600 mt-1">View all evaluation forms with status, dates, and response metrics.</p>
+          </div>
+
+          <!-- Loading State -->
+          <div *ngIf="loading" class="p-8 text-center">
+            <div class="inline-flex items-center">
+              <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              <span class="text-gray-600">Loading evaluation forms...</span>
+            </div>
+          </div>
+
+          <!-- Empty State -->
+          <div *ngIf="!loading && paginatedEvaluationForms.length === 0" class="p-8 text-center">
+            <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7m-8 0l7-7-7-7"></path>
+            </svg>
+            <h3 class="mt-2 text-sm font-medium text-gray-900">No forms found</h3>
+            <p class="mt-1 text-sm text-gray-500">
+              {{ searchTerm ? 'Try adjusting your search terms.' : 'Get started by creating a new form.' }}
+            </p>
+            <div class="mt-6">
+              <button
+                *ngIf="!searchTerm"
+                (click)="openCreateForm()"
+                class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-lg text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200"
+              >
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                </svg>
+                Create New Form
+              </button>
+            </div>
+          </div>
+
+          <!-- Forms Table -->
+          <div *ngIf="!loading && paginatedEvaluationForms.length > 0" class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+              <thead class="bg-gray-50">
+                <tr>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Form</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Dates</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Responses</th>
+                  <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                </tr>
+              </thead>
+              <tbody class="bg-white divide-y divide-gray-200">
+                <tr *ngFor="let form of paginatedEvaluationForms" class="hover:bg-gray-50 transition-colors duration-200">
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <div class="text-sm font-medium text-gray-900">{{ form.title }}</div>
+                    <div class="text-sm text-gray-500">{{ form.description }}</div>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <span
+                      [class]="getFormStatus(form) === 'Active' ? 'inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800' : (getFormStatus(form) === 'Pending' ? 'inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800' : (getFormStatus(form) === 'Expired' ? 'inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800' : 'inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-800'))"
+                    >
+                      {{ getFormStatus(form) }}
+                    </span>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    {{ form.startDate | date:'MMM dd, yyyy' }} - {{ form.endDate | date:'MMM dd, yyyy' }}
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    {{ getResponseCount(form) }} ({{ getCompletionRate(form) }}% complete)
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                    <div class="flex items-center justify-end space-x-2">
+                      <button
+                        (click)="openViewForm(form)"
+                        class="text-blue-600 hover:text-blue-900 transition-colors duration-200"
+                        title="View"
+                      >
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.477 0 8.268 2.943 9.542 7-1.274 4.057-5.065 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                        </svg>
+                      </button>
+                      <button
+                        (click)="openEditForm(form)"
+                        class="text-yellow-600 hover:text-yellow-900 transition-colors duration-200"
+                        title="Edit"
+                      >
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                        </svg>
+                      </button>
+                      <button
+                        (click)="deleteForm(form.id)"
+                        class="text-red-600 hover:text-red-900 transition-colors duration-200"
+                        title="Delete"
+                      >
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                        </svg>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Pagination Controls -->
+          <div *ngIf="!loading && filteredEvaluationForms.length > 0" class="px-6 py-4 border-t border-gray-200 bg-gray-50 pagination-controls">
+            <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
+              <!-- Items per page and info -->
+              <div class="flex items-center gap-4 pagination-info">
+                <!-- Items Per Page Selector -->
+                <div class="flex items-center gap-2">
+                  <label for="itemsPerPage" class="text-sm font-medium text-gray-700">Show:</label>
+                  
+                  <div class="relative">
+                    <select
+                      id="itemsPerPage"
+                      [(ngModel)]="itemsPerPage"
+                      (change)="onItemsPerPageChange()"
+                      class="appearance-none block pl-3 pr-8 py-1.5 text-sm border border-gray-300 rounded-lg shadow-sm
+                             bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500
+                             hover:border-gray-400 transition-all duration-200 cursor-pointer">
+                      <option class="text-left" *ngFor="let option of itemsPerPageOptions" [value]="option">{{ option }}</option>
+                    </select>
+                  </div>
+              
+                  <span class="text-sm text-gray-700">per page</span>
+                </div>
+              
+                <!-- Results Counter -->
+                <div class="text-sm text-gray-700">
+                  Showing {{ (currentPage - 1) * itemsPerPage + 1 }} to
+                  {{ Math.min(currentPage * itemsPerPage, totalItems) }} of {{ totalItems }} results
+                </div>
+              </div>              
+
+              <!-- Pagination Navigation -->
+              <div class="flex items-center gap-2 pagination-navigation">
+                <!-- First Page Button -->
+                <button
+                  (click)="goToFirstPage()"
+                  [disabled]="currentPage === 1"
+                  class="pagination-btn"
+                  [class]="currentPage === 1 ? 'pagination-btn-disabled' : 'pagination-btn-enabled'"
+                  title="First page"
+                >
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7"></path>
+                  </svg>
+                </button>
+
+                <!-- Previous Page Button -->
+                <button
+                  (click)="goToPreviousPage()"
+                  [disabled]="currentPage === 1"
+                  class="pagination-btn"
+                  [class]="currentPage === 1 ? 'pagination-btn-disabled' : 'pagination-btn-enabled'"
+                  title="Previous page"
+                >
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                  </svg>
+                </button>
+
+                <!-- Page Numbers -->
+                <div class="flex items-center gap-1">
+                  <button
+                    *ngFor="let page of getPageNumbers()"
+                    (click)="goToPage(page)"
+                    class="pagination-page-btn"
+                    [class]="page === currentPage ? 'pagination-page-btn-active' : 'pagination-page-btn-inactive'"
+                  >
+                    {{ page }}
+                  </button>
+                </div>
+
+                <!-- Next Page Button -->
+                <button
+                  (click)="goToNextPage()"
+                  [disabled]="currentPage === totalPages"
+                  class="pagination-btn"
+                  [class]="currentPage === totalPages ? 'pagination-btn-disabled' : 'pagination-btn-enabled'"
+                  title="Next page"
+                >
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                  </svg>
+                </button>
+
+                <!-- Last Page Button -->
+                <button
+                  (click)="goToLastPage()"
+                  [disabled]="currentPage === totalPages"
+                  class="pagination-btn"
+                  [class]="currentPage === totalPages ? 'pagination-btn-disabled' : 'pagination-btn-enabled'"
+                  title="Last page"
+                >
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7m-8 0l7-7-7-7"></path>
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Create/Edit Form Modal (Employee-management style overlay) -->
+        <div *ngIf="showCreateForm || showEditForm" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50" (click)="onModalBackdropClick($event)">
+          <div class="relative top-20 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-3/4 shadow-lg rounded-md bg-white" (click)="$event.stopPropagation()">
+            <div class="mt-3">
+              <div class="flex items-center justify-between mb-6">
+                <h2 class="text-xl font-semibold text-gray-900">
+                  {{ showEditForm ? 'Edit Evaluation Form' : 'Create New Evaluation Form' }}
+                </h2>
+                <button (click)="closeForms()" class="text-gray-400 hover:text-gray-600 transition-colors duration-200 modal-close-btn" title="Close">
+                  <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                  </svg>
+                </button>
+              </div>
+
+              <form (ngSubmit)="submitForm()" class="space-y-6 modal-form">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <!-- Title -->
+                  <div>
+                    <label for="title" class="block text-sm font-medium text-gray-700 mb-2">Form Title *</label>
+                    <input type="text" id="title" name="title" [(ngModel)]="formData.title" required class="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200" placeholder="Enter form title" />
+                  </div>
+                  
+                  <!-- Status -->
+                  <div>
+                    <label for="isActive" class="block text-sm font-medium text-gray-700 mb-2">Status</label>
+                    <div class="flex items-center gap-3">
+                      <input type="checkbox" id="isActive" name="isActive" [(ngModel)]="formData.isActive" class="h-4 w-4 text-blue-600 border-gray-300 rounded" />
+                      <label for="isActive" class="text-sm text-gray-700">Active</label>
+                    </div>
+                  </div>
+                  
+                  <!-- Start Date -->
+                  <div>
+                    <label for="startDate" class="block text-sm font-medium text-gray-700 mb-2">Start Date *</label>
+                    <input type="date" id="startDate" name="startDate" [(ngModel)]="startDateInput" required class="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200" />
+                  </div>
+                  
+                  <!-- End Date -->
+                  <div>
+                    <label for="endDate" class="block text-sm font-medium text-gray-700 mb-2">End Date *</label>
+                    <input type="date" id="endDate" name="endDate" [(ngModel)]="endDateInput" required class="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200" />
+                  </div>
+                </div>
+
+                <!-- Description -->
+                <div>
+                  <label for="description" class="block text-sm font-medium text-gray-700 mb-2">Description *</label>
+                  <textarea id="description" name="description" rows="3" [(ngModel)]="formData.description" required class="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200" placeholder="Enter form description"></textarea>
+                </div>
+
+                <!-- Current Questions -->
+                <div>
+                  <h3 class="text-md font-medium text-gray-800 mb-2">Questions</h3>
+                  <div *ngFor="let question of formData.questions; let i = index" [attr.id]="'question-item-' + i" class="mb-3 p-3 border rounded bg-gray-50 transition-all duration-300" [class.ring-2]="recentlyAddedQuestionIndex === i" [class.ring-blue-400]="recentlyAddedQuestionIndex === i" [class.bg-blue-50]="recentlyAddedQuestionIndex === i">
+                    <div class="flex items-start justify-between mb-2">
+                      <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-gray-200 text-gray-700">#{{ i + 1 }}</span>
+                      <button type="button" (click)="removeQuestion(i)" class="text-red-600 hover:text-red-800" title="Remove">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                      </button>
+                    </div>
+                    <div class="text-sm font-medium text-gray-900">{{ question.questionText }}</div>
+                    <div class="text-xs text-gray-600">{{ getQuestionTypeLabel(question.questionType) }} • {{ question.isRequired ? 'Required' : 'Optional' }} • Order {{ question.order }}</div>
+                    <div *ngIf="question.options?.length" class="mt-2 text-xs text-gray-700">
+                      <div class="font-medium mb-1">Options:</div>
+                      <ul class="list-disc ml-5">
+                        <li *ngFor="let option of question.options">{{ option.optionText }}<span *ngIf="option.score !== undefined"> (Score: {{ option.score }})</span></li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Add Question -->
+                <div class="p-3 border rounded">
+                  <h3 class="text-md font-medium text-gray-800 mb-4">Add New Question</h3>
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
+                    <div>
+                      <label for="questionText" class="block text-sm font-medium text-gray-700 mb-2">Question Text *</label>
+                      <input type="text" id="questionText" name="questionText" [(ngModel)]="currentQuestion.questionText" placeholder="Enter your question here..." class="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200" />
+                    </div>
+                    <div>
+                      <label for="questionType" class="block text-sm font-medium text-gray-700 mb-2">Question Type</label>
+                      <select id="questionType" name="questionType" [(ngModel)]="currentQuestion.questionType" (ngModelChange)="onQuestionTypeChange()" class="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200">
+                        <option *ngFor="let type of questionTypes" [value]="type.value">{{ type.label }}</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label for="order" class="block text-sm font-medium text-gray-700 mb-2">Order</label>
+                      <input type="number" id="order" name="order" min="1" [(ngModel)]="currentQuestion.order" class="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200" />
+                    </div>
+                    <div class="flex items-center mt-6">
+                      <input type="checkbox" id="isRequired" name="isRequired" [(ngModel)]="currentQuestion.isRequired" class="h-4 w-4 text-blue-600 border-gray-300 rounded" />
+                      <label for="isRequired" class="ml-2 text-sm text-gray-700">Required Question</label>
+                    </div>
+                  </div>
+
+                  <div *ngIf="currentQuestion.questionType === 'multipleChoice' || currentQuestion.questionType === 'rating' || currentQuestion.questionType === 'checkbox'" class="bg-white p-3 rounded">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Options</label>
+                    <div *ngFor="let option of currentQuestion.options; let i = index" class="grid grid-cols-1 md:grid-cols-12 gap-2 mb-2 items-center">
+                      <div class="md:col-span-7">
+                        <input type="text" [placeholder]="currentQuestion.questionType === 'rating' ? 'Label (optional)' : 'Option ' + (i + 1)" name="optionText{{i}}" [(ngModel)]="option.optionText" class="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200" />
+                      </div>
+                      <div class="md:col-span-3">
+                        <input type="number" placeholder="Score" name="optionScore{{i}}" [(ngModel)]="option.score" class="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200" />
+                      </div>
+                      <div class="md:col-span-2 flex justify-end">
+                        <button type="button" class="px-3 py-2 border border-gray-300 rounded-lg text-sm text-gray-700 hover:bg-gray-50 transition-colors duration-200" (click)="removeOption(i)" [disabled]="currentQuestion.options.length <= 1">
+                          Remove
+                        </button>
+                      </div>
+                    </div>
+                    <button type="button" class="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-lg text-blue-700 bg-blue-50 hover:bg-blue-100 transition-colors duration-200" (click)="addOption()">
+                      Add Option
+                    </button>
+                  </div>
+                  
+                  <div class="mt-4">
+                    <button type="button" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200" (click)="addQuestion()">Add Question</button>
+                  </div>
+                </div>
+
+                <!-- Actions -->
+                <div class="flex justify-end space-x-3 pt-2">
+                  <button type="button" (click)="closeForms()" class="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200">Cancel</button>
+                  <button type="submit" [disabled]="loading" class="px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200">
+                    <span *ngIf="!loading">{{ showEditForm ? 'Update Form' : 'Create Form' }}</span>
+                    <span *ngIf="loading" class="flex items-center">
+                      <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      {{ showEditForm ? 'Updating...' : 'Creating...' }}
+                    </span>
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+
+        <!-- View Form Modal -->
+        <div *ngIf="showViewForm && selectedForm" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50" (click)="onModalBackdropClick($event)">
+          <div class="relative top-20 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-3/4 shadow-lg rounded-md bg-white" (click)="$event.stopPropagation()">
+            <div class="mt-3">
+              <div class="flex items-center justify-between mb-6">
+                <h2 class="text-xl font-semibold text-gray-900">Form Details</h2>
+                <button (click)="closeForms()" class="text-gray-400 hover:text-gray-600" title="Close">
+                  <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+              </div>
+              <div class="space-y-4">
+                <div>
+                  <div class="text-lg font-semibold text-gray-900">{{ selectedForm.title }}</div>
+                  <div class="text-sm text-gray-600">{{ selectedForm.description }}</div>
+                </div>
+                <div class="text-sm text-gray-700">Period: {{ selectedForm.startDate | date:'MMM dd, yyyy' }} - {{ selectedForm.endDate | date:'MMM dd, yyyy' }}</div>
+                <div>
+                  <h3 class="text-md font-medium text-gray-800 mb-2">Questions</h3>
+                  <ol class="list-decimal ml-5 space-y-1 text-sm">
+                    <li *ngFor="let q of selectedForm.questions">{{ q.questionText }}</li>
+                  </ol>
+                </div>
+              </div>
+              <div class="flex justify-end space-x-3 pt-4">
+                <button type="button" (click)="closeForms()" class="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50">Close</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Responses Modal -->
+        <div *ngIf="showResponses && selectedForm" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50" (click)="onModalBackdropClick($event)">
+          <div class="relative top-20 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-3/4 shadow-lg rounded-md bg-white" (click)="$event.stopPropagation()">
+            <div class="mt-3">
+              <div class="flex items-center justify-between mb-6">
+                <h2 class="text-xl font-semibold text-gray-900">Responses</h2>
+                <button (click)="closeForms()" class="text-gray-400 hover:text-gray-600" title="Close">
+                  <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+              </div>
+              <div *ngIf="selectedForm.responses?.length; else noResp" class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200 text-sm">
+                  <thead class="bg-gray-50">
+                    <tr>
+                      <th class="px-4 py-2 text-left font-medium text-gray-600">Employee</th>
+                      <th class="px-4 py-2 text-left font-medium text-gray-600">Status</th>
+                      <th class="px-4 py-2 text-left font-medium text-gray-600">Submitted</th>
+                      <th class="px-4 py-2 text-left font-medium text-gray-600">Score</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-gray-200">
+                    <tr *ngFor="let r of selectedForm.responses">
+                      <td class="px-4 py-2">{{ r.employee?.firstName }} {{ r.employee?.lastName }}</td>
+                      <td class="px-4 py-2">{{ r.status | titlecase }}</td>
+                      <td class="px-4 py-2">{{ r.submittedAt || r.createdAt | date:'MMM dd, yyyy' }}</td>
+                      <td class="px-4 py-2">{{ r.totalScore ?? '-' }}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <ng-template #noResp>
+                <div class="text-sm text-gray-600">No responses yet.</div>
+              </ng-template>
+              <div class="flex justify-end space-x-3 pt-4">
+                <button type="button" (click)="closeForms()" class="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50">Close</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>

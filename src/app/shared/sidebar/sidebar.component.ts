@@ -67,6 +67,7 @@ export class SidebarComponent implements OnInit, OnDestroy, OnChanges {
         { name: 'Loans, leaves, Contributions Summary', icon: 'schedule', path: '/llc-summary' }
       ] },
         { name: 'Bank File Generation', icon: 'account_circle', path: '/bank-file-generation' },
+        { name: 'Evaluation Management', icon: 'account_circle', path: '/evaluation-management' },
         { name: 'Audit & Logs', icon: 'person', children: [
           { name: 'Activity Logs', icon: 'account_circle', path: '/activity-logs' },
         ] },
@@ -82,6 +83,7 @@ export class SidebarComponent implements OnInit, OnDestroy, OnChanges {
       { name: 'Time Tracking', icon: 'schedule', path: '/employee/time-tracking' },
       { name: 'Request Loan', icon: 'request_page', path: '/request-loan' },
       { name: 'My Reports', icon: 'report', path: '/employee/reports' },
+      { name: 'Evaluation', icon: 'account_circle', path: '/employee/evaluation' },
       { name: 'Settings', icon: 'settings', path: '/employee/settings' }
     ]
   };
