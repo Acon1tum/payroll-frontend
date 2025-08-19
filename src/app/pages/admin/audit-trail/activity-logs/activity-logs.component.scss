@@ -2,31 +2,24 @@
 .activity-logs-table {
   // Ensure table fits container width
   width: 100%;
+  min-width: 800px; // Minimum width to show all columns
   
   // Column width management
   th, td {
-    // Prevent text wrapping in headers
+    // Prevent text wrapping in headers and most cells
     white-space: nowrap;
     
-    // Allow content to wrap in data cells
-    &.allow-wrap {
+    // Allow content to wrap in details column only
+    &:nth-child(5) { // Details column
       white-space: normal;
       word-wrap: break-word;
+      max-width: 200px;
     }
   }
-  
-  // Specific column widths for better layout
-  .col-date { width: 120px; min-width: 120px; }
-  .col-user { width: 180px; min-width: 180px; }
-  .col-entity { width: 120px; min-width: 120px; }
-  .col-action { width: 100px; min-width: 100px; }
-  .col-details { min-width: 200px; }
-  .col-ip { width: 160px; min-width: 160px; }
-  .col-severity { width: 100px; min-width: 100px; }
 }
 
-// Mobile card view enhancements
-.mobile-card {
+// Mobile card view enhancements (only for very small screens)
+.mobile-cards {
   .log-item {
     transition: all 0.2s ease-in-out;
     
@@ -67,21 +60,13 @@
 }
 
 // Responsive breakpoints
-@media (max-width: 1024px) {
-  .desktop-table {
-    display: none;
-  }
-  
+@media (max-width: 640px) {
   .mobile-cards {
     display: block;
   }
 }
 
-@media (min-width: 1025px) {
-  .desktop-table {
-    display: block;
-  }
-  
+@media (min-width: 641px) {
   .mobile-cards {
     display: none;
   }
@@ -97,19 +82,6 @@
   // Tooltip for truncated IPs
   &[title] {
     cursor: help;
-  }
-}
-
-// Details column text handling
-.details-text {
-  max-width: 300px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  
-  &:hover {
-    white-space: normal;
-    word-wrap: break-word;
   }
 }
 
@@ -157,5 +129,26 @@
   
   .description {
     color: #6b7280;
+  }
+}
+
+// Horizontal scrollbar styling
+.overflow-x-auto {
+  &::-webkit-scrollbar {
+    height: 8px;
+  }
+  
+  &::-webkit-scrollbar-track {
+    background: #f1f5f9;
+    border-radius: 4px;
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 4px;
+    
+    &:hover {
+      background: #94a3b8;
+    }
   }
 }
