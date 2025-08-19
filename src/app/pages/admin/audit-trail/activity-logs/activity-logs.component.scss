@@ -1,37 +1,29 @@
-// Responsive table styles
-.activity-logs-table {
-  // Ensure table fits container width and shows all columns
+// Simplified table styles
+table {
   width: 100%;
-  table-layout: fixed; // Fixed table layout for consistent column widths
   
-  // Column width management - ensure all columns fit
   th, td {
-    // Prevent text wrapping in headers and most cells
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    
-    // Specific column widths to fit all columns
-    &:nth-child(1) { width: 12%; } // Date
-    &:nth-child(2) { width: 18%; } // User
-    &:nth-child(3) { width: 12%; } // Entity
-    &:nth-child(4) { width: 10%; } // Action
-    &:nth-child(5) { width: 20%; } // Details
-    &:nth-child(6) { width: 18%; } // IP Address
-    &:nth-child(7) { width: 10%; } // Severity
+    padding: 0.75rem 1rem;
+    text-align: left;
+    border-bottom: 1px solid #e5e7eb;
   }
   
-  // Allow details column to wrap text
-  td:nth-child(5) {
-    white-space: normal;
-    word-wrap: break-word;
+  th {
+    background-color: #f9fafb;
+    font-weight: 500;
+    color: #6b7280;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
   }
   
-  // Ensure table container can accommodate all columns
-  min-width: 100%;
+  td {
+    color: #111827;
+    font-size: 0.875rem;
+  }
 }
 
-// Mobile card view enhancements (only for very small screens)
+// Mobile card view enhancements
 .mobile-cards {
   .log-item {
     transition: all 0.2s ease-in-out;
@@ -114,12 +106,9 @@
 }
 
 // Hover effects
-.table-row {
+tr:hover {
+  background-color: #f9fafb;
   transition: background-color 0.15s ease-in-out;
-  
-  &:hover {
-    background-color: #f9fafb;
-  }
 }
 
 // Loading and empty states
@@ -142,5 +131,105 @@
   
   .description {
     color: #6b7280;
+  }
+}
+
+// Modal styles
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+  padding: 1rem;
+}
+
+.modal-content {
+  background-color: white;
+  border-radius: 0.5rem;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  max-width: 42rem;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.modal-body {
+  padding: 1.5rem;
+}
+
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  padding: 1.5rem;
+  border-top: 1px solid #e5e7eb;
+}
+
+// Detail item styles
+.detail-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  
+  i {
+    width: 1rem;
+    text-align: center;
+  }
+  
+  .label {
+    color: #6b7280;
+    font-size: 0.875rem;
+    min-width: 80px;
+  }
+  
+  .value {
+    color: #111827;
+    font-size: 0.875rem;
+    font-weight: 500;
+  }
+}
+
+// Button styles
+.btn {
+  padding: 0.5rem 1rem;
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: all 0.15s ease-in-out;
+  cursor: pointer;
+  border: none;
+  
+  &.btn-primary {
+    background-color: #3b82f6;
+    color: white;
+    
+    &:hover {
+      background-color: #2563eb;
+    }
+  }
+  
+  &.btn-secondary {
+    background-color: #f3f4f6;
+    color: #374151;
+    
+    &:hover {
+      background-color: #e5e7eb;
+    }
+  }
+  
+  &.btn-sm {
+    padding: 0.25rem 0.75rem;
+    font-size: 0.75rem;
   }
 }

@@ -28,6 +28,9 @@ export class ActivityLogsComponent implements OnInit, OnDestroy {
   loading = false;
   error = '';
 
+  // Modal
+  selectedLog: ActivityLog | null = null;
+
   // Pagination
   currentPage = 1;
   pageSize = 20;
@@ -267,5 +270,13 @@ export class ActivityLogsComponent implements OnInit, OnDestroy {
 
   getMaxPageItems(): number {
     return Math.min(this.currentPage * this.pageSize, this.totalItems);
+  }
+
+  viewDetails(index: number): void {
+    this.selectedLog = this.activityLogs[index];
+  }
+
+  closeDetails(): void {
+    this.selectedLog = null;
   }
 }
