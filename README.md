@@ -70,3 +70,5 @@ if (process.env.NODE_ENV === 'production') {
 
 
 IN (src\index.ts)
+Client         →       CDN      → Load Balancer → Your Backend
+112.198.209.55 → 172.69.184.159 → 10.214.208.61 → Your App
