@@ -1,21 +1,34 @@
 // Responsive table styles
 .activity-logs-table {
-  // Ensure table fits container width
+  // Ensure table fits container width and shows all columns
   width: 100%;
-  min-width: 800px; // Minimum width to show all columns
+  table-layout: fixed; // Fixed table layout for consistent column widths
   
-  // Column width management
+  // Column width management - ensure all columns fit
   th, td {
     // Prevent text wrapping in headers and most cells
     white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
     
-    // Allow content to wrap in details column only
-    &:nth-child(5) { // Details column
-      white-space: normal;
-      word-wrap: break-word;
-      max-width: 200px;
-    }
+    // Specific column widths to fit all columns
+    &:nth-child(1) { width: 12%; } // Date
+    &:nth-child(2) { width: 18%; } // User
+    &:nth-child(3) { width: 12%; } // Entity
+    &:nth-child(4) { width: 10%; } // Action
+    &:nth-child(5) { width: 20%; } // Details
+    &:nth-child(6) { width: 18%; } // IP Address
+    &:nth-child(7) { width: 10%; } // Severity
   }
+  
+  // Allow details column to wrap text
+  td:nth-child(5) {
+    white-space: normal;
+    word-wrap: break-word;
+  }
+  
+  // Ensure table container can accommodate all columns
+  min-width: 100%;
 }
 
 // Mobile card view enhancements (only for very small screens)
@@ -129,26 +142,5 @@
   
   .description {
     color: #6b7280;
-  }
-}
-
-// Horizontal scrollbar styling
-.overflow-x-auto {
-  &::-webkit-scrollbar {
-    height: 8px;
-  }
-  
-  &::-webkit-scrollbar-track {
-    background: #f1f5f9;
-    border-radius: 4px;
-  }
-  
-  &::-webkit-scrollbar-thumb {
-    background: #cbd5e1;
-    border-radius: 4px;
-    
-    &:hover {
-      background: #94a3b8;
-    }
   }
 }

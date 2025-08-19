@@ -242,65 +242,63 @@
 
         <!-- Activity Logs Table -->
         <div *ngIf="!loading && !error" class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-          <!-- Desktop and Medium Table View (with horizontal scroll) -->
+          <!-- Desktop and Medium Table View (all columns always visible) -->
           <div class="hidden sm:block">
-            <div class="overflow-x-auto">
-              <table class="w-full divide-y divide-gray-200 activity-logs-table min-w-full">
-                <thead class="bg-gray-50">
-                  <tr>
-                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Date</th>
-                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">User</th>
-                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Entity</th>
-                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Action</th>
-                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Details</th>
-                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">IP Address</th>
-                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Severity</th>
-                  </tr>
-                </thead>
-                <tbody class="bg-white divide-y divide-gray-200">
-                  <tr *ngFor="let log of activityLogs" class="hover:bg-gray-50 table-row">
-                    <td class="px-4 py-4 text-sm text-gray-900 whitespace-nowrap">
-                      {{ formatDate(log.createdAt) }}
-                    </td>
-                    <td class="px-4 py-4 whitespace-nowrap">
-                      <div class="text-sm text-gray-900">{{ getUserDisplayName(log) }}</div>
-                      <div class="text-xs text-gray-500" *ngIf="log.user && log.user.role">
-                        {{ getRoleDisplayName(log.user.role) }}
-                      </div>
-                    </td>
-                    <td class="px-4 py-4 whitespace-nowrap">
-                      <div class="text-sm text-gray-900">{{ log.entity }}</div>
-                      <div class="text-xs text-gray-500">ID: {{ log.entityId }}</div>
-                    </td>
-                    <td class="px-4 py-4 whitespace-nowrap">
-                      <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium badge"
-                            [ngClass]="getActionColor(log.action)">
-                        <i class="fas mr-1" [ngClass]="getActionIcon(log.action)"></i>
-                        {{ log.action }}
+            <table class="w-full divide-y divide-gray-200 activity-logs-table">
+              <thead class="bg-gray-50">
+                <tr>
+                  <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-32">Date</th>
+                  <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-48">User</th>
+                  <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-32">Entity</th>
+                  <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-24">Action</th>
+                  <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-48">Details</th>
+                  <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-40">IP Address</th>
+                  <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-24">Severity</th>
+                </tr>
+              </thead>
+              <tbody class="bg-white divide-y divide-gray-200">
+                <tr *ngFor="let log of activityLogs" class="hover:bg-gray-50 table-row">
+                  <td class="px-3 py-4 text-sm text-gray-900">
+                    {{ formatDate(log.createdAt) }}
+                  </td>
+                  <td class="px-3 py-4">
+                    <div class="text-sm text-gray-900">{{ getUserDisplayName(log) }}</div>
+                    <div class="text-xs text-gray-500" *ngIf="log.user && log.user.role">
+                      {{ getRoleDisplayName(log.user.role) }}
+                    </div>
+                  </td>
+                  <td class="px-3 py-4">
+                    <div class="text-sm text-gray-900">{{ log.entity }}</div>
+                    <div class="text-xs text-gray-500">ID: {{ log.entityId }}</div>
+                  </td>
+                  <td class="px-3 py-4">
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium badge"
+                          [ngClass]="getActionColor(log.action)">
+                      <i class="fas mr-1" [ngClass]="getActionIcon(log.action)"></i>
+                      {{ log.action }}
+                    </span>
+                  </td>
+                  <td class="px-3 py-4 text-sm text-gray-900">
+                    <div class="max-w-xs">
+                      <span class="truncate block" [title]="log.details || 'No details provided'">
+                        {{ log.details || 'No details provided' }}
                       </span>
-                    </td>
-                    <td class="px-4 py-4 text-sm text-gray-900">
-                      <div class="max-w-xs">
-                        <span class="truncate block" [title]="log.details || 'No details provided'">
-                          {{ log.details || 'No details provided' }}
-                        </span>
-                      </div>
-                    </td>
-                    <td class="px-4 py-4 text-sm text-gray-900 whitespace-nowrap">
-                      <div class="ip-address" [title]="log.ipAddress || 'N/A'">
-                        {{ log.ipAddress || 'N/A' }}
-                      </div>
-                    </td>
-                    <td class="px-4 py-4 whitespace-nowrap">
-                      <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium badge"
-                            [ngClass]="getSeverityColor(log.severity)">
-                        {{ log.severity }}
-                      </span>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
+                    </div>
+                  </td>
+                  <td class="px-3 py-4 text-sm text-gray-900">
+                    <div class="ip-address" [title]="log.ipAddress || 'N/A'">
+                      {{ log.ipAddress || 'N/A' }}
+                    </div>
+                  </td>
+                  <td class="px-3 py-4">
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium badge"
+                          [ngClass]="getSeverityColor(log.severity)">
+                      {{ log.severity }}
+                    </span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
           </div>
 
           <!-- Mobile Card View (very small screens only) -->
