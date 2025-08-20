@@ -39,6 +39,7 @@ export class SidebarComponent implements OnInit, OnDestroy, OnChanges {
         { name: 'Department Management', icon: 'apartment', path: '/department-management' },
         { name: 'Employee Management', icon: 'person', path: '/employee-management' }
       ] },
+      { name: 'Attendance Management', icon: 'person', path: '/attendance-management' },
       { name: 'Payroll Management', icon: 'payments', path: '/payroll-management', children: [
         { name: 'Run Payroll', icon: 'assessment', path: '/run-payroll' },
         { name: 'Payslip Center', icon: 'assessment', path: '/payslip-center' },
@@ -76,6 +77,7 @@ export class SidebarComponent implements OnInit, OnDestroy, OnChanges {
     employee: [
       { name: 'Dashboard', icon: 'person', path: '/employee-dashboard' },
       { name: 'My Profile', icon: 'account_circle', path: '/employee/profile' },
+      { name: 'Attendance', icon: 'account_circle', path: '/employee/attendance' },
       { name: 'My Payslip', icon: 'account_circle', path: '/employee/payslip' },
       { name: 'My Contributions', icon: 'account_circle', path: '/employee/contributions' },
       { name: 'My Leave Management', icon: 'account_circle', path: '/employee/leave-management' },

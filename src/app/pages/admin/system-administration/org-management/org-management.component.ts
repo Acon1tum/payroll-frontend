@@ -194,6 +194,48 @@ export class OrgManagementComponent implements OnInit, OnDestroy {
     return this.filteredOrganizations.length;
   }
 
+  // Get organization plural suffix
+  getOrganizationPluralSuffix(): string {
+    return this.searchResultCount === 1 ? '' : 's';
+  }
+
+  // Get organization status text
+  getOrganizationStatusText(status: string): string {
+    return status === 'active' ? 'Active' : 'Inactive';
+  }
+
+  // Get organization status classes
+  getOrganizationStatusClasses(status: string): string {
+    return status === 'active' 
+      ? 'inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800'
+      : 'inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800';
+  }
+
+  // Get toggle button classes
+  getToggleButtonClasses(status: string): string {
+    return status === 'active' ? 'text-red-600 hover:text-red-900' : 'text-green-600 hover:text-green-900';
+  }
+
+  // Get toggle button title
+  getToggleButtonTitle(status: string): string {
+    return status === 'active' ? 'Deactivate' : 'Activate';
+  }
+
+  // Get pagination button classes
+  getPaginationButtonClasses(isDisabled: boolean): string {
+    return isDisabled ? 'pagination-btn-disabled' : 'pagination-btn-enabled';
+  }
+
+  // Get page number button classes
+  getPageNumberButtonClasses(page: number): string {
+    return page === this.currentPage ? 'pagination-page-btn-active' : 'pagination-page-btn-inactive';
+  }
+
+  // Get end item number for pagination display
+  getEndItemNumber(): number {
+    return Math.min(this.currentPage * this.itemsPerPage, this.totalItems);
+  }
+
   // Highlight search terms in text
   highlightSearchTerm(text: string, searchTerm: string): string {
     if (!searchTerm || !text) {

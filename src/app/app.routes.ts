@@ -38,6 +38,8 @@ import { UnauthorizedComponent } from './shared/unauthorized/unauthorized.compon
 import { LeaveBalanceComponent } from './pages/admin/leave-management/leave-balance/leave-balance.component';
 import { EvaluationManagementComponent } from './pages/admin/evaluation-management/evaluation-management.component';
 import { EvaluationComponent } from './pages/employee/evaluation/evaluation.component';
+import { AttendanceManagementComponent } from './pages/admin/attendance-management/attendance-management.component';
+import { AttendanceComponent } from './pages/employee/attendance/attendance.component';
 import { AuthGuard } from './guards/auth.guard';
 import { RoleGuard } from './guards/role.guard';
 import { LoggedInGuard } from './guards/logged-in.guard';
@@ -204,6 +206,12 @@ export const routes: Routes = [
     canActivate: [AuthGuard, RoleGuard],
     data: { roles: ['admin', 'payrollManager'] }
   },
+  {
+    path: 'attendance-management',
+    component: AttendanceManagementComponent,
+    canActivate: [AuthGuard, RoleGuard],
+    data: { roles: ['admin', 'hrStaff'] }
+  },
   
   // Audit Trail (admin role only)
   { 
@@ -283,6 +291,12 @@ export const routes: Routes = [
   {
     path: 'employee/evaluation',
     component: EvaluationComponent,
+    canActivate: [AuthGuard, RoleGuard],
+    data: { roles: ['employee'] }
+  },
+  {
+    path: 'employee/attendance',
+    component: AttendanceComponent,
     canActivate: [AuthGuard, RoleGuard],
     data: { roles: ['employee'] }
   },

@@ -83,7 +83,7 @@
               <!-- Search Results Info -->
               <div *ngIf="searchTerm" class="mt-2 text-sm text-gray-600">
                 <span *ngIf="hasSearchResults">
-                  Found {{ searchResultCount }} organization{{ searchResultCount !== 1 ? 's' : '' }}
+                  Found {{ searchResultCount }} organization{{ getOrganizationPluralSuffix() }}
                 </span>
                 <span *ngIf="!hasSearchResults" class="text-red-600">
                   No organizations found matching "{{ searchTerm }}"
@@ -347,10 +347,8 @@
                     <div class="text-sm text-gray-500">{{ org.phone }}</div>
                   </td>
                   <td class="px-6 py-4 whitespace-nowrap">
-                    <span
-                      [class]="org.status === 'active' ? 'inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800' : 'inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800'"
-                    >
-                      {{ org.status === 'active' ? 'Active' : 'Inactive' }}
+                    <span [class]="getOrganizationStatusClasses(org.status)">
+                      {{ getOrganizationStatusText(org.status) }}
                     </span>
                   </td>
                   <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
@@ -360,9 +358,9 @@
                     <div class="flex items-center justify-end space-x-2">
                       <button
                         (click)="toggleStatus(org)"
-                        [class]="org.status === 'active' ? 'text-red-600 hover:text-red-900' : 'text-green-600 hover:text-green-900'"
+                        [class]="getToggleButtonClasses(org.status)"
                         class="transition-colors duration-200"
-                        [title]="org.status === 'active' ? 'Deactivate' : 'Activate'"
+                        [title]="getToggleButtonTitle(org.status)"
                       >
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
@@ -420,7 +418,7 @@
                 <!-- Results Counter -->
                 <div class="text-sm text-gray-700">
                   Showing {{ (currentPage - 1) * itemsPerPage + 1 }} to
-                  {{ Math.min(currentPage * itemsPerPage, totalItems) }} of {{ totalItems }} results
+                  {{ getEndItemNumber() }} of {{ totalItems }} results
                 </div>
               </div>              
 
@@ -431,7 +429,7 @@
                   (click)="goToFirstPage()"
                   [disabled]="currentPage === 1"
                   class="pagination-btn"
-                  [class]="currentPage === 1 ? 'pagination-btn-disabled' : 'pagination-btn-enabled'"
+                  [class]="getPaginationButtonClasses(currentPage === 1)"
                   title="First page"
                 >
                   <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -444,7 +442,7 @@
                   (click)="goToPreviousPage()"
                   [disabled]="currentPage === 1"
                   class="pagination-btn"
-                  [class]="currentPage === 1 ? 'pagination-btn-disabled' : 'pagination-btn-enabled'"
+                  [class]="getPaginationButtonClasses(currentPage === 1)"
                   title="Previous page"
                 >
                   <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -458,7 +456,7 @@
                     *ngFor="let page of getPageNumbers()"
                     (click)="goToPage(page)"
                     class="pagination-page-btn"
-                    [class]="page === currentPage ? 'pagination-page-btn-active' : 'pagination-page-btn-inactive'"
+                    [class]="getPageNumberButtonClasses(page)"
                   >
                     {{ page }}
                   </button>
@@ -469,7 +467,7 @@
                   (click)="goToNextPage()"
                   [disabled]="currentPage === totalPages"
                   class="pagination-btn"
-                  [class]="currentPage === totalPages ? 'pagination-btn-disabled' : 'pagination-btn-enabled'"
+                  [class]="getPaginationButtonClasses(currentPage === totalPages)"
                   title="Next page"
                 >
                   <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -482,7 +480,7 @@
                   (click)="goToLastPage()"
                   [disabled]="currentPage === totalPages"
                   class="pagination-btn"
-                  [class]="currentPage === totalPages ? 'pagination-btn-disabled' : 'pagination-btn-enabled'"
+                  [class]="getPaginationButtonClasses(currentPage === totalPages)"
                   title="Last page"
                 >
                   <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
