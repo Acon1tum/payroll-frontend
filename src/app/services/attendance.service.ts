@@ -41,15 +41,13 @@ export interface AttendanceRecord {
   breakStart?: Date;
   breakEnd?: Date;
   status: 'present' | 'absent' | 'late' | 'halfDay' | 'holiday' | 'leave' | 'undertime';
-  regularHours: number;
-  overtimeHours: number;
-  lateMinutes: number;
-  underTimeMinutes: number;
-  notes?: string;
-  isHoliday: boolean;
+  calculatedHours?: number;
+  overtimeHours?: number;
+  lateMinutes?: number;
+  underTimeMinutes?: number;
+  isHoliday?: boolean;
   holidayType?: string;
-  createdAt: Date;
-  updatedAt: Date;
+  timeLogs?: TimeLog[];
   employee?: Employee;
 }
 
@@ -61,6 +59,14 @@ export interface TimeLog {
   location?: string;
   notes?: string;
   isManualEntry: boolean;
+  date?: Date;
+  calculatedHours?: number;
+  overtimeHours?: number;
+  lateMinutes?: number;
+  underTimeMinutes?: number;
+  status?: 'present' | 'absent' | 'late' | 'halfDay' | 'holiday' | 'leave' | 'undertime';
+  isHoliday?: boolean;
+  holidayType?: string;
   createdAt: Date;
   employee?: Employee;
 }
@@ -190,11 +196,8 @@ export class AttendanceService {
 
   // ==================== ATTENDANCE RECORDS ====================
 
-  // Create or update attendance record
-  createOrUpdateAttendanceRecord(recordData: Partial<AttendanceRecord>): Observable<AttendanceRecord> {
-    return this.http.post<{ success: boolean; data: AttendanceRecord }>(`${this.apiUrl}/records`, recordData)
-      .pipe(map(response => response.data));
-  }
+  // Note: Attendance records are now generated from time logs on the backend
+  // No need to create/update them directly
 
   // Get attendance records with filters
   getAttendanceRecords(params: {
@@ -301,11 +304,30 @@ export class AttendanceService {
       }
     });
 
+    console.log('getTimeLogs service method called with params:', params);
+    console.log('HTTP params:', httpParams.toString());
+    console.log('Full API URL:', `${this.apiUrl}/time-logs`);
+
     return this.http.get<{ success: boolean; data: TimeLog[]; pagination: any }>(`${this.apiUrl}/time-logs`, { params: httpParams })
-      .pipe(map(response => ({
-        data: response.data,
-        pagination: response.pagination
-      })));
+      .pipe(
+        map(response => {
+          console.log('getTimeLogs HTTP response:', response);
+          return {
+            data: response.data,
+            pagination: response.pagination
+          };
+        }),
+        catchError(error => {
+          console.error('getTimeLogs HTTP error:', error);
+          console.error('Error details:', {
+            message: error instanceof Error ? error.message : 'Unknown error',
+            status: (error as any)?.status,
+            statusText: (error as any)?.statusText,
+            url: (error as any)?.url
+          });
+          throw error;
+        })
+      );
   }
 
   // ==================== OVERTIME REQUESTS ====================

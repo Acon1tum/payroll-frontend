@@ -144,11 +144,19 @@ export class AttendanceComponent implements OnInit, OnDestroy {
       this.clockInLocation = '';
       this.clockInNotes = '';
       
-      // Wait a bit before refreshing data to avoid rate limiting
-      setTimeout(() => {
-        this.loadCurrentDayAttendance();
-        this.loadMonthlyAttendance();
-      }, 1000);
+      // Refresh data immediately to show updated status
+      console.log('Refreshing data after clock-in...');
+      await this.loadCurrentDayAttendance();
+      console.log('Current day attendance loaded, now loading monthly...');
+      await this.loadMonthlyAttendance();
+      console.log('Data refresh complete');
+      
+      // Force change detection by updating a simple property
+      console.log('Final state check:');
+      console.log('- todayTimeLogs length:', this.todayTimeLogs.length);
+      console.log('- canClockIn():', this.canClockIn());
+      console.log('- canClockOut():', this.canClockOut());
+      console.log('- getCurrentStatus():', this.getCurrentStatus());
     } catch (error) {
       console.error('Error clocking in:', error);
       // Show user-friendly error message
@@ -171,11 +179,12 @@ export class AttendanceComponent implements OnInit, OnDestroy {
       this.clockOutLocation = '';
       this.clockOutNotes = '';
       
-      // Wait a bit before refreshing data to avoid rate limiting
-      setTimeout(() => {
-        this.loadCurrentDayAttendance();
-        this.loadMonthlyAttendance();
-      }, 1000);
+      // Refresh data immediately to show updated status
+      console.log('Refreshing data after clock-out...');
+      await this.loadCurrentDayAttendance();
+      console.log('Current day attendance loaded, now loading monthly...');
+      await this.loadMonthlyAttendance();
+      console.log('Data refresh complete');
     } catch (error) {
       console.error('Error clocking out:', error);
     } finally {
@@ -226,13 +235,49 @@ export class AttendanceComponent implements OnInit, OnDestroy {
 
     try {
       this.isDataLoading = true;
-      const attendance = await this.attendanceService
-        .getCurrentDayAttendance()
-        .toPromise();
+      // Since we're now working with time logs directly, just load today's time logs
+      await this.loadTodayTimeLogs();
+      
+      // Generate current day attendance record from time logs for display
+      if (this.todayTimeLogs.length > 0) {
+        const today = new Date().toISOString().split('T')[0];
+        this.currentDayAttendance = {
+          id: `generated-${today}`,
+          employeeId: this.currentEmployeeId,
+          date: new Date(today + 'T00:00:00.000Z'),
+          timeIn: undefined,
+          timeOut: undefined,
+          breakStart: undefined,
+          breakEnd: undefined,
+          status: 'present',
+          calculatedHours: 0,
+          overtimeHours: 0,
+          lateMinutes: 0,
+          underTimeMinutes: 0,
+          isHoliday: false,
+          holidayType: undefined,
+          timeLogs: this.todayTimeLogs
+        };
 
-      this.currentDayAttendance = attendance || null;
-      if (this.currentDayAttendance) {
-        await this.loadTodayTimeLogs();
+        // Set the appropriate times based on time logs
+        this.todayTimeLogs.forEach(log => {
+          switch (log.type) {
+            case 'timeIn':
+              this.currentDayAttendance!.timeIn = new Date(log.timestamp);
+              break;
+            case 'timeOut':
+              this.currentDayAttendance!.timeOut = new Date(log.timestamp);
+              break;
+            case 'breakStart':
+              this.currentDayAttendance!.breakStart = new Date(log.timestamp);
+              break;
+            case 'breakEnd':
+              this.currentDayAttendance!.breakEnd = new Date(log.timestamp);
+              break;
+          }
+        });
+      } else {
+        this.currentDayAttendance = null;
       }
     } catch (error) {
       console.error('Error loading current day attendance:', error);
@@ -247,6 +292,11 @@ export class AttendanceComponent implements OnInit, OnDestroy {
 
     try {
       const today = new Date().toISOString().split('T')[0];
+      console.log('Loading time logs for today:', today);
+      console.log('Current employee ID:', this.currentEmployeeId);
+      
+      console.log('About to call getTimeLogs with params:', { startDate: today, endDate: today });
+      
       const response = await this.attendanceService
         .getTimeLogs({
           startDate: today,
@@ -254,9 +304,37 @@ export class AttendanceComponent implements OnInit, OnDestroy {
         })
         .toPromise();
 
+      console.log('Time logs response:', response);
       this.todayTimeLogs = response?.data || [];
+      console.log('Today time logs loaded:', this.todayTimeLogs);
+      console.log('Time logs count:', this.todayTimeLogs.length);
+      
+      // Debug each time log
+      this.todayTimeLogs.forEach((log, index) => {
+        console.log(`Time log ${index}:`, {
+          id: log.id,
+          type: log.type,
+          timestamp: log.timestamp,
+          employeeId: log.employeeId
+        });
+      });
+      
+      // If no time logs found, log a warning
+      if (this.todayTimeLogs.length === 0) {
+        console.warn('No time logs found for today. This might indicate:');
+        console.warn('1. Backend API is not running');
+        console.warn('2. API endpoint is returning an error');
+        console.warn('3. No time logs exist for today');
+        console.warn('4. Authentication issue with API calls');
+      }
     } catch (error) {
       console.error('Error loading today time logs:', error);
+      console.error('Error details:', {
+        message: error instanceof Error ? error.message : 'Unknown error',
+        status: (error as any)?.status,
+        statusText: (error as any)?.statusText,
+        url: (error as any)?.url
+      });
     }
   }
 
@@ -269,6 +347,7 @@ export class AttendanceComponent implements OnInit, OnDestroy {
     try {
       this.isLoading = true;
       this.isDataLoading = true;
+      console.log('Calling getEmployeeMonthlyAttendance with month:', this.currentMonth + 1, 'year:', this.currentYear);
       const summary = await this.attendanceService
         .getEmployeeMonthlyAttendance(
           this.currentMonth + 1, 
@@ -305,8 +384,8 @@ export class AttendanceComponent implements OnInit, OnDestroy {
     return records.map(record => {
       const dtrRecord: DTRRecord = {
         date: new Date(record.date),
-        totalHours: record.regularHours || 0,
-        totalMinutes: Math.round((record.regularHours || 0) * 60),
+        totalHours: record.calculatedHours || 0,
+        totalMinutes: Math.round((record.calculatedHours || 0) * 60),
         status: record.status || 'absent'
       };
 
@@ -345,9 +424,11 @@ export class AttendanceComponent implements OnInit, OnDestroy {
   // ==================== UTILITY METHODS ====================
 
   getCurrentStatus(): string {
+    console.log('getCurrentStatus called, todayTimeLogs:', this.todayTimeLogs);
     if (!this.todayTimeLogs.length) return 'Not Started';
     
     const lastLog = this.todayTimeLogs[this.todayTimeLogs.length - 1];
+    console.log('Last log:', lastLog);
     switch (lastLog.type) {
       case 'timeIn': return 'Working';
       case 'timeOut': return 'Completed';
@@ -358,12 +439,17 @@ export class AttendanceComponent implements OnInit, OnDestroy {
   }
 
   canClockIn(): boolean {
-    return !this.todayTimeLogs.some(log => log.type === 'timeIn');
+    const canClockIn = !this.todayTimeLogs.some(log => log.type === 'timeIn');
+    console.log('canClockIn called, todayTimeLogs:', this.todayTimeLogs, 'result:', canClockIn);
+    return canClockIn;
   }
 
   canClockOut(): boolean {
-    return this.todayTimeLogs.some(log => log.type === 'timeIn') && 
-           !this.todayTimeLogs.some(log => log.type === 'timeOut');
+    const hasTimeIn = this.todayTimeLogs.some(log => log.type === 'timeIn');
+    const hasTimeOut = this.todayTimeLogs.some(log => log.type === 'timeOut');
+    const canClockOut = hasTimeIn && !hasTimeOut;
+    console.log('canClockOut called:', { hasTimeIn, hasTimeOut, canClockOut, todayTimeLogs: this.todayTimeLogs });
+    return canClockOut;
   }
 
   canStartBreak(): boolean {
