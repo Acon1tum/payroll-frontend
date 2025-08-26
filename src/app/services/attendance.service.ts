@@ -49,6 +49,11 @@ export interface AttendanceRecord {
   holidayType?: string;
   timeLogs?: TimeLog[];
   employee?: Employee;
+  // AM/PM breakdown for DTR display
+  amArrival?: Date;
+  amDeparture?: Date;
+  pmArrival?: Date;
+  pmDeparture?: Date;
 }
 
 export interface TimeLog {
@@ -440,7 +445,6 @@ export class AttendanceService {
   // Employee clock in
   clockIn(location?: string, notes?: string): Observable<TimeLog> {
     const timeLogData = {
-      employeeId: this.getCurrentEmployeeId(), // Add employee ID
       timestamp: new Date().toISOString(),
       type: 'timeIn' as const,
       location,
@@ -454,7 +458,6 @@ export class AttendanceService {
   // Employee clock out
   clockOut(location?: string, notes?: string): Observable<TimeLog> {
     const timeLogData = {
-      employeeId: this.getCurrentEmployeeId(), // Add employee ID
       timestamp: new Date().toISOString(),
       type: 'timeOut' as const,
       location,
@@ -468,7 +471,6 @@ export class AttendanceService {
   // Employee break start
   startBreak(location?: string, notes?: string): Observable<TimeLog> {
     const timeLogData = {
-      employeeId: this.getCurrentEmployeeId(), // Add employee ID
       timestamp: new Date().toISOString(),
       type: 'breakStart' as const,
       location,
@@ -482,7 +484,6 @@ export class AttendanceService {
   // Employee break end
   endBreak(location?: string, notes?: string): Observable<TimeLog> {
     const timeLogData = {
-      employeeId: this.getCurrentEmployeeId(), // Add employee ID
       timestamp: new Date().toISOString(),
       type: 'breakEnd' as const,
       location,
@@ -514,13 +515,6 @@ export class AttendanceService {
     console.log('Fetching monthly attendance for month:', month, 'year:', year);
     console.log('Full API URL:', `${this.apiUrl}/records/summary`);
     console.log('Query parameters:', params.toString());
-    
-    // Check if we have an auth token
-    const token = sessionStorage.getItem('auth_token');
-    console.log('Auth token present:', !!token);
-    if (token) {
-      console.log('Token starts with:', token.substring(0, 20) + '...');
-    }
     
     return this.http.get<{ success: boolean; data: EmployeeAttendanceSummary; message?: string }>(`${this.apiUrl}/records/summary`, { params })
       .pipe(
@@ -621,35 +615,5 @@ export class AttendanceService {
     return 'present';
   }
 
-  // Get current employee ID from auth service or local storage
-  private getCurrentEmployeeId(): string {
-    // Try to get from sessionStorage first (auth service uses this)
-    const userStr = sessionStorage.getItem('current_user');
-    if (userStr) {
-      try {
-        const user = JSON.parse(userStr);
-        if (user?.employee?.id) {
-          return user.employee.id;
-        }
-      } catch (e) {
-        console.error('Error parsing user from sessionStorage:', e);
-      }
-    }
-    
-    // Fallback: try to get from localStorage
-    const localUserStr = localStorage.getItem('current_user');
-    if (localUserStr) {
-      try {
-        const user = JSON.parse(localUserStr);
-        if (user?.employee?.id) {
-          return user.employee.id;
-        }
-      } catch (e) {
-        console.error('Error parsing user from localStorage:', e);
-      }
-    }
-    
-    // If no employee ID found, throw error
-    throw new Error('Employee ID not found. Please log in again.');
-  }
+
 }
