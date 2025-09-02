@@ -6,6 +6,7 @@ import { EmployeeDashboardComponent } from './pages/employee/employee-dashboard/
 import { DepartmentManagementComponent } from './pages/admin/system-administration/department-management/department-management.component';
 import { UserManagementComponent } from './pages/admin/system-administration/user-management/user-management.component';
 import { OrgManagementComponent } from './pages/admin/system-administration/org-management/org-management.component';
+import { SettingsComponent } from './pages/admin/system-administration/settings/settings.component';
 import { EmployeeManagementComponent } from './pages/admin/employee-management/employee-management.component';
 import { FinalPayProcessComponent } from './pages/admin/payroll-management/final-pay-process/final-pay-process.component';
 import { PayslipCenterComponent } from './pages/admin/payroll-management/payslip-center/payslip-center.component';
@@ -81,6 +82,12 @@ export const routes: Routes = [
     component: OrgManagementComponent,
     canActivate: [AuthGuard, RoleGuard],
     data: { roles: ['admin'] }
+  },
+  { 
+    path: 'settings', 
+    component: SettingsComponent,
+    canActivate: [AuthGuard, RoleGuard],
+    data: { roles: ['admin', 'hrStaff'] }
   },
   { 
     path: 'employee-management', 

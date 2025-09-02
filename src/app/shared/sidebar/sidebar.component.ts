@@ -37,7 +37,8 @@ export class SidebarComponent implements OnInit, OnDestroy, OnChanges {
         { name: 'Organization Management', icon: 'business', path: '/org-management' },
         { name: 'User Management', icon: 'manage_accounts', path: '/user-management' },
         { name: 'Department Management', icon: 'apartment', path: '/department-management' },
-        { name: 'Employee Management', icon: 'person', path: '/employee-management' }
+        { name: 'Employee Management', icon: 'person', path: '/employee-management' },
+        { name: 'Settings', icon: 'settings', path: '/settings' }
       ] },
       { name: 'Attendance Management', icon: 'person', path: '/attendance-management' },
       { name: 'Payroll Management', icon: 'payments', path: '/payroll-management', children: [

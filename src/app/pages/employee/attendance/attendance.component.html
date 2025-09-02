@@ -19,8 +19,10 @@
           <div class="flex items-center justify-between mb-4">
             <h2 class="text-xl font-semibold text-gray-800">Today's Attendance</h2>
             <div class="text-right">
-              <div class="text-2xl font-bold text-blue-600" [textContent]="currentTime | date:'HH:mm:ss'"></div>
-              <div class="text-sm text-gray-500" [textContent]="currentTime | date:'EEEE, MMMM d, y'"></div>
+              <div class="text-2xl font-bold text-blue-600" [textContent]="getCurrentManilaTimeFormatted()"></div>
+              <div class="text-sm text-gray-500" [textContent]="getCurrentManilaDateFormatted()"></div>
+              <!-- ✅ Updated timezone display to show the actual system timezone -->
+              <div class="text-xs text-gray-400" [textContent]="getTimezoneStatus()"></div>
             </div>
           </div>
           
@@ -30,6 +32,19 @@
               <span class="w-2 h-2 bg-blue-400 rounded-full mr-2"></span>
               Status: {{ getCurrentStatus() }}
             </div>
+            <!-- Session Info -->
+            <div *ngIf="getSessionInfo()" class="mt-2 text-sm text-gray-600">
+              {{ getSessionInfo() }}
+            </div>
+            <!-- Current Session Type -->
+            <div class="mt-2 text-sm text-gray-700 font-medium">
+              Current Session: {{ getCurrentSessionType() }}
+            </div>
+            <!-- Active Session Status -->
+            <div class="mt-1 text-sm text-blue-600 font-medium">
+              {{ getCurrentActiveSession() }}
+            </div>
+            <!-- ✅ Remove duplicate timezone status display since it's now shown above -->
           </div>
 
           <!-- Time Tracking Buttons -->
@@ -48,7 +63,7 @@
                   <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                   <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
-                {{ isClockingIn ? 'Clocking In...' : 'Clock In' }}
+                {{ isClockingIn ? 'Clocking In...' : getClockInButtonText() }}
               </button>
               
               <!-- Clock In Form -->
@@ -82,7 +97,7 @@
                   <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                   <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
-                {{ isClockingOut ? 'Clocking Out...' : 'Clock Out' }}
+                {{ isClockingOut ? 'Clocking Out...' : getClockOutButtonText() }}
               </button>
               
               <!-- Clock Out Form -->
@@ -136,6 +151,61 @@
                 </svg>
                 {{ isEndingBreak ? 'Ending...' : 'End Break' }}
               </button>
+            </div>
+          </div>
+
+          <!-- Session Progress Indicator -->
+          <div class="mt-6 p-4 bg-gray-50 rounded-lg">
+            <h4 class="text-sm font-medium text-gray-700 mb-3">Daily Progress</h4>
+            <div class="grid grid-cols-2 gap-4">
+              <!-- AM Session -->
+              <div class="text-center">
+                <div class="text-lg font-semibold text-blue-600">AM Session</div>
+                <div class="text-sm text-gray-600 mb-2">
+                  <span *ngIf="sessionStatus.amSessionCompleted" class="text-green-600">✓ Completed</span>
+                  <span *ngIf="!sessionStatus.amSessionCompleted" class="text-orange-600">In Progress</span>
+                </div>
+                <div class="text-xs text-gray-500">
+                  <div *ngIf="sessionStatus.amSessionCompleted">
+                    {{ formatTime(currentDayAttendance?.amArrival) }} - {{ formatTime(currentDayAttendance?.amDeparture) }}
+                  </div>
+                  <div *ngIf="!sessionStatus.amSessionCompleted">
+                    {{ formatTime(currentDayAttendance?.amArrival) || 'Not started' }}
+                  </div>
+                </div>
+              </div>
+              
+              <!-- PM Session -->
+              <div class="text-center">
+                <div class="text-lg font-semibold text-purple-600">PM Session</div>
+                <div class="text-sm text-gray-600 mb-2">
+                  <span *ngIf="sessionStatus.pmSessionCompleted" class="text-green-600">✓ Completed</span>
+                  <span *ngIf="!sessionStatus.pmSessionCompleted && sessionStatus.amSessionCompleted" class="text-orange-600">In Progress</span>
+                  <span *ngIf="!sessionStatus.pmSessionCompleted && !sessionStatus.amSessionCompleted" class="text-gray-500">Waiting</span>
+                </div>
+                <div class="text-xs text-gray-500">
+                  <div *ngIf="sessionStatus.pmSessionCompleted">
+                    {{ formatTime(currentDayAttendance?.pmArrival) }} - {{ formatTime(currentDayAttendance?.pmDeparture) }}
+                  </div>
+                  <div *ngIf="!sessionStatus.pmSessionCompleted && sessionStatus.amSessionCompleted">
+                    {{ formatTime(currentDayAttendance?.pmArrival) || 'Not started' }}
+                  </div>
+                  <div *ngIf="!sessionStatus.pmSessionCompleted && !sessionStatus.amSessionCompleted">
+                    Complete AM session first
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Overall Progress -->
+            <div class="mt-4 pt-4 border-t border-gray-200 text-center">
+              <div class="text-sm font-medium text-gray-700 mb-2">
+                Daily Completion: {{ (sessionStatus.amSessionCompleted ? 1 : 0) + (sessionStatus.pmSessionCompleted ? 1 : 0) }}/2 Sessions
+              </div>
+              <div class="w-full bg-gray-200 rounded-full h-2">
+                <div class="bg-green-600 h-2 rounded-full transition-all duration-300" 
+                     [style.width.%]="(sessionStatus.amSessionCompleted ? 50 : 0) + (sessionStatus.pmSessionCompleted ? 50 : 0)"></div>
+              </div>
             </div>
           </div>
         </div>

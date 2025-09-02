@@ -156,6 +156,19 @@ export class NavigationService {
         }
       ]
     },
+    {
+      path: '/settings',
+      label: 'System Settings',
+      icon: 'settings',
+      roles: ['admin', 'hrStaff'],
+      children: [
+        {
+          path: '/settings',
+          label: 'All Settings',
+          roles: ['admin', 'hrStaff']
+        }
+      ]
+    },
     // Employee Navigation
     {
       path: '/employee-dashboard',

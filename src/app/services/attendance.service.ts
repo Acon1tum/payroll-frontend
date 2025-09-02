@@ -4,6 +4,7 @@ import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { environment } from '../../environment/environment';
 import { catchError } from 'rxjs/operators';
+import { TimezoneService } from './timezone.service';
 
 // ==================== INTERFACES ====================
 
@@ -35,11 +36,11 @@ export interface Employee {
 export interface AttendanceRecord {
   id: string;
   employeeId: string;
-  date: Date;
-  timeIn?: Date;
-  timeOut?: Date;
-  breakStart?: Date;
-  breakEnd?: Date;
+  date: Date | string; // Allow both Date and string for HTTP serialization
+  timeIn?: Date | string;
+  timeOut?: Date | string;
+  breakStart?: Date | string;
+  breakEnd?: Date | string;
   status: 'present' | 'absent' | 'late' | 'halfDay' | 'holiday' | 'leave' | 'undertime';
   calculatedHours?: number;
   overtimeHours?: number;
@@ -50,10 +51,19 @@ export interface AttendanceRecord {
   timeLogs?: TimeLog[];
   employee?: Employee;
   // AM/PM breakdown for DTR display
-  amArrival?: Date;
-  amDeparture?: Date;
-  pmArrival?: Date;
-  pmDeparture?: Date;
+  amArrival?: Date | string;
+  amDeparture?: Date | string;
+  pmArrival?: Date | string;
+  pmDeparture?: Date | string;
+  // AM/PM session tracking for multiple sessions
+  amTimeIn?: Date | string;
+  amTimeOut?: Date | string;
+  pmTimeIn?: Date | string;
+  pmTimeOut?: Date | string;
+  // Session completion tracking
+  amSessionCompleted?: boolean;
+  pmSessionCompleted?: boolean;
+  allSessionsCompleted?: boolean;
 }
 
 export interface TimeLog {
@@ -64,7 +74,7 @@ export interface TimeLog {
   location?: string;
   notes?: string;
   isManualEntry: boolean;
-  date?: Date;
+  date?: Date | string;
   calculatedHours?: number;
   overtimeHours?: number;
   lateMinutes?: number;
@@ -72,8 +82,10 @@ export interface TimeLog {
   status?: 'present' | 'absent' | 'late' | 'halfDay' | 'holiday' | 'leave' | 'undertime';
   isHoliday?: boolean;
   holidayType?: string;
-  createdAt: Date;
+  createdAt: Date | string;
   employee?: Employee;
+  // Add session tracking
+  session?: 'AM' | 'PM';
 }
 
 export interface OvertimeRequest {
@@ -166,7 +178,7 @@ export interface PaginatedResponse<T> {
 export class AttendanceService {
   private apiUrl = `${environment.apiUrl}/attendance`;
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient, private timezoneService: TimezoneService) {}
 
   // ==================== SHIFT MANAGEMENT ====================
 
@@ -266,6 +278,7 @@ export class AttendanceService {
   createTimeLog(timeLogData: Partial<TimeLog>): Observable<TimeLog> {
     console.log('Creating time log with data:', timeLogData);
     console.log('API URL:', `${this.apiUrl}/time-logs`);
+    console.log('Request body being sent:', JSON.stringify(timeLogData, null, 2));
     
     return this.http.post<{ success: boolean; data: TimeLog; message?: string }>(`${this.apiUrl}/time-logs`, timeLogData)
       .pipe(
@@ -278,12 +291,23 @@ export class AttendanceService {
         }),
         catchError(error => {
           console.error('Error in createTimeLog:', error);
+          console.error('Error details:', {
+            status: error.status,
+            statusText: error.statusText,
+            message: error.message,
+            error: error.error
+          });
+          
           if (error.status === 0) {
             throw new Error('Network error: Unable to connect to server. Please check your internet connection.');
           } else if (error.status === 401) {
             throw new Error('Authentication failed. Please log in again.');
           } else if (error.status === 403) {
             throw new Error('Access denied. You do not have permission to perform this action.');
+          } else if (error.status === 400) {
+            // Show the specific error message from the backend
+            const errorMessage = error.error?.message || error.message || 'Bad request';
+            throw new Error(`Validation error: ${errorMessage}`);
           } else if (error.status === 500) {
             throw new Error('Server error. Please try again later.');
           } else {
@@ -445,12 +469,16 @@ export class AttendanceService {
   // Employee clock in
   clockIn(location?: string, notes?: string): Observable<TimeLog> {
     const timeLogData = {
-      timestamp: new Date().toISOString(),
+      timestamp: this.timezoneService.getNowIsoInSystemTimezone(),
       type: 'timeIn' as const,
       location,
       notes,
-      isManualEntry: false
+      isManualEntry: false,
+      session: this.determineSession()
     };
+
+    console.log('clockIn called with timeLogData:', timeLogData);
+    console.log('Session determined:', this.determineSession());
 
     return this.createTimeLog(timeLogData);
   }
@@ -458,11 +486,12 @@ export class AttendanceService {
   // Employee clock out
   clockOut(location?: string, notes?: string): Observable<TimeLog> {
     const timeLogData = {
-      timestamp: new Date().toISOString(),
+      timestamp: this.timezoneService.getNowIsoInSystemTimezone(),
       type: 'timeOut' as const,
       location,
       notes,
-      isManualEntry: false
+      isManualEntry: false,
+      session: this.determineSession()
     };
 
     return this.createTimeLog(timeLogData);
@@ -471,11 +500,12 @@ export class AttendanceService {
   // Employee break start
   startBreak(location?: string, notes?: string): Observable<TimeLog> {
     const timeLogData = {
-      timestamp: new Date().toISOString(),
+      timestamp: this.timezoneService.getNowIsoInSystemTimezone(),
       type: 'breakStart' as const,
       location,
       notes,
-      isManualEntry: false
+      isManualEntry: false,
+      session: this.determineSession()
     };
 
     return this.createTimeLog(timeLogData);
@@ -484,14 +514,109 @@ export class AttendanceService {
   // Employee break end
   endBreak(location?: string, notes?: string): Observable<TimeLog> {
     const timeLogData = {
-      timestamp: new Date().toISOString(),
+      timestamp: this.timezoneService.getNowIsoInSystemTimezone(),
       type: 'breakEnd' as const,
       location,
       notes,
-      isManualEntry: false
+      isManualEntry: false,
+      session: this.determineSession()
     };
 
     return this.createTimeLog(timeLogData);
+  }
+
+  // Determine if current time is AM or PM session
+  private determineSession(): 'AM' | 'PM' {
+    const now = new Date();
+    const hour = now.getHours();
+    return hour < 12 ? 'AM' : 'PM';
+  }
+
+  // Get session status for the current day
+  getSessionStatus(employeeId: string, date: string): Observable<{
+    amSessionCompleted: boolean;
+    pmSessionCompleted: boolean;
+    allSessionsCompleted: boolean;
+    canClockInAM: boolean;
+    canClockOutAM: boolean;
+    canClockInPM: boolean;
+    canClockOutPM: boolean;
+  }> {
+    const params = {
+      startDate: date,
+      endDate: date
+    };
+
+    return this.getTimeLogs(params).pipe(
+      map(response => {
+        const timeLogs = response.data;
+        return this.calculateSessionStatus(timeLogs);
+      })
+    );
+  }
+
+  // Calculate session status from time logs
+  private calculateSessionStatus(timeLogs: TimeLog[]): {
+    amSessionCompleted: boolean;
+    pmSessionCompleted: boolean;
+    allSessionsCompleted: boolean;
+    canClockInAM: boolean;
+    canClockOutAM: boolean;
+    canClockInPM: boolean;
+    canClockOutPM: boolean;
+  } {
+    const amLogs = timeLogs.filter(log => log.session === 'AM');
+    const pmLogs = timeLogs.filter(log => log.session === 'PM');
+
+    // Check AM session completion
+    const amTimeIn = amLogs.find(log => log.type === 'timeIn');
+    const amTimeOut = amLogs.find(log => log.type === 'timeOut');
+    const amSessionCompleted = !!(amTimeIn && amTimeOut);
+
+    // Check PM session completion
+    const pmTimeIn = pmLogs.find(log => log.type === 'timeIn');
+    const pmTimeOut = pmLogs.find(log => log.type === 'timeOut');
+    const pmSessionCompleted = !!(pmTimeIn && pmTimeOut);
+
+    // Overall completion
+    const allSessionsCompleted = amSessionCompleted && pmSessionCompleted;
+
+    // Determine button states
+    // AM Clock In: Only if no AM time in exists and AM session not completed
+    const canClockInAM = !amTimeIn && !amSessionCompleted && !allSessionsCompleted;
+    // AM Clock Out: Only if AM time in exists but no AM time out
+    const canClockOutAM = !!amTimeIn && !amTimeOut && !allSessionsCompleted;
+    // PM Clock In: Only if AM session is completed and no PM time in exists
+    const canClockInPM = amSessionCompleted && !pmTimeIn && !pmSessionCompleted && !allSessionsCompleted;
+    // PM Clock Out: Only if PM time in exists but no PM time out
+    const canClockOutPM = !!pmTimeIn && !pmTimeOut && !allSessionsCompleted;
+
+    const sessionStatus = {
+      amSessionCompleted,
+      pmSessionCompleted,
+      allSessionsCompleted,
+      canClockInAM,
+      canClockOutAM,
+      canClockInPM,
+      canClockOutPM
+    };
+
+    // Debug logging
+    console.log('Session status calculation:', {
+      amTimeIn: !!amTimeIn,
+      amTimeOut: !!amTimeOut,
+      pmTimeIn: !!pmTimeIn,
+      pmTimeOut: !!pmTimeOut,
+      amSessionCompleted,
+      pmSessionCompleted,
+      allSessionsCompleted,
+      canClockInAM,
+      canClockOutAM,
+      canClockInPM,
+      canClockOutPM
+    });
+
+    return sessionStatus;
   }
 
   // Get current day attendance for employee
@@ -595,6 +720,10 @@ export class AttendanceService {
   }
 
   // Get attendance status based on time logs
+  // Business Rules for Attendance Status:
+  // - 8+ hours = Present (Full day)
+  // - Below 8 hours but > 0 = Undertime
+  // - 0 hours = Absent
   getAttendanceStatus(timeIn?: Date, timeOut?: Date, shift?: Shift): string {
     if (!timeIn) return 'absent';
     
@@ -607,12 +736,13 @@ export class AttendanceService {
     
     if (!timeOut) return 'present';
     
-    // Calculate if it's a half day or full day
+    // Calculate if it's a full day or undertime
+    // Updated business rules: 8+ hours = Present, below 8 hours = Undertime
     const hours = this.calculateWorkingHours(timeIn, timeOut);
-    if (hours < 4) return 'halfDay';
-    if (hours < 8) return 'undertime';
+    if (hours >= 8) return 'present';
+    if (hours > 0) return 'undertime';
     
-    return 'present';
+    return 'absent';
   }
 
 

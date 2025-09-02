@@ -1,0 +1,539 @@
+<div class="h-screen bg-gray-50 flex overflow-hidden">
+  <!-- Sidebar -->
+  <app-sidebar></app-sidebar>
+
+  <!-- Main Content -->
+  <div class="flex-1 flex flex-col overflow-hidden">
+    <!-- Header -->
+    <app-header 
+      [breadcrumbs]="breadcrumbs"
+      title="System Settings"
+    ></app-header>
+
+    <!-- Page Content -->
+    <main class="flex-1 overflow-x-hidden overflow-y-auto bg-gray-50 p-6">
+      <div class="max-w-7xl mx-auto">
+    <!-- Page Header -->
+        <div class="bg-white rounded-lg shadow-lg border border-gray-200 p-6 mb-6">
+          <h1 class="text-3xl font-bold text-gray-900 mb-2">System Settings</h1>
+          <p class="text-gray-600">Configure and manage system-wide preferences and configurations</p>
+          
+          <!-- Header Actions -->
+          <div class="flex flex-wrap gap-3 mt-4">
+            <button class="btn btn-outline-secondary" (click)="exportSettings()" title="Export Settings">
+              <i class="fas fa-download"></i>
+              <span class="btn-text">Export</span>
+        </button>
+            <button class="btn btn-outline-warning" (click)="resetToDefaults()" title="Reset to Defaults">
+              <i class="fas fa-undo"></i>
+              <span class="btn-text">Reset</span>
+        </button>
+            <button class="btn btn-primary" (click)="addSetting()" title="Add New Setting">
+              <i class="fas fa-plus"></i>
+              <span class="btn-text">Add Setting</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Timezone Configuration Section -->
+        <div class="bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg shadow-lg p-6 mb-6 text-white">
+          <div class="flex items-center gap-4 mb-4">
+            <div class="w-16 h-16 bg-white bg-opacity-20 rounded-xl flex items-center justify-center">
+              <i class="fas fa-globe-americas text-2xl text-yellow-300"></i>
+            </div>
+            <div>
+              <h3 class="text-xl font-semibold">System Timezone</h3>
+              <p class="text-blue-100">Set the timezone for the entire payroll system. This affects all date and time operations.</p>
+            </div>
+      </div>
+          
+          <div class="flex flex-col lg:flex-row gap-6 items-start lg:items-center">
+            <div class="flex-1">
+              <label for="systemTimezone" class="block text-sm font-medium text-yellow-300 mb-2">Select Timezone</label>
+              <div class="relative">
+          <select 
+            id="systemTimezone" 
+            [(ngModel)]="selectedTimezone" 
+            (change)="onTimezoneChange()"
+                  class="w-full px-4 py-3 bg-white bg-opacity-10 border border-white border-opacity-30 rounded-lg text-white placeholder-white placeholder-opacity-70 focus:outline-none focus:ring-2 focus:ring-yellow-300 focus:border-transparent"
+            [disabled]="isTimezoneLoading"
+          >
+                  <option *ngFor="let timezone of availableTimezones" [value]="timezone" class="text-gray-800">
+              {{ getTimezoneDisplayName(timezone) }}
+            </option>
+          </select>
+                <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                  <i class="fas fa-chevron-down text-white text-opacity-70"></i>
+                </div>
+              </div>
+            </div>
+            
+            <div class="text-center">
+              <div *ngIf="isTimezoneLoading" class="flex flex-col items-center gap-2 text-yellow-300">
+                <div class="w-8 h-8 border-2 border-white border-opacity-30 border-t-yellow-300 rounded-full animate-spin"></div>
+                <span class="text-sm">Updating timezone...</span>
+        </div>
+              <div *ngIf="!isTimezoneLoading && selectedTimezone" class="bg-white bg-opacity-15 px-4 py-3 rounded-lg border border-white border-opacity-20">
+                <div class="flex items-center gap-2">
+                  <i class="fas fa-clock text-yellow-300"></i>
+                  <span class="font-medium">{{ getTimezoneDisplayName(selectedTimezone) }}</span>
+          </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+        <!-- Search and Filters Section -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            <!-- Search Box -->
+            <div class="lg:col-span-2">
+              <label class="block text-sm font-medium text-gray-700 mb-2">Search Settings</label>
+              <div class="relative">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <i class="fas fa-search text-gray-400"></i>
+                </div>
+        <input 
+          type="text" 
+                  placeholder="Search settings by key, description, or value..." 
+          [(ngModel)]="searchTerm"
+          (keyup.enter)="onSearch()"
+                  class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+        >
+                <button class="absolute inset-y-0 right-0 px-3 text-gray-400 hover:text-gray-600" (click)="onSearch()">
+          <i class="fas fa-search"></i>
+        </button>
+              </div>
+      </div>
+      
+            <!-- Category Filter -->
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Category</label>
+              <div class="relative">
+                <select 
+                  [(ngModel)]="selectedCategory" 
+                  (change)="filterSettings()" 
+                  class="block w-full px-3 py-2 border border-gray-300 rounded-lg leading-5 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+                >
+          <option value="">All Categories</option>
+          <option *ngFor="let category of categories" [value]="category">
+            {{ category }}
+          </option>
+        </select>
+                <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                  <i class="fas fa-chevron-down text-gray-400"></i>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Clear Filters -->
+          <div class="flex justify-end mt-4">
+        <button class="btn btn-outline-secondary" (click)="clearFilters()">
+              <i class="fas fa-times"></i>
+              <span>Clear Filters</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Messages -->
+        <div *ngIf="errorMessage" class="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+          <div class="flex">
+            <div class="flex-shrink-0">
+              <i class="fas fa-exclamation-triangle text-red-400"></i>
+            </div>
+            <div class="ml-3">
+              <h3 class="text-sm font-medium text-red-800">Error</h3>
+              <div class="mt-2 text-sm text-red-700">{{ errorMessage }}</div>
+            </div>
+          </div>
+        </div>
+        
+        <div *ngIf="successMessage" class="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
+          <div class="flex">
+            <div class="flex-shrink-0">
+              <i class="fas fa-check-circle text-green-400"></i>
+            </div>
+            <div class="ml-3">
+              <h3 class="text-sm font-medium text-green-800">Success</h3>
+              <div class="mt-2 text-sm text-green-700">{{ successMessage }}</div>
+            </div>
+          </div>
+    </div>
+    
+        <!-- Settings Table Section -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+          <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+              <h3 class="text-lg font-medium text-gray-900">System Settings</h3>
+              <div class="flex items-center gap-4 mt-2 sm:mt-0">
+                <span class="text-sm text-gray-600">
+                  <i class="fas fa-list text-blue-500 mr-1"></i>
+                  {{ totalItems }} Total Settings
+                </span>
+                <span class="text-sm text-gray-600">
+                  <i class="fas fa-filter text-blue-500 mr-1"></i>
+                  {{ filteredSettings.length }} Filtered
+                </span>
+              </div>
+            </div>
+    </div>
+
+          <div class="overflow-x-auto">
+            <div *ngIf="isLoading" class="flex flex-col items-center justify-center py-12">
+              <div class="w-10 h-10 border-4 border-gray-200 border-t-blue-600 rounded-full animate-spin mb-4"></div>
+              <p class="text-gray-600">Loading settings...</p>
+      </div>
+
+            <table *ngIf="!isLoading && paginatedSettings.length > 0" class="min-w-full divide-y divide-gray-200">
+              <thead class="bg-gray-50">
+                <tr>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Setting Key</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Value</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Editable</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+          </tr>
+        </thead>
+              <tbody class="bg-white divide-y divide-gray-200">
+                <tr *ngFor="let setting of paginatedSettings" class="hover:bg-gray-50">
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <div class="flex items-center">
+                      <i class="fas fa-cog text-blue-500 mr-2"></i>
+                      <span class="text-sm font-medium text-gray-900 font-mono">{{ setting.key }}</span>
+                    </div>
+            </td>
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <div class="text-sm text-gray-900 bg-gray-100 px-2 py-1 rounded font-mono max-w-xs truncate" [title]="setting.value">
+                {{ formatValue(setting) }}
+              </div>
+            </td>
+                  <td class="px-6 py-4">
+                    <div class="text-sm text-gray-900 max-w-xs truncate" [title]="setting.description">
+                      {{ setting.description }}
+                    </div>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full" [class]="'category-' + setting.category.toLowerCase().replace(' ', '-')">
+                      {{ setting.category }}
+                    </span>
+            </td>
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full type-{{ setting.dataType }}">
+                      {{ getDataTypeLabel(setting.dataType) }}
+                    </span>
+            </td>
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <span class="inline-flex items-center px-2 py-1 text-xs font-semibold rounded-full" [class]="setting.isEditable ? 'editable-yes' : 'editable-no'">
+                      <i class="fas mr-1" [class.fa-check]="setting.isEditable" [class.fa-times]="!setting.isEditable"></i>
+                {{ setting.isEditable ? 'Yes' : 'No' }}
+              </span>
+            </td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                    <div class="flex space-x-2">
+                      <button class="btn btn-icon btn-info" (click)="viewSetting(setting)" title="View Details">
+                  <i class="fas fa-eye"></i>
+                </button>
+                <button 
+                        class="btn btn-icon btn-warning" 
+                  (click)="editSetting(setting)" 
+                        title="Edit Setting"
+                  [disabled]="!setting.isEditable"
+                >
+                  <i class="fas fa-edit"></i>
+                </button>
+                <button 
+                        class="btn btn-icon btn-danger" 
+                  (click)="deleteSetting(setting)" 
+                        title="Delete Setting"
+                  [disabled]="!setting.isEditable"
+                >
+                  <i class="fas fa-trash"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- Empty State -->
+            <div *ngIf="!isLoading && paginatedSettings.length === 0" class="text-center py-12">
+              <div class="text-gray-400 mb-4">
+                <i class="fas fa-cogs text-6xl"></i>
+              </div>
+              <h3 class="text-lg font-medium text-gray-900 mb-2">No settings found</h3>
+              <p class="text-gray-600 mb-6">No settings match your current filters. Try adjusting your search criteria or add a new setting.</p>
+        <button class="btn btn-primary" (click)="addSetting()">
+                <i class="fas fa-plus"></i>
+                Add First Setting
+        </button>
+            </div>
+      </div>
+    </div>
+
+        <!-- Pagination Section -->
+        <div *ngIf="totalPages > 1" class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mt-6">
+          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div class="text-sm text-gray-700">
+              Showing {{ (currentPage - 1) * itemsPerPage + 1 }} to {{ Math.min(currentPage * itemsPerPage, totalItems) }} of {{ totalItems }} settings
+      </div>
+      
+            <div class="flex flex-col sm:flex-row items-center gap-4">
+              <div class="flex items-center gap-2">
+                <label for="itemsPerPage" class="text-sm font-medium text-gray-700">Show:</label>
+                <select 
+                  id="itemsPerPage" 
+                  [(ngModel)]="itemsPerPage" 
+                  (change)="onItemsPerPageChange()" 
+                  class="px-3 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                >
+          <option *ngFor="let option of itemsPerPageOptions" [value]="option">
+                    {{ option }}
+          </option>
+        </select>
+              </div>
+        
+              <div class="flex items-center gap-2">
+          <button 
+                  class="px-3 py-1 border border-gray-300 rounded-md text-sm text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:opacity-50 disabled:cursor-not-allowed" 
+            (click)="onPageChange(currentPage - 1)"
+            [disabled]="currentPage === 1"
+          >
+            <i class="fas fa-chevron-left"></i>
+          </button>
+          
+                <span class="px-3 py-1 text-sm text-gray-700">
+                  {{ currentPage }} of {{ totalPages }}
+                </span>
+          
+          <button 
+                  class="px-3 py-1 border border-gray-300 rounded-md text-sm text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:opacity-50 disabled:cursor-not-allowed" 
+            (click)="onPageChange(currentPage + 1)"
+            [disabled]="currentPage === totalPages"
+          >
+            <i class="fas fa-chevron-right"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- Add/Edit/View Modal -->
+<div *ngIf="isAddMode || isEditMode || isViewMode" class="modal-overlay" (click)="closeModal()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <div class="modal-title">
+        <div class="title-icon">
+          <i class="fas" [class.fa-plus]="isAddMode" [class.fa-edit]="isEditMode" [class.fa-eye]="isViewMode"></i>
+        </div>
+      <h3>
+        <span *ngIf="isAddMode">Add New Setting</span>
+        <span *ngIf="isEditMode">Edit Setting</span>
+          <span *ngIf="isViewMode">View Setting Details</span>
+      </h3>
+      </div>
+      <button class="modal-close" (click)="closeModal()" title="Close">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+
+    <div class="modal-body">
+      <form (ngSubmit)="saveSetting()" #form="ngForm" class="setting-form">
+        <div class="form-section">
+          <h4 class="section-title">Basic Information</h4>
+          
+        <div class="form-group">
+          <label for="key">Setting Key *</label>
+            <div class="input-wrapper">
+              <i class="fas fa-key input-icon"></i>
+          <input 
+            type="text" 
+            id="key" 
+            name="key" 
+            [(ngModel)]="settingForm.key" 
+            class="form-control"
+                [class.is-invalid]="getFieldError('key')"
+            required
+            [readonly]="isEditMode || isViewMode"
+            placeholder="e.g., system.name, email.smtp.host"
+          >
+            </div>
+            <small class="form-help">Unique identifier for the setting (e.g., system.name)</small>
+            <div *ngIf="getFieldError('key')" class="error-message">
+              <i class="fas fa-exclamation-circle"></i>
+              {{ getFieldError('key') }}
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="description">Description *</label>
+            <div class="input-wrapper">
+              <i class="fas fa-align-left input-icon"></i>
+              <textarea 
+                id="description" 
+                name="description" 
+                [(ngModel)]="settingForm.description" 
+                class="form-control"
+                [class.is-invalid]="getFieldError('description')"
+                required
+                [readonly]="isViewMode"
+                rows="3"
+                placeholder="Brief description of what this setting controls"
+              ></textarea>
+            </div>
+            <div *ngIf="getFieldError('description')" class="error-message">
+              <i class="fas fa-exclamation-circle"></i>
+              {{ getFieldError('description') }}
+            </div>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <h4 class="section-title">Configuration</h4>
+          
+          <div class="form-row">
+            <div class="form-group">
+              <label for="category">Category *</label>
+              <div class="select-wrapper">
+                <select 
+                  id="category" 
+                  name="category" 
+                  [(ngModel)]="settingForm.category" 
+                  class="form-control"
+                  [class.is-invalid]="getFieldError('category')"
+                  required
+                  [disabled]="isViewMode"
+                >
+                  <option value="">Select Category</option>
+                  <option *ngFor="let category of categories" [value]="category">
+                    {{ category }}
+                  </option>
+                </select>
+                <i class="fas fa-chevron-down select-arrow"></i>
+              </div>
+              <div *ngIf="getFieldError('category')" class="error-message">
+                <i class="fas fa-exclamation-circle"></i>
+                {{ getFieldError('category') }}
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="dataType">Data Type *</label>
+              <div class="select-wrapper">
+                <select 
+                  id="dataType" 
+                  name="dataType" 
+                  [(ngModel)]="settingForm.dataType" 
+                  class="form-control"
+                  [class.is-invalid]="getFieldError('dataType')"
+                  required
+                  [disabled]="isEditMode || isViewMode"
+                >
+                  <option *ngFor="let option of dataTypeOptions" [value]="option.value">
+                    {{ option.label }}
+                  </option>
+                </select>
+                <i class="fas fa-chevron-down select-arrow"></i>
+              </div>
+              <div *ngIf="getFieldError('dataType')" class="error-message">
+                <i class="fas fa-exclamation-circle"></i>
+                {{ getFieldError('dataType') }}
+              </div>
+            </div>
+        </div>
+
+        <div class="form-group">
+          <label for="value">Value *</label>
+            <div class="input-wrapper">
+              <i class="fas fa-pencil-alt input-icon"></i>
+          <input 
+            *ngIf="settingForm.dataType !== 'boolean' && settingForm.dataType !== 'json'"
+            type="text" 
+            id="value" 
+            name="value" 
+            [(ngModel)]="settingForm.value" 
+            class="form-control"
+                [class.is-invalid]="getFieldError('value')"
+            required
+            [readonly]="isViewMode"
+            [placeholder]="'Enter ' + settingForm.dataType + ' value'"
+          >
+          
+          <select 
+            *ngIf="settingForm.dataType === 'boolean'"
+            id="value" 
+            name="value" 
+            [(ngModel)]="settingForm.value" 
+            class="form-control"
+                [class.is-invalid]="getFieldError('value')"
+            required
+            [disabled]="isViewMode"
+          >
+            <option value="true">Yes</option>
+            <option value="false">No</option>
+          </select>
+          
+          <textarea 
+            *ngIf="settingForm.dataType === 'json'"
+            id="value" 
+            name="value" 
+            [(ngModel)]="settingForm.value" 
+            class="form-control"
+                [class.is-invalid]="getFieldError('value')"
+            required
+            [readonly]="isViewMode"
+            rows="4"
+            placeholder='{"key": "value"}'
+          ></textarea>
+        </div>
+            <div *ngIf="getFieldError('value')" class="error-message">
+              <i class="fas fa-exclamation-circle"></i>
+              {{ getFieldError('value') }}
+        </div>
+          </div>
+
+          <div class="form-group">
+            <div class="checkbox-wrapper">
+              <input 
+                type="checkbox" 
+                id="isEditable" 
+                name="isEditable" 
+                [(ngModel)]="settingForm.isEditable"
+                class="form-checkbox"
+                [disabled]="isViewMode"
+              >
+              <label class="checkbox-label" for="isEditable">
+                <i class="fas fa-lock-open"></i>
+                Allow users to modify this setting
+              </label>
+            </div>
+          </div>
+        </div>
+      </form>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn btn-secondary" (click)="closeModal()" [disabled]="isSubmitting">
+        <i class="fas fa-times"></i>
+        Cancel
+      </button>
+      <button 
+        *ngIf="!isViewMode"
+        class="btn btn-primary" 
+        (click)="saveSetting()"
+        [disabled]="!form.valid || isSubmitting"
+      >
+        <i class="fas" [class.fa-spinner]="isSubmitting" [class.fa-spin]="isSubmitting" [class.fa-plus]="!isSubmitting && isAddMode" [class.fa-save]="!isSubmitting && isEditMode"></i>
+        <span *ngIf="isSubmitting">Processing...</span>
+        <span *ngIf="!isSubmitting && isAddMode">Create Setting</span>
+        <span *ngIf="!isSubmitting && isEditMode">Update Setting</span>
+      </button>
+    </div>
+  </div>
+</div>

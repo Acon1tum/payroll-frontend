@@ -5,7 +5,9 @@ import { SidebarComponent } from "../../../shared/sidebar/sidebar.component";
 import { HeaderComponent } from "../../../shared/header/header.component";
 import { AttendanceService, AttendanceRecord, TimeLog, Employee } from '../../../services/attendance.service';
 import { AuthService } from '../../../services/auth.service';
-import { Subject, takeUntil } from 'rxjs';
+import { TimezoneService } from '../../../services/timezone.service';
+import { DtrPdfService } from '../../../services/dtr-pdf.service';
+import { Subject, takeUntil, Subscription } from 'rxjs';
 
 interface Breadcrumb {
   label: string;
@@ -15,12 +17,12 @@ interface Breadcrumb {
 
 interface DTRRecord {
   date: Date;
-  amArrival?: Date;
-  amDeparture?: Date;
-  breakStart?: Date;
-  breakEnd?: Date;
-  pmArrival?: Date;
-  pmDeparture?: Date;
+  amArrival?: Date | string;
+  amDeparture?: Date | string;
+  breakStart?: Date | string;
+  breakEnd?: Date | string;
+  pmArrival?: Date | string;
+  pmDeparture?: Date | string;
   totalHours: number;
   totalMinutes: number;
   status: string;
@@ -36,6 +38,7 @@ interface DTRRecord {
 })
 export class AttendanceComponent implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();
+  private timezoneSubscription: Subscription = new Subscription();
 
   breadcrumbs: Breadcrumb[] = [
     { label: 'Home', path: '/employee' },
@@ -76,19 +79,55 @@ export class AttendanceComponent implements OnInit, OnDestroy {
   private isInitialized = false;
   private isDataLoading = false;
 
+  // Session status tracking
+  sessionStatus: {
+    amSessionCompleted: boolean;
+    pmSessionCompleted: boolean;
+    allSessionsCompleted: boolean;
+    canClockInAM: boolean;
+    canClockOutAM: boolean;
+    canClockInPM: boolean;
+    canClockOutPM: boolean;
+  } = {
+    amSessionCompleted: false,
+    pmSessionCompleted: false,
+    allSessionsCompleted: false,
+    canClockInAM: false,
+    canClockOutAM: false,
+    canClockInPM: false,
+    canClockOutPM: false
+  };
+
   constructor(
     private attendanceService: AttendanceService,
-    private authService: AuthService
+    private authService: AuthService,
+    private timezoneService: TimezoneService,
+    private dtrPdfService: DtrPdfService
   ) {}
 
   ngOnInit() {
     this.initializeComponent();
     this.startTimeUpdate();
+    
+    // ✅ Subscribe to timezone changes with better error handling
+    this.timezoneSubscription.add(
+      this.timezoneService.getSystemTimezone().subscribe({
+        next: (newTimezone: string) => {
+          console.log('Attendance: Timezone changed to:', newTimezone);
+          this.refreshTimezone();
+          this.updateDisplayedTime();
+        },
+        error: (error) => {
+          console.error('Attendance: Error receiving timezone update:', error);
+        }
+      })
+    );
   }
 
   ngOnDestroy() {
     this.destroy$.next();
     this.destroy$.complete();
+    this.timezoneSubscription.unsubscribe();
     if (this.timeInterval) {
       clearInterval(this.timeInterval);
     }
@@ -260,9 +299,12 @@ export class AttendanceComponent implements OnInit, OnDestroy {
       // Since we're now working with time logs directly, just load today's time logs
       await this.loadTodayTimeLogs();
       
+      // Load session status
+      await this.loadSessionStatus();
+      
       // Generate current day attendance record from time logs for display
       if (this.todayTimeLogs.length > 0) {
-        const today = new Date().toISOString().split('T')[0];
+        const today = this.timezoneService.getDateStringInSystemTimezone();
         
         // Sort time logs by timestamp
         const sortedTimeLogs = [...this.todayTimeLogs].sort((a, b) => 
@@ -294,69 +336,33 @@ export class AttendanceComponent implements OnInit, OnDestroy {
           }
         });
 
-        // Calculate working hours
-        if (timeIn && timeOut) {
-          let totalWorkTime = timeOut.getTime() - timeIn.getTime();
-          
-          // Subtract break time if break was taken
-          if (breakStart && breakEnd) {
-            const breakTime = breakEnd.getTime() - breakStart.getTime();
-            totalWorkTime -= breakTime;
-          }
-          
-          // Convert to hours
-          calculatedHours = totalWorkTime / (1000 * 60 * 60);
-        }
+        // Calculate working hours across multiple sessions
+        calculatedHours = this.calculateTotalHoursFromSessions(sortedTimeLogs);
 
-        // Get status from the latest time log (backend calculates this)
-        let status: 'present' | 'absent' | 'late' | 'halfDay' | 'holiday' | 'leave' | 'undertime' = 'present';
+        // Derive status strictly from total hours (should match backend logic)
+        // Updated business rules: 8+ hours = Present, below 8 hours = Undertime
+        let status: 'present' | 'absent' | 'late' | 'halfDay' | 'holiday' | 'leave' | 'undertime' = 'absent';
+        if (calculatedHours >= 8) status = 'present';
+        else if (calculatedHours > 0) status = 'undertime';
         
-        // Find the latest time log with a status
-        const latestTimeLog = this.todayTimeLogs
-          .filter(log => log.status)
-          .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())[0];
-        
-        if (latestTimeLog && latestTimeLog.status) {
-          status = latestTimeLog.status;
-        } else {
-          // Fallback calculation if no status in time log
-          if (timeIn && timeOut) {
-            if (calculatedHours >= 8) {
-              status = 'present';
-            } else if (calculatedHours >= 4) {
-              status = 'halfDay';
-            } else {
-              status = 'undertime';
-            }
-          } else if (timeIn) {
-            status = 'present';
-          } else {
-            status = 'absent';
-          }
-        }
+        // Debug: Log the status calculation for current day
+        console.log('Current day status calculation:', {
+          calculatedHours,
+          status,
+          threshold: '8 hours for present, below 8 hours = undertime'
+        });
 
-        // Calculate AM/PM times using helper method
+        // Calculate AM/PM times based on actual sessions
         let amArrival: Date | undefined;
         let amDeparture: Date | undefined;
         let pmArrival: Date | undefined;
         let pmDeparture: Date | undefined;
-
-        if (timeIn && timeOut) {
-          const ampmTimes = this.calculateAMPMTimes(timeIn, timeOut);
-          amArrival = ampmTimes.amArrival;
-          amDeparture = ampmTimes.amDeparture;
-          pmArrival = ampmTimes.pmArrival;
-          pmDeparture = ampmTimes.pmDeparture;
-        } else if (timeIn) {
-          // Only time in, no time out yet
-          const noon = new Date(timeIn);
-          noon.setHours(12, 0, 0, 0);
-          
-          if (timeIn < noon) {
-            amArrival = timeIn;
-          } else {
-            pmArrival = timeIn;
-          }
+        const sessions = this.pairSessions(sortedTimeLogs);
+        for (const s of sessions) {
+          if (!s.in) continue;
+          const isAM = this.getHourInSystemTimezone(s.in) < 12;
+          if (isAM && !amArrival) { amArrival = s.in; amDeparture = s.out; }
+          if (!isAM && !pmArrival) { pmArrival = s.in; pmDeparture = s.out; }
         }
 
         this.currentDayAttendance = {
@@ -379,7 +385,11 @@ export class AttendanceComponent implements OnInit, OnDestroy {
           amArrival,
           amDeparture,
           pmArrival,
-          pmDeparture
+          pmDeparture,
+          // Add session completion tracking
+          amSessionCompleted: this.sessionStatus.amSessionCompleted,
+          pmSessionCompleted: this.sessionStatus.pmSessionCompleted,
+          allSessionsCompleted: this.sessionStatus.allSessionsCompleted
         };
         
         console.log('Current day attendance generated:', {
@@ -390,7 +400,10 @@ export class AttendanceComponent implements OnInit, OnDestroy {
           hasBreakEnd: !!breakEnd,
           calculatedHours,
           status,
-          timeLogsCount: this.todayTimeLogs.length
+          timeLogsCount: this.todayTimeLogs.length,
+          amSessionCompleted: this.sessionStatus.amSessionCompleted,
+          pmSessionCompleted: this.sessionStatus.pmSessionCompleted,
+          allSessionsCompleted: this.sessionStatus.allSessionsCompleted
         });
       } else {
         this.currentDayAttendance = null;
@@ -408,8 +421,8 @@ export class AttendanceComponent implements OnInit, OnDestroy {
     if (!this.currentEmployeeId) return;
 
     try {
-      const today = new Date().toISOString().split('T')[0];
-      console.log('Loading time logs for today:', today);
+      const today = this.timezoneService.getDateStringInSystemTimezone();
+      console.log('Loading time logs for today (system TZ):', today);
       console.log('Current employee ID:', this.currentEmployeeId);
       
       console.log('About to call getTimeLogs with params:', { startDate: today, endDate: today });
@@ -473,10 +486,45 @@ export class AttendanceComponent implements OnInit, OnDestroy {
         .toPromise();
 
       console.log('Monthly attendance summary received:', summary);
+      console.log('Summary type:', typeof summary);
+      if (summary?.records) {
+        console.log('Records type:', typeof summary.records);
+        console.log('Records length:', summary.records.length);
+        if (Array.isArray(summary.records) && summary.records.length > 0) {
+          console.log('First record sample:', summary.records[0]);
+          console.log('First record date type:', typeof summary.records[0].date, 'value:', summary.records[0].date);
+        }
+      }
       
       if (summary?.records) {
         console.log('Processing', summary.records.length, 'attendance records');
+        console.log('Raw records dates:', summary.records.map(r => new Date(r.date).toISOString().split('T')[0]));
         console.log('Raw records:', summary.records);
+        
+        // Debug: Check session information in time logs and validate date types
+        summary.records.forEach((record, index) => {
+          console.log(`Record ${index} date type:`, typeof record.date, 'value:', record.date);
+          console.log(`Record ${index} date constructor:`, record.date?.constructor?.name);
+          console.log(`Record ${index} date instanceof Date:`, record.date instanceof Date);
+          
+          if (record.timeLogs && record.timeLogs.length > 0) {
+            try {
+              // Ensure date is a Date object before calling toISOString
+              const recordDate = new Date(record.date);
+              console.log(`Record ${recordDate.toISOString().split('T')[0]} time logs:`, 
+                record.timeLogs.map(log => ({
+                  id: log.id,
+                  type: log.type,
+                  session: log.session,
+                  timestamp: log.timestamp
+                }))
+              );
+            } catch (error) {
+              console.error(`Error processing record ${index} date:`, error);
+            }
+          }
+        });
+        
         this.monthlyAttendance = this.processDTRRecords(summary.records);
         console.log('Processed DTR records:', this.monthlyAttendance);
         console.log('Final monthly attendance count:', this.monthlyAttendance.length);
@@ -496,41 +544,84 @@ export class AttendanceComponent implements OnInit, OnDestroy {
     }
   }
 
+  private async loadSessionStatus() {
+    if (!this.currentEmployeeId) return;
+
+    try {
+      const today = this.timezoneService.getDateStringInSystemTimezone();
+      const status = await this.attendanceService.getSessionStatus(this.currentEmployeeId, today).toPromise();
+      
+      if (status) {
+        this.sessionStatus = status;
+        console.log('Session status loaded:', this.sessionStatus);
+      }
+    } catch (error) {
+      console.error('Error loading session status:', error);
+    }
+  }
+
   // ==================== DTR PROCESSING ====================
+  // Business Rules for Attendance Status:
+  // - 8+ hours = Present (Full day)
+  // - Below 8 hours but > 0 = Undertime
+  // - 0 hours = Absent
 
   private processDTRRecords(records: AttendanceRecord[]): DTRRecord[] {
     const today = new Date().toISOString().split('T')[0];
     
     console.log('Processing DTR records, today is:', today);
+    console.log('Current month:', this.currentMonth + 1, 'Current year:', this.currentYear);
     console.log('Total records to process:', records.length);
     
     const filteredRecords = records.filter(record => {
-      // Exclude current day (it's displayed separately)
-      const recordDate = new Date(record.date).toISOString().split('T')[0];
-      if (recordDate === today) {
-        console.log('Filtering out current day record:', recordDate);
-        return false;
+      try {
+        // Ensure date is a Date object before calling toISOString
+        const recordDate = new Date(record.date);
+        const recordDateString = recordDate.toISOString().split('T')[0];
+        
+        // Filter by selected month and year
+        // This ensures that only records from the selected month are displayed
+        // Fixes the issue where August 31, 2025 was showing in September 2025 view
+        const recordMonth = recordDate.getMonth(); // 0-11
+        const recordYear = recordDate.getFullYear();
+        
+        if (recordMonth !== this.currentMonth || recordYear !== this.currentYear) {
+          console.log('Filtering out record not in selected month:', recordDateString, 
+            `(record: ${recordMonth + 1}/${recordYear}, selected: ${this.currentMonth + 1}/${this.currentYear})`);
+          return false;
+        }
+        
+        // Exclude current day (it's displayed separately) only if viewing current month
+        if (recordDateString === today && this.currentMonth === new Date().getMonth() && this.currentYear === new Date().getFullYear()) {
+          console.log('Filtering out current day record:', recordDateString);
+          return false;
+        }
+        
+        // Only include records with actual time logs
+        if (!record.timeLogs || record.timeLogs.length === 0) {
+          console.log('Filtering out record without time logs:', recordDateString);
+          return false;
+        }
+        
+        console.log('Including record with time logs:', recordDateString, 'count:', record.timeLogs.length);
+        return true;
+      } catch (error) {
+        console.error('Error processing record date:', error, 'record:', record);
+        return false; // Skip records with invalid dates
       }
-      
-      // Only include records with actual time logs
-      if (!record.timeLogs || record.timeLogs.length === 0) {
-        console.log('Filtering out record without time logs:', recordDate);
-        return false;
-      }
-      
-      console.log('Including record with time logs:', recordDate, 'count:', record.timeLogs.length);
-      return true;
     });
     
     console.log('Records after filtering:', filteredRecords.length);
+    console.log('Filtered records dates:', filteredRecords.map(r => new Date(r.date).toISOString().split('T')[0]));
     
     return filteredRecords.map(record => {
-      const dtrRecord: DTRRecord = {
-        date: new Date(record.date),
-        totalHours: 0,
-        totalMinutes: 0,
-        status: record.status || 'absent'
-      };
+      try {
+        const dtrRecord: DTRRecord = {
+          date: new Date(record.date),
+          totalHours: 0,
+          totalMinutes: 0,
+          status: record.status || 'absent'
+        };
 
       // Process time logs for AM/PM breakdown and calculate working hours
       if (record.timeLogs && record.timeLogs.length > 0) {
@@ -542,6 +633,27 @@ export class AttendanceComponent implements OnInit, OnDestroy {
         let timeOut: Date | undefined;
         let breakStart: Date | undefined;
         let breakEnd: Date | undefined;
+
+        // Set AM/PM breakdown based on session information from time logs
+        // First try to use session field if available
+        const amTimeIn = timeLogs.find(log => log.type === 'timeIn' && log.session === 'AM')?.timestamp;
+        const amTimeOut = timeLogs.find(log => log.type === 'timeOut' && log.session === 'AM')?.timestamp;
+        const pmTimeIn = timeLogs.find(log => log.type === 'timeIn' && log.session === 'PM')?.timestamp;
+        const pmTimeOut = timeLogs.find(log => log.type === 'timeOut' && log.session === 'PM')?.timestamp;
+
+        console.log(`Processing DTR record for ${new Date(record.date).toISOString().split('T')[0]}:`, {
+          totalTimeLogs: timeLogs.length,
+          timeLogsWithSession: timeLogs.filter(log => log.session).map(log => ({
+            id: log.id,
+            type: log.type,
+            session: log.session,
+            timestamp: log.timestamp
+          })),
+          amTimeIn,
+          amTimeOut,
+          pmTimeIn,
+          pmTimeOut
+        });
 
         // Extract times from time logs
         timeLogs.forEach(log => {
@@ -562,110 +674,167 @@ export class AttendanceComponent implements OnInit, OnDestroy {
           }
         });
 
-        // Calculate working hours
-        if (timeIn && timeOut) {
-          let totalWorkTime = timeOut.getTime() - timeIn.getTime();
-          
-          // Subtract break time if break was taken
-          if (breakStart && breakEnd) {
-            const breakTime = breakEnd.getTime() - breakStart.getTime();
-            totalWorkTime -= breakTime;
+        // Calculate working hours from all timeIn/timeOut pairs (should match backend logic)
+        let totalWorkTime = 0;
+        
+        // Find all timeIn/timeOut pairs in chronological order
+        const timeInOutPairs: { timeIn: Date; timeOut: Date }[] = [];
+        let currentTimeIn: Date | undefined;
+        
+        for (const log of timeLogs) {
+          if (log.type === 'timeIn') {
+            currentTimeIn = new Date(log.timestamp);
+          } else if (log.type === 'timeOut' && currentTimeIn) {
+            timeInOutPairs.push({
+              timeIn: currentTimeIn,
+              timeOut: new Date(log.timestamp)
+            });
+            currentTimeIn = undefined;
           }
-          
-          // Convert to hours
+        }
+        
+        // Calculate total work time from all pairs
+        for (const pair of timeInOutPairs) {
+          totalWorkTime += pair.timeOut.getTime() - pair.timeIn.getTime();
+        }
+        
+        // Subtract break time if break was taken
+        if (record.breakStart && record.breakEnd) {
+          const breakStartDate = new Date(record.breakStart);
+          const breakEndDate = new Date(record.breakEnd);
+          const breakTime = breakEndDate.getTime() - breakStartDate.getTime();
+          totalWorkTime -= breakTime;
+        }
+        
+        // Convert to hours
+        if (totalWorkTime > 0) {
           const totalHours = totalWorkTime / (1000 * 60 * 60);
           dtrRecord.totalHours = Math.round(totalHours * 100) / 100; // Round to 2 decimal places
           dtrRecord.totalMinutes = Math.round(totalHours * 60);
         }
+        
+        // Debug: Log the hours calculation
+        console.log(`Hours calculation for ${new Date(record.date).toISOString().split('T')[0]}:`, {
+          timeInOutPairs: timeInOutPairs.length,
+          totalWorkTimeMs: totalWorkTime,
+          totalHours: dtrRecord.totalHours,
+          breakTime: record.breakStart && record.breakEnd ? 
+            (new Date(record.breakEnd).getTime() - new Date(record.breakStart).getTime()) / (1000 * 60 * 60) : 0
+        });
 
         // Set break times
         dtrRecord.breakStart = breakStart;
         dtrRecord.breakEnd = breakEnd;
 
-        // Set AM/PM breakdown based on actual working hours
-        if (timeIn && timeOut) {
-          const noon = new Date(timeIn);
-          noon.setHours(12, 0, 0, 0);
+        // Set AM/PM breakdown based on session information from time logs
+        if (amTimeIn) {
+          dtrRecord.amArrival = new Date(amTimeIn);
+          if (amTimeOut) {
+            dtrRecord.amDeparture = new Date(amTimeOut);
+          }
+        }
 
-          // If employee works before noon, set AM times
-          if (timeIn < noon) {
-            dtrRecord.amArrival = timeIn;
-            // If they leave before noon, set AM departure
-            if (timeOut <= noon) {
-              dtrRecord.amDeparture = timeOut;
+        if (pmTimeIn) {
+          dtrRecord.pmArrival = new Date(pmTimeIn);
+          if (pmTimeOut) {
+            dtrRecord.pmDeparture = new Date(pmTimeOut);
+          }
+        }
+
+        // Fallback to time-based logic if session field is not available
+        if (!amTimeIn && !pmTimeIn) {
+          if (timeIn && timeOut) {
+            const inHour = this.getHourInSystemTimezone(timeIn);
+            const outHour = this.getHourInSystemTimezone(timeOut);
+            // If employee works before noon, set AM times
+            if (inHour < 12) {
+              dtrRecord.amArrival = timeIn;
+              if (outHour <= 12) {
+                dtrRecord.amDeparture = timeOut;
+              } else {
+                // If they work past noon, set AM departure to system noon and PM arrival to system noon
+                const tz = this.timezoneService.getCurrentTimezone();
+                const parts = new Intl.DateTimeFormat('en-CA', { timeZone: tz, year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(timeIn)
+                  .reduce((acc: any, p) => { if (p.type !== 'literal') acc[p.type] = p.value; return acc; }, {});
+                const noon = new Date(Number(parts.year), Number(parts.month) - 1, Number(parts.day), 12, 0, 0, 0);
+                dtrRecord.amDeparture = noon;
+                dtrRecord.pmArrival = noon;
+                dtrRecord.pmDeparture = timeOut;
+              }
             } else {
-              // If they work past noon, set AM departure to noon and PM arrival to noon
-              dtrRecord.amDeparture = noon;
-              dtrRecord.pmArrival = noon;
+              // If employee starts after noon, set PM times only
+              dtrRecord.pmArrival = timeIn;
               dtrRecord.pmDeparture = timeOut;
             }
-          } else {
-            // If employee starts after noon, set PM times only
-            dtrRecord.pmArrival = timeIn;
-            dtrRecord.pmDeparture = timeOut;
-          }
-        } else if (timeIn) {
-          // Only time in, no time out yet
-          const noon = new Date(timeIn);
-          noon.setHours(12, 0, 0, 0);
-          
-          if (timeIn < noon) {
-            dtrRecord.amArrival = timeIn;
-          } else {
-            dtrRecord.pmArrival = timeIn;
-          }
-        }
-
-        // Get status from the latest time log (backend calculates this)
-        const latestTimeLog = timeLogs
-          .filter(log => log.status)
-          .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())[0];
-        
-        if (latestTimeLog && latestTimeLog.status) {
-          dtrRecord.status = latestTimeLog.status;
-        } else {
-          // Fallback calculation if no status in time log
-          if (timeIn && timeOut) {
-            if (dtrRecord.totalHours >= 8) {
-              dtrRecord.status = 'present';
-            } else if (dtrRecord.totalHours >= 4) {
-              dtrRecord.status = 'halfDay';
-            } else {
-              dtrRecord.status = 'undertime';
-            }
           } else if (timeIn) {
-            dtrRecord.status = 'present';
-          } else {
-            dtrRecord.status = 'absent';
+            const inHour = this.getHourInSystemTimezone(timeIn);
+            if (inHour < 12) {
+              dtrRecord.amArrival = timeIn;
+            } else {
+              dtrRecord.pmArrival = timeIn;
+            }
           }
         }
-      }
 
-      return dtrRecord;
+        // Calculate status based on total hours (this should match backend logic)
+        // Updated business rules: 8+ hours = Present, below 8 hours = Undertime
+        if (dtrRecord.totalHours >= 8) {
+          dtrRecord.status = 'present';
+        } else if (dtrRecord.totalHours > 0) {
+          dtrRecord.status = 'undertime';
+        } else {
+          dtrRecord.status = 'absent';
+        }
+        
+        // Debug: Log the status calculation
+        console.log(`Status calculation for ${new Date(record.date).toISOString().split('T')[0]}:`, {
+          totalHours: dtrRecord.totalHours,
+          calculatedStatus: dtrRecord.status,
+          timeIn: !!timeIn,
+          timeOut: !!timeOut,
+          threshold: '8 hours for present, below 8 hours = undertime'
+        });
+              }
+
+        return dtrRecord;
+      } catch (error) {
+        console.error('Error processing DTR record:', error, 'record:', record);
+        // Return a default record to prevent the entire process from failing
+        return {
+          date: new Date(),
+          totalHours: 0,
+          totalMinutes: 0,
+          status: 'absent'
+        };
+      }
     });
   }
 
   // Helper method to calculate AM/PM times for current day
   private calculateAMPMTimes(timeIn: Date, timeOut: Date): { amArrival?: Date, amDeparture?: Date, pmArrival?: Date, pmDeparture?: Date } {
-    const noon = new Date(timeIn);
-    noon.setHours(12, 0, 0, 0);
+    const tz = this.timezoneService.getCurrentTimezone();
+    // Build a noon boundary in system timezone for timeIn's date
+    const dateParts = new Intl.DateTimeFormat('en-CA', {
+      timeZone: tz,
+      year: 'numeric', month: '2-digit', day: '2-digit'
+    }).formatToParts(timeIn).reduce((acc: any, p) => { if (p.type !== 'literal') acc[p.type] = p.value; return acc; }, {});
+    const noonLocal = new Date(Number(dateParts.year), Number(dateParts.month) - 1, Number(dateParts.day), 12, 0, 0, 0);
 
     const result: { amArrival?: Date, amDeparture?: Date, pmArrival?: Date, pmDeparture?: Date } = {};
 
-    // If employee works before noon, set AM times
-    if (timeIn < noon) {
+    const timeInHour = this.getHourInSystemTimezone(timeIn);
+    const timeOutHour = this.getHourInSystemTimezone(timeOut);
+
+    if (timeInHour < 12) {
       result.amArrival = timeIn;
-      // If they leave before noon, set AM departure
-      if (timeOut <= noon) {
+      if (timeOutHour <= 12) {
         result.amDeparture = timeOut;
       } else {
-        // If they work past noon, set AM departure to noon and PM arrival to noon
-        result.amDeparture = noon;
-        result.pmArrival = noon;
+        result.amDeparture = noonLocal;
+        result.pmArrival = noonLocal;
         result.pmDeparture = timeOut;
       }
     } else {
-      // If employee starts after noon, set PM times only
       result.pmArrival = timeIn;
       result.pmDeparture = timeOut;
     }
@@ -674,6 +843,115 @@ export class AttendanceComponent implements OnInit, OnDestroy {
   }
 
   // ==================== UTILITY METHODS ====================
+
+  // Compute total hours from multiple timeIn/timeOut sessions, subtracting breaks in each session
+  private calculateTotalHoursFromSessions(timeLogs: TimeLog[]): number {
+    const sessions = this.pairSessions(timeLogs);
+    let totalMs = 0;
+    for (const s of sessions) {
+      if (!s.in) continue;
+      const end = s.out || new Date();
+      let span = end.getTime() - s.in.getTime();
+      const breaks = this.collectBreaksWithin(timeLogs, s.in, end);
+      for (const b of breaks) span -= b;
+      if (span > 0) totalMs += span;
+    }
+    return totalMs / (1000 * 60 * 60);
+  }
+
+  private pairSessions(timeLogs: TimeLog[]): { in?: Date, out?: Date }[] {
+    const logs = [...timeLogs].sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+    const sessions: { in?: Date, out?: Date }[] = [];
+    let currentIn: Date | undefined;
+    for (const log of logs) {
+      const ts = new Date(log.timestamp);
+      if (log.type === 'timeIn') {
+        if (!currentIn) currentIn = ts;
+      } else if (log.type === 'timeOut') {
+        if (currentIn) {
+          sessions.push({ in: currentIn, out: ts });
+          currentIn = undefined;
+        }
+      }
+    }
+    if (currentIn) sessions.push({ in: currentIn, out: undefined });
+    return sessions;
+  }
+
+  private collectBreaksWithin(timeLogs: TimeLog[], start: Date, end: Date): number[] {
+    const logs = [...timeLogs].sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+    const durations: number[] = [];
+    let open: Date | undefined;
+    for (const log of logs) {
+      const ts = new Date(log.timestamp);
+      if (ts < start || ts > end) continue;
+      if (log.type === 'breakStart' && !open) open = ts;
+      if (log.type === 'breakEnd' && open) {
+        durations.push(ts.getTime() - open.getTime());
+        open = undefined;
+      }
+    }
+    return durations;
+  }
+
+  // ==================== TEMPLATE HELPERS (TIME/SESSION INFO) ====================
+
+  // ✅ Update method to use dynamic timezone with better error handling
+  getCurrentManilaTimeFormatted(): string {
+    try {
+      return this.timezoneService.getFormattedCurrentTime('HH:mm:ss a');
+    } catch (error) {
+      console.warn('Attendance: Error formatting time, using local time:', error);
+      return this.currentTime.toLocaleTimeString('en-US', { 
+        hour12: true, 
+        hour: '2-digit', 
+        minute: '2-digit', 
+        second: '2-digit' 
+      });
+    }
+  }
+
+  // ✅ Update method to use dynamic timezone with better error handling
+  getCurrentManilaDateFormatted(): string {
+    try {
+      const fmt = new Intl.DateTimeFormat('en-US', {
+        timeZone: this.timezoneService.getCurrentTimezone(),
+        year: 'numeric',
+        month: 'short',
+        day: '2-digit'
+      });
+      return fmt.format(new Date());
+    } catch (error) {
+      console.warn('Attendance: Error formatting date with timezone, using local date:', error);
+      return this.currentTime.toLocaleDateString();
+    }
+  }
+
+  getSessionInfo(): string {
+    if (!this.todayTimeLogs || this.todayTimeLogs.length === 0) return '';
+    const sessions = this.pairSessions(this.todayTimeLogs);
+    const completed = sessions.filter(s => s.in && s.out).length;
+    const open = sessions.some(s => s.in && !s.out);
+    if (open) {
+      const openSession = sessions.find(s => s.in && !s.out);
+      const started = openSession?.in ? this.formatTime(openSession.in) : '';
+      return `Active session started at ${started} • Completed: ${completed}/2`;
+    }
+    return `Completed sessions today: ${completed}/2`;
+  }
+
+  // ✅ Update method to use dynamic timezone with better display
+  getTimezoneStatus(): string {
+    try {
+      const timezone = this.timezoneService.getCurrentTimezone();
+      const offset = this.timezoneService.getFormattedTimezoneOffset();
+      const displayName = this.timezoneService.getTimezoneDisplayName();
+      return `Timezone: ${displayName} (${offset})`;
+    } catch (error) {
+      console.warn('Attendance: Error getting timezone status:', error);
+      return 'Timezone: Unknown (UTC+00:00)';
+    }
+  }
 
   // Check if today's row should be displayed (only when viewing current month)
   shouldShowTodayRow(): boolean {
@@ -733,45 +1011,100 @@ export class AttendanceComponent implements OnInit, OnDestroy {
   }
 
   canClockIn(): boolean {
-    const canClockIn = !this.todayTimeLogs.some(log => log.type === 'timeIn');
-    console.log('canClockIn called, todayTimeLogs:', this.todayTimeLogs, 'result:', canClockIn);
+    const canClockIn = this.sessionStatus.canClockInAM || this.sessionStatus.canClockInPM;
+    console.log('canClockIn check:', {
+      canClockInAM: this.sessionStatus.canClockInAM,
+      canClockInPM: this.sessionStatus.canClockInPM,
+      result: canClockIn
+    });
     return canClockIn;
   }
 
   canClockOut(): boolean {
-    const hasTimeIn = this.todayTimeLogs.some(log => log.type === 'timeIn');
-    const hasTimeOut = this.todayTimeLogs.some(log => log.type === 'timeOut');
-    const canClockOut = hasTimeIn && !hasTimeOut;
-    console.log('canClockOut called:', { hasTimeIn, hasTimeOut, canClockOut, todayTimeLogs: this.todayTimeLogs });
+    const canClockOut = this.sessionStatus.canClockOutAM || this.sessionStatus.canClockOutPM;
+    console.log('canClockOut check:', {
+      canClockOutAM: this.sessionStatus.canClockOutAM,
+      canClockOutPM: this.sessionStatus.canClockOutPM,
+      result: canClockOut
+    });
     return canClockOut;
   }
 
   canStartBreak(): boolean {
-    return this.todayTimeLogs.some(log => log.type === 'timeIn') && 
-           !this.todayTimeLogs.some(log => log.type === 'timeOut') &&
-           !this.todayTimeLogs.some(log => log.type === 'breakStart');
+    return this.sessionStatus.canClockOutAM || this.sessionStatus.canClockOutPM;
   }
 
   canEndBreak(): boolean {
-    return this.todayTimeLogs.some(log => log.type === 'breakStart') && 
-           !this.todayTimeLogs.some(log => log.type === 'breakEnd');
+    return this.sessionStatus.canClockOutAM || this.sessionStatus.canClockOutPM;
   }
 
-  formatTime(date: Date | undefined): string {
+  formatTime(date: Date | string | undefined): string {
     if (!date) return '-';
-    return date.toLocaleTimeString('en-US', { 
-      hour: '2-digit', 
-      minute: '2-digit',
-      hour12: true 
-    });
+    try {
+      const dateObj = typeof date === 'string' ? new Date(date) : date;
+      const tz = this.timezoneService.getCurrentTimezone();
+      return new Intl.DateTimeFormat('en-US', {
+        timeZone: tz,
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: true
+      }).format(dateObj);
+    } catch {
+      try {
+        const dateObj = typeof date === 'string' ? new Date(date) : date;
+        return dateObj.toLocaleTimeString('en-US', {
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: true
+        });
+      } catch {
+        return '-';
+      }
+    }
   }
 
-  formatDate(date: Date): string {
-    return date.toLocaleDateString('en-US', { 
-      month: 'short', 
-      day: 'numeric',
-      year: 'numeric'
-    });
+  formatDate(date: Date | string): string {
+    try {
+      const dateObj = typeof date === 'string' ? new Date(date) : date;
+      const tz = this.timezoneService.getCurrentTimezone();
+      return new Intl.DateTimeFormat('en-US', {
+        timeZone: tz,
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric'
+      }).format(dateObj);
+    } catch {
+      try {
+        const dateObj = typeof date === 'string' ? new Date(date) : date;
+        return dateObj.toLocaleDateString('en-US', {
+          month: 'short',
+          day: 'numeric',
+          year: 'numeric'
+        });
+      } catch {
+        return '-';
+      }
+    }
+  }
+
+  private getHourInSystemTimezone(date: Date | string): number {
+    try {
+      const dateObj = typeof date === 'string' ? new Date(date) : date;
+      const tz = this.timezoneService.getCurrentTimezone();
+      const hourStr = new Intl.DateTimeFormat('en-US', {
+        timeZone: tz,
+        hour: '2-digit',
+        hour12: false
+      }).format(dateObj);
+      return Number(hourStr);
+    } catch {
+      try {
+        const dateObj = typeof date === 'string' ? new Date(date) : date;
+        return dateObj.getHours();
+      } catch {
+        return 0;
+      }
+    }
   }
 
   getStatusClass(status: string): string {
@@ -798,6 +1131,26 @@ export class AttendanceComponent implements OnInit, OnDestroy {
       case 'leave': return 'On Leave';
       default: return 'Unknown';
     }
+  }
+
+  // ==================== SESSION HELPERS ====================
+
+  private getCompletedSessionsCount(): number {
+    if (!this.todayTimeLogs || this.todayTimeLogs.length === 0) return 0;
+    // Ensure chronological order for pairing logic
+    const logs = [...this.todayTimeLogs].sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+    let open = false;
+    let count = 0;
+    for (const log of logs) {
+      if (log.type === 'timeIn') {
+        open = true;
+      } else if (log.type === 'timeOut' && open) {
+        count++;
+        open = false;
+      }
+      // breakStart/breakEnd don't affect session open/close; they only pause work
+    }
+    return count;
   }
 
   // ==================== MONTH NAVIGATION ====================
@@ -847,8 +1200,182 @@ export class AttendanceComponent implements OnInit, OnDestroy {
   // ==================== PDF EXPORT ====================
 
   exportToPDF() {
-    // TODO: Implement PDF export for Civil Service Form 48 DTR
-    console.log('Exporting to PDF...');
-    alert('PDF export functionality will be implemented here for Civil Service Form 48 DTR');
+    try {
+      const name = `${this.currentUser?.employee?.firstName || ''} ${this.currentUser?.employee?.lastName || ''}`.trim();
+      const position = this.currentUser?.employee?.position || '';
+      const division = this.currentUser?.employee?.department?.name || '';
+      const office = this.currentUser?.employee?.department?.name || '';
+
+      const monthLabel = `${this.getMonthName()} ${this.currentYear}`;
+      console.log('Exporting DTR for month:', monthLabel);
+      console.log('Current month index:', this.currentMonth, 'Current year:', this.currentYear);
+      console.log('Monthly attendance count:', this.monthlyAttendance.length);
+      console.log('Current day attendance:', this.currentDayAttendance);
+
+      // Build 1..31 rows using available monthlyAttendance AND current day data
+      const byDay = new Map<number, any>();
+      
+      // Add monthly attendance records
+      this.monthlyAttendance.forEach(r => {
+        const d = new Date(r.date);
+        const day = d.getDate();
+        byDay.set(day, r);
+      });
+
+      // If viewing current month, also include current day data
+      const now = new Date();
+      const currentMonth = now.getMonth();
+      const currentYear = now.getFullYear();
+      
+      if (this.currentMonth === currentMonth && this.currentYear === currentYear && this.currentDayAttendance) {
+        const currentDay = now.getDate();
+        const currentRecord = {
+          date: now,
+          amArrival: this.currentDayAttendance.amArrival,
+          amDeparture: this.currentDayAttendance.amDeparture,
+          pmArrival: this.currentDayAttendance.pmArrival,
+          pmDeparture: this.currentDayAttendance.pmDeparture,
+          totalHours: this.currentDayAttendance.calculatedHours || 0,
+          status: this.currentDayAttendance.status
+        };
+        byDay.set(currentDay, currentRecord);
+      }
+
+      const records = Array.from({ length: 31 }, (_, i) => {
+        const day = i + 1;
+        const rec = byDay.get(day);
+
+        const fmt = (v?: Date | string) => {
+          if (!v) return '';
+          try { return this.formatTime(v); } catch { return ''; }
+        };
+
+        // Compute undertime if status is undertime or hours < 8
+        let underHours = '';
+        let underMinutes = '';
+        if (rec && (rec.status === 'undertime' || (rec.totalHours ?? 0) < 8)) {
+          const worked = Number(rec.totalHours || 0);
+          const remainingMinutes = Math.max(0, Math.round(8 * 60 - worked * 60));
+          underHours = String(Math.floor(remainingMinutes / 60));
+          underMinutes = String(remainingMinutes % 60).padStart(2, '0');
+        }
+
+        return {
+          day,
+          amArrival: fmt(rec?.amArrival),
+          amDeparture: fmt(rec?.amDeparture),
+          pmArrival: fmt(rec?.pmArrival),
+          pmDeparture: fmt(rec?.pmDeparture),
+          underHours,
+          underMinutes
+        };
+      });
+
+      this.dtrPdfService.generateDTR(
+        { name, position, division, office },
+        monthLabel,
+        records
+      );
+    } catch (error) {
+      console.error('Error exporting DTR PDF:', error);
+      alert('Failed to export DTR PDF.');
+    }
   }
+
+  // ✅ Add method to update displayed time with better error handling
+  private updateDisplayedTime(): void {
+    try {
+      console.log('Attendance: Updating displayed time...');
+      // Force change detection for time display
+      this.currentTime = new Date();
+      // Update any other time-related displays
+      this.updateClockDisplay();
+    } catch (error) {
+      console.error('Attendance: Error updating displayed time:', error);
+    }
+  }
+
+  // ✅ Add method to update clock display with better error handling
+  private updateClockDisplay(): void {
+    try {
+      // This will trigger the template to re-render with new timezone
+      setTimeout(() => {
+        this.currentTime = new Date();
+        console.log('Attendance: Clock display updated');
+      }, 100);
+    } catch (error) {
+      console.error('Attendance: Error updating clock display:', error);
+    }
+  }
+
+  // ✅ Add method to test timezone functionality
+  testTimezone(): void {
+    try {
+      console.log('=== TIMEZONE TEST ===');
+      console.log('Current timezone service timezone:', this.timezoneService.getCurrentTimezone());
+      console.log('Current timezone service offset:', this.timezoneService.getFormattedTimezoneOffset());
+      console.log('Current timezone service display name:', this.timezoneService.getTimezoneDisplayName());
+      console.log('Current formatted time:', this.timezoneService.getFormattedCurrentTime('HH:mm:ss a'));
+      console.log('Current formatted date:', this.timezoneService.getFormattedCurrentDate());
+      console.log('=== END TIMEZONE TEST ===');
+    } catch (error) {
+      console.error('Error testing timezone:', error);
+    }
+  }
+
+  // ✅ Add method to manually refresh timezone
+  private refreshTimezone(): void {
+    try {
+      console.log('Attendance: Refreshing timezone...');
+      // Force a timezone refresh by updating the current time
+      this.currentTime = new Date();
+      // Trigger change detection
+      this.updateDisplayedTime();
+    } catch (error) {
+      console.error('Attendance: Error refreshing timezone:', error);
+    }
+  }
+
+  // ==================== SESSION MANAGEMENT METHODS ====================
+
+  getCurrentSessionType(): string {
+    const now = new Date();
+    const hour = now.getHours();
+    return hour < 12 ? 'AM' : 'PM';
+  }
+
+  getClockInButtonText(): string {
+    if (this.sessionStatus.canClockInAM) {
+      return 'Clock In (AM)';
+    } else if (this.sessionStatus.canClockInPM) {
+      return 'Clock In (PM)';
+    }
+    return 'Clock In';
+  }
+
+  getClockOutButtonText(): string {
+    if (this.sessionStatus.canClockOutAM) {
+      return 'Clock Out (AM)';
+    } else if (this.sessionStatus.canClockOutPM) {
+      return 'Clock Out (PM)';
+    }
+    return 'Clock Out';
+  }
+
+  // Helper method to get current active session for better UX
+  getCurrentActiveSession(): string {
+    if (this.sessionStatus.canClockOutAM) {
+      return 'AM Session Active';
+    } else if (this.sessionStatus.canClockOutPM) {
+      return 'PM Session Active';
+    } else if (this.sessionStatus.canClockInAM) {
+      return 'Ready for AM Session';
+    } else if (this.sessionStatus.canClockInPM) {
+      return 'Ready for PM Session';
+    } else if (this.sessionStatus.allSessionsCompleted) {
+      return 'All Sessions Completed';
+    }
+    return 'No Active Session';
+  }
+
 }
