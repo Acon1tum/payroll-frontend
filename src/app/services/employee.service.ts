@@ -154,13 +154,56 @@ export interface ContributionResponse {
   };
 }
 
+export interface CurrentMonthContributionsResponse {
+  success: boolean;
+  data: {
+    currentMonth: number;
+    currentYear: number;
+    calculatedContributions: {
+      sss: {
+        employeeShare: number;
+        employerShare: number;
+        rate: string;
+      };
+      philHealth: {
+        employeeShare: number;
+        employerShare: number;
+        rate: string;
+      };
+      pagIbig: {
+        employeeShare: number;
+        employerShare: number;
+        rate: string;
+      };
+      bir: {
+        employeeShare: number;
+        employerShare: number;
+        rate: string;
+        taxableIncome: number;
+      };
+    };
+    actualContributions: Contribution[] | null;
+    payrollRun: any;
+    employee: {
+      id: string;
+      employeeNumber: string;
+      firstName: string;
+      lastName: string;
+      baseSalary: number;
+      sssNumber?: string;
+      philHealthNumber?: string;
+      pagIbigNumber?: string;
+      tinNumber?: string;
+    };
+  };
+}
+
 export interface PayslipItem {
   id: string;
   type: 'earning' | 'deduction';
-  description: string;
   label: string;
   amount: number;
-  isTaxable: boolean;
+  contributionCode?: 'SSS' | 'PHILHEALTH' | 'PAGIBIG' | 'BIR';
 }
 
 export interface Payslip {
@@ -176,10 +219,20 @@ export interface Payslip {
   items: PayslipItem[];
   status: 'draft' | 'approved' | 'paid';
   pdfUrl?: string;
+  employee?: {
+    id: string;
+    firstName: string;
+    lastName: string;
+    employeeNumber?: string;
+    department?: { name?: string } | null;
+    organization?: { name?: string } | null;
+    baseSalary?: number;
+  };
   payrollRun: {
     periodStart: string | Date;
     periodEnd: string | Date;
     payDate: string | Date;
+    frequency?: 'weekly' | 'semiMonthly' | 'monthly';
   };
   createdAt: string | Date;
   updatedAt: string | Date;
@@ -260,6 +313,13 @@ export class EmployeeService {
     });
   }
 
+  getCurrentMonthContributions(): Observable<CurrentMonthContributionsResponse> {
+    const url = `${environment.apiUrl}/employee/contributions/current-month`;
+    return this.http.get<CurrentMonthContributionsResponse>(url, {
+      headers: this.getHeaders(),
+    });
+  }
+
   getPayslips(params: any): Observable<PayslipResponse> {
     const queryParams = new URLSearchParams();
     if (params.page) queryParams.append('page', params.page.toString());
@@ -269,6 +329,52 @@ export class EmployeeService {
 
     const url = `${environment.apiUrl}/employee/payslips?${queryParams.toString()}`;
     return this.http.get<PayslipResponse>(url, {
+      headers: this.getHeaders(),
+    });
+  }
+
+  // Sync current month contributions to payslip data
+  syncCurrentMonthContributionsToPayslip(): Observable<{ 
+    success: boolean; 
+    message: string; 
+    data: {
+      payFrequency: string;
+      payslips: Array<{
+        payslipId: string;
+        payrollRunId: string;
+        period: string;
+        frequency: string;
+        grossPay: number;
+        totalDeductions: number;
+        netPay: number;
+      }>;
+      totalPayslips: number;
+      calculatedContributions: any;
+      totalEmployeeDeductions: number;
+      netTakeHomePay: number;
+    }
+  }> {
+    const url = `${environment.apiUrl}/employee/contributions/sync-to-payslip`;
+    return this.http.post<{ 
+      success: boolean; 
+      message: string; 
+      data: {
+        payFrequency: string;
+        payslips: Array<{
+          payslipId: string;
+          payrollRunId: string;
+          period: string;
+          frequency: string;
+          grossPay: number;
+          totalDeductions: number;
+          netPay: number;
+        }>;
+        totalPayslips: number;
+        calculatedContributions: any;
+        totalEmployeeDeductions: number;
+        netTakeHomePay: number;
+      }
+    }>(url, {}, {
       headers: this.getHeaders(),
     });
   }

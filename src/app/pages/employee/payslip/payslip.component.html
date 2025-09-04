@@ -106,6 +106,7 @@
                 <tr>
                   <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Reference</th>
                   <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Period</th>
+                  <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Frequency</th>
                   <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Pay Date</th>
                   <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Gross</th>
                   <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Deductions</th>
@@ -117,6 +118,12 @@
                 <tr *ngFor="let p of payslips">
                   <td class="px-4 py-3 text-sm text-gray-900">{{ p.id }}</td>
                   <td class="px-4 py-3 text-sm text-gray-600">{{ formatDate(p.payrollRun.periodStart) }} - {{ formatDate(p.payrollRun.periodEnd) }}</td>
+                  <td class="px-4 py-3 text-sm text-gray-600">
+                    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium" 
+                          [class]="getFrequencyBadgeClass(p.payrollRun.frequency || 'monthly')">
+                      {{ getPayFrequencyDisplay(p.payrollRun.frequency || 'monthly') }}
+                    </span>
+                  </td>
                   <td class="px-4 py-3 text-sm text-gray-600">{{ formatDate(p.payrollRun.payDate) }}</td>
                   <td class="px-4 py-3 text-sm text-gray-900 text-right">{{ formatCurrency(p.grossPay) }}</td>
                   <td class="px-4 py-3 text-sm text-gray-900 text-right">{{ formatCurrency(p.totalDeductions) }}</td>
@@ -196,47 +203,118 @@
         </div>
 
         <!-- Details Modal -->
-        <div *ngIf="showDetailsModal" class="fixed inset-0 z-50 flex items-start justify-center bg-black bg-opacity-30">
-          <div class="bg-white rounded-lg shadow-lg w-full max-w-3xl mt-20 border border-gray-200">
+        <div *ngIf="showDetailsModal" class="payslip-backdrop" (click)="closeDetails()">
+          <div class="payslip-modal" (click)="$event.stopPropagation()">
             <div class="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
               <div>
-                <h4 class="text-md font-medium text-gray-900">Payslip Details</h4>
+                <h4 class="text-md font-medium text-gray-900">Payslip</h4>
                 <p class="text-xs text-gray-600">Reference: {{ selected?.id }} • Period: {{ selected?.payrollRun?.periodStart | date:'MMM d, y' }} - {{ selected?.payrollRun?.periodEnd | date:'MMM d, y' }}</p>
               </div>
-              <button (click)="closeDetails()" class="text-gray-500 hover:text-gray-700">✕</button>
-            </div>
-            <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <h5 class="text-sm font-semibold text-gray-900 mb-2">Earnings</h5>
-                <div class="space-y-2 text-sm">
-                  <div class="flex items-center justify-between" *ngFor="let e of getEarnings(selected!)">
-                    <span class="text-gray-700">{{ e.label }}</span>
-                    <span class="text-gray-900 font-medium">{{ formatCurrency(e.amount) }}</span>
-                  </div>
-                  <div class="flex items-center justify-between border-t border-gray-200 pt-2">
-                    <span class="text-gray-700 font-medium">Gross Total</span>
-                    <span class="text-gray-900 font-semibold">{{ formatCurrency(selected?.grossPay) }}</span>
-                  </div>
-                </div>
-              </div>
-              <div>
-                <h5 class="text-sm font-semibold text-gray-900 mb-2">Deductions</h5>
-                <div class="space-y-2 text-sm">
-                  <div class="flex items-center justify-between" *ngFor="let d of getDeductions(selected!)">
-                    <span class="text-gray-700">{{ d.label }}</span>
-                    <span class="text-gray-900 font-medium">{{ formatCurrency(d.amount) }}</span>
-                  </div>
-                  <div class="flex items-center justify-between border-t border-gray-200 pt-2">
-                    <span class="text-gray-700 font-medium">Deductions Total</span>
-                    <span class="text-gray-900 font-semibold">{{ formatCurrency(selected?.totalDeductions) }}</span>
-                  </div>
-                </div>
+              <div class="flex items-center space-x-2">
+                <button (click)="printSelectedPayslip()" class="px-3 py-1.5 text-xs rounded-md border border-gray-300 bg-white hover:bg-gray-50">Print</button>
+                <button (click)="closeDetails()" class="text-gray-500 hover:text-gray-700">✕</button>
               </div>
             </div>
-            <div class="px-6 pb-6">
-              <div class="flex items-center justify-between">
+
+            <!-- Printable Payslip Area -->
+            <div class="p-6" id="payslip-print-area">
+              <!-- Header -->
+              <div class="flex items-start justify-between border-b border-gray-200 pb-4">
+                <div class="flex items-center space-x-3">
+                  <img [src]="companyLogoUrl" alt="Company Logo" class="h-10 w-auto" />
+                  <div>
+                    <h2 class="text-base font-semibold text-gray-900">{{ getOrganizationName(selected) }}</h2>
+                    <p class="text-xs text-gray-600">Official Payslip</p>
+                  </div>
+                </div>
+                <img [src]="getQrDataForPayslip(selected)" alt="QR Code" class="h-16 w-16" />
+              </div>
+
+              <!-- Meta -->
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4 text-sm">
+                <div class="space-y-1">
+                  <p class="text-gray-700"><span class="text-gray-500">Employee:</span> <span class="bg-yellow-100 px-2 py-1 rounded font-semibold">{{ getEmployeeFullName(selected) }}</span></p>
+                  <p class="text-gray-700" *ngIf="getEmployeeNumber(selected)"><span class="text-gray-500">Employee No.:</span> {{ getEmployeeNumber(selected) }}</p>
+                  <p class="text-gray-700" *ngIf="selected?.employee?.id"><span class="text-gray-500">Employee ID:</span> {{ selected?.employee?.id }}</p>
+                  <p class="text-gray-700"><span class="text-gray-500">Pay Frequency:</span> {{ getPayFrequencyDisplay(selected?.payrollRun?.frequency || 'monthly') }}</p>
+                </div>
+                <div class="space-y-1 md:text-right">
+                  <p class="text-gray-700"><span class="text-gray-500">Period:</span> {{ selected?.payrollRun?.periodStart | date:'MMM d, y' }} - {{ selected?.payrollRun?.periodEnd | date:'MMM d, y' }}</p>
+                  <p class="text-gray-700"><span class="text-gray-500">Pay Date:</span> {{ selected?.payrollRun?.payDate | date:'MMM d, y' }}</p>
+                  <p class="text-gray-700"><span class="text-gray-500">Reference:</span> {{ selected?.id }}</p>
+                </div>
+              </div>
+
+              <!-- Earnings & Deductions -->
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+                <div>
+                  <h5 class="text-sm font-semibold text-gray-900 mb-2">Earnings</h5>
+                  <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                      <tr>
+                        <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
+                        <th class="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
+                      </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                      <tr *ngFor="let e of getEarnings(selected!)">
+                        <td class="px-3 py-2 text-sm text-gray-700">{{ e.label }}</td>
+                        <td class="px-3 py-2 text-sm text-gray-900 text-right">{{ formatCurrency(e.amount) }}</td>
+                      </tr>
+                      <tr>
+                        <td class="px-3 py-2 text-sm font-medium text-gray-700">Gross Total</td>
+                        <td class="px-3 py-2 text-sm font-semibold text-gray-900 text-right">{{ formatCurrency(selected?.grossPay) }}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+                <div>
+                  <h5 class="text-sm font-semibold text-gray-900 mb-2">Deductions</h5>
+                  <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                      <tr>
+                        <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
+                        <th class="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
+                      </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                      <tr *ngFor="let d of getDeductions(selected!)">
+                        <td class="px-3 py-2 text-sm text-gray-700">{{ d.label }}</td>
+                        <td class="px-3 py-2 text-sm text-gray-900 text-right">{{ formatCurrency(d.amount) }}</td>
+                      </tr>
+                      <tr>
+                        <td class="px-3 py-2 text-sm font-medium text-gray-700">Deductions Total</td>
+                        <td class="px-3 py-2 text-sm font-semibold text-gray-900 text-right">{{ formatCurrency(selected?.totalDeductions) }}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <!-- Net Pay -->
+              <div class="mt-6 flex items-center justify-between">
                 <p class="text-base font-semibold text-gray-900">Net Pay</p>
                 <p class="text-base font-bold text-gray-900">{{ formatCurrency(selected?.netPay) }}</p>
+              </div>
+
+              <!-- Amount in Words -->
+              <div class="mt-4 p-3 bg-gray-50 rounded-lg">
+                <div class="text-xs text-gray-600 mb-1">Amount in Words:</div>
+                <div class="text-sm font-semibold text-gray-900 uppercase">{{ numberToWords(selected?.netPay || 0) }} PESOS ONLY</div>
+              </div>
+
+              <!-- Signature Lines -->
+              <div class="mt-6 grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div class="text-center">
+                  <div class="border-b border-gray-300 w-full h-10 mb-2"></div>
+                  <div class="text-xs text-gray-600">CEO of Company</div>
+                  <div class="text-xs text-gray-600 mt-1">Authorized Signature</div>
+                </div>
+                <div class="text-center">
+                  <div class="border-b border-gray-300 w-full h-10 mb-2"></div>
+                  <div class="text-xs text-gray-600">Employee Signature</div>
+                  <div class="text-xs text-gray-600 mt-1">{{ getEmployeeFullName(selected) }}</div>
+                </div>
               </div>
             </div>
           </div>

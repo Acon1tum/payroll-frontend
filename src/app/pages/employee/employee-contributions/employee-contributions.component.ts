@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { SidebarComponent } from '../../../shared/sidebar/sidebar.component';
 import { HeaderComponent } from '../../../shared/header/header.component';
-import { EmployeeService, Contribution, ContributionSummary } from '../../../services/employee.service';
+import { EmployeeService, Contribution, ContributionSummary, CurrentMonthContributionsResponse } from '../../../services/employee.service';
 import { catchError, finalize } from 'rxjs/operators';
 import { of } from 'rxjs';
 
@@ -58,12 +58,17 @@ export class EmployeeContributionsComponent implements OnInit {
   logoLoadErrors: { [key: string]: boolean } = {};
 
   // Filters
-  selectedYear = 2024; // Default to 2024 where we have seed data
+  selectedYear = 2025; // Default to 2024 where we have seed data
+
+  // Current month contributions
+  currentMonthLoading = false;
+  currentMonthContributions: CurrentMonthContributionsResponse['data'] | null = null;
 
   constructor(private employeeService: EmployeeService) {}
 
   ngOnInit(): void {
     this.loadContributions();
+    this.loadCurrentMonthContributions();
     
     // Debug: Log the logo paths
     console.log('Logo paths:');
@@ -165,6 +170,29 @@ export class EmployeeContributionsComponent implements OnInit {
       }
     });
 
+    // Add current month data if it's the selected year and we have current month data
+    if (this.currentMonthContributions && this.selectedYear === this.getCurrentYear()) {
+      const currentMonthIndex = this.currentMonthContributions.currentMonth - 1;
+      const currentMonthName = monthNames[currentMonthIndex];
+      
+      if (monthlyData[currentMonthName]) {
+        const calc = this.currentMonthContributions.calculatedContributions;
+        
+        // Add current month calculated contributions to the monthly data
+        monthlyData[currentMonthName].sss += calc.sss.employeeShare;
+        monthlyData[currentMonthName].philHealth += calc.philHealth.employeeShare;
+        monthlyData[currentMonthName].pagibig += calc.pagIbig.employeeShare;
+        monthlyData[currentMonthName].bir += calc.bir.employeeShare;
+        
+        console.log(`Added current month (${currentMonthName}) data:`, {
+          sss: calc.sss.employeeShare,
+          philHealth: calc.philHealth.employeeShare,
+          pagibig: calc.pagIbig.employeeShare,
+          bir: calc.bir.employeeShare
+        });
+      }
+    }
+
     // Calculate totals and convert to array
     this.months = Object.values(monthlyData).map(month => ({
       ...month,
@@ -173,6 +201,7 @@ export class EmployeeContributionsComponent implements OnInit {
 
     // Log for debugging
     console.log('Processed contributions:', this.contributions.length);
+    console.log('Current month data added:', this.currentMonthContributions ? 'Yes' : 'No');
     console.log('Monthly data:', this.months);
   }
 
@@ -213,9 +242,21 @@ export class EmployeeContributionsComponent implements OnInit {
       }
     });
 
+    // Add current month data if it's the selected year and we have current month data
+    if (this.currentMonthContributions && this.selectedYear === this.getCurrentYear()) {
+      const calc = this.currentMonthContributions.calculatedContributions;
+      
+      // Add current month contributions to yearly totals
+      this.yearTotals.sss += calc.sss.employeeShare;
+      this.yearTotals.philHealth += calc.philHealth.employeeShare;
+      this.yearTotals.pagibig += calc.pagIbig.employeeShare;
+      this.yearTotals.bir += calc.bir.employeeShare;
+    }
+
     // Debug logging
     console.log('Year totals from summary:', this.yearTotals);
     console.log('Summary data used:', this.summary);
+    console.log('Current month added to totals:', this.currentMonthContributions ? 'Yes' : 'No');
   }
 
   get maxYearTotal(): number {
@@ -287,6 +328,52 @@ export class EmployeeContributionsComponent implements OnInit {
     return this.months.length === 0 || this.months.every(m => m.total === 0);
   }
 
+  hasData(): boolean {
+    return this.contributions.length > 0 || this.summary.length > 0 || this.currentMonthContributions !== null;
+  }
+
+  isCurrentMonth(monthName: string): boolean {
+    if (!this.currentMonthContributions || this.selectedYear !== this.getCurrentYear()) {
+      return false;
+    }
+    
+    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 
+                       'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const currentMonthIndex = this.currentMonthContributions.currentMonth - 1;
+    const currentMonthName = monthNames[currentMonthIndex];
+    
+    return monthName === currentMonthName;
+  }
+
+  private generateCSV(): string {
+    const headers = ['Month', 'SSS', 'PhilHealth', 'Pag-IBIG', 'BIR (WHT)', 'Total'];
+    const rows = this.months.map(month => [
+      month.month,
+      month.sss.toString(),
+      month.philHealth.toString(),
+      month.pagibig.toString(),
+      month.bir.toString(),
+      month.total.toString()
+    ]);
+
+    // Add yearly totals row
+    rows.push([
+      'YEARLY TOTAL',
+      this.yearTotals.sss.toString(),
+      this.yearTotals.philHealth.toString(),
+      this.yearTotals.pagibig.toString(),
+      this.yearTotals.bir.toString(),
+      (this.yearTotals.sss + this.yearTotals.philHealth + this.yearTotals.pagibig + this.yearTotals.bir).toString()
+    ]);
+
+    const csvContent = [
+      headers.join(','),
+      ...rows.map(row => row.join(','))
+    ].join('\n');
+
+    return csvContent;
+  }
+
   downloadBIR2316(): void {
     const win = window.open('', '_blank', 'width=800,height=900');
     if (!win) return;
@@ -355,5 +442,146 @@ export class EmployeeContributionsComponent implements OnInit {
     win.document.open();
     win.document.write(html);
     win.document.close();
+  }
+
+  loadCurrentMonthContributions(): void {
+    this.currentMonthLoading = true;
+    
+    this.employeeService.getCurrentMonthContributions()
+      .pipe(
+        catchError(error => {
+          console.error('Error loading current month contributions:', error);
+          return of({ success: false, data: null });
+        }),
+        finalize(() => this.currentMonthLoading = false)
+      )
+      .subscribe(response => {
+        if (response.success) {
+          this.currentMonthContributions = response.data;
+          console.log('Current month contributions:', this.currentMonthContributions);
+          
+          // Reprocess monthly data to include current month
+          if (this.selectedYear === this.getCurrentYear()) {
+            this.processMonthlyData();
+            this.computeYearTotalsFromSummary();
+          }
+        }
+      });
+  }
+
+  // Current month helper methods
+  getCurrentMonthName(): string {
+    if (!this.currentMonthContributions) return '';
+    const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
+                       'July', 'August', 'September', 'October', 'November', 'December'];
+    return monthNames[this.currentMonthContributions.currentMonth - 1] || '';
+  }
+
+  getCurrentYear(): number {
+    return this.currentMonthContributions?.currentYear || new Date().getFullYear();
+  }
+
+  // Get pay frequency display name
+  getPayFrequencyDisplay(): string {
+    if (!this.currentMonthContributions?.employee) {
+      return 'Monthly'; // Default fallback
+    }
+    
+    // You would need to get the pay frequency from the employee data
+    // For now, we'll use a default based on common practices
+    const payFrequency = 'semiMonthly'; // This should come from employee data
+    
+    const frequencyMap: { [key: string]: string } = {
+      'weekly': 'Weekly',
+      'semiMonthly': 'Semi-Monthly',
+      'monthly': 'Monthly'
+    };
+    return frequencyMap[payFrequency] || 'Monthly';
+  }
+
+  getTotalEmployeeDeductions(): number {
+    if (!this.currentMonthContributions) return 0;
+    const calc = this.currentMonthContributions.calculatedContributions;
+    return (calc.sss.employeeShare + calc.philHealth.employeeShare + 
+            calc.pagIbig.employeeShare + calc.bir.employeeShare);
+  }
+
+  getTotalEmployerContributions(): number {
+    if (!this.currentMonthContributions) return 0;
+    const calc = this.currentMonthContributions.calculatedContributions;
+    return (calc.sss.employerShare + calc.philHealth.employerShare + 
+            calc.pagIbig.employerShare + calc.bir.employerShare);
+  }
+
+  getNetTakeHomePay(): number {
+    if (!this.currentMonthContributions) return 0;
+    const baseSalary = this.currentMonthContributions.employee.baseSalary;
+    const totalDeductions = this.getTotalEmployeeDeductions();
+    return baseSalary - totalDeductions;
+  }
+
+  // New methods for the redesigned filter section
+  refreshData(): void {
+    this.loadContributions();
+    this.loadCurrentMonthContributions();
+  }
+
+  exportData(): void {
+    if (!this.hasData()) {
+      return;
+    }
+
+    // Create CSV content
+    const csvContent = this.generateCSV();
+    
+    // Create and download file
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `contributions_${this.selectedYear}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }
+
+  // Sync current month contributions to payslip data
+  syncCurrentMonthContributionsToPayslip(): void {
+    if (!this.currentMonthContributions) {
+      console.error('No current month contributions available');
+      return;
+    }
+
+    this.employeeService.syncCurrentMonthContributionsToPayslip()
+      .pipe(
+        catchError(error => {
+          console.error('Error syncing current month contributions to payslip:', error);
+          return of({ success: false, message: 'Failed to sync contributions', data: null });
+        })
+      )
+      .subscribe(response => {
+        if (response.success && response.data) {
+          console.log('Current month contributions synced to payslip successfully:', response.data);
+          
+          // Show detailed success message based on pay frequency
+          const { payFrequency, payslips, totalPayslips } = response.data;
+          let message = `Current month contributions have been synced to payslip successfully!\n\n`;
+          message += `Pay Frequency: ${payFrequency}\n`;
+          message += `Total Payslips Created: ${totalPayslips}\n\n`;
+          
+          if (payslips && payslips.length > 0) {
+            message += 'Created Payslips:\n';
+            payslips.forEach((payslip, index) => {
+              message += `${index + 1}. ${payslip.period} - Gross: ${this.formatCurrency(payslip.grossPay)}, Net: ${this.formatCurrency(payslip.netPay)}\n`;
+            });
+          }
+          
+          alert(message);
+        } else {
+          console.error('Failed to sync contributions:', response.message);
+          alert('Failed to sync contributions: ' + response.message);
+        }
+      });
   }
 }
