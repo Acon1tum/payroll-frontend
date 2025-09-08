@@ -525,10 +525,10 @@ export class AttendanceService {
     return this.createTimeLog(timeLogData);
   }
 
-  // Determine if current time is AM or PM session
+  // Determine if current time is AM or PM session using system timezone
   private determineSession(): 'AM' | 'PM' {
-    const now = new Date();
-    const hour = now.getHours();
+    const nowInSystemTz = this.timezoneService.getCurrentSystemTime();
+    const hour = nowInSystemTz.getHours();
     return hour < 12 ? 'AM' : 'PM';
   }
 
@@ -583,13 +583,32 @@ export class AttendanceService {
 
     // Determine button states
     // AM Clock In: Only if no AM time in exists and AM session not completed
-    const canClockInAM = !amTimeIn && !amSessionCompleted && !allSessionsCompleted;
+    let canClockInAM = !amTimeIn && !amSessionCompleted && !allSessionsCompleted;
     // AM Clock Out: Only if AM time in exists but no AM time out
-    const canClockOutAM = !!amTimeIn && !amTimeOut && !allSessionsCompleted;
-    // PM Clock In: Only if AM session is completed and no PM time in exists
-    const canClockInPM = amSessionCompleted && !pmTimeIn && !pmSessionCompleted && !allSessionsCompleted;
+    let canClockOutAM = !!amTimeIn && !amTimeOut && !allSessionsCompleted;
+    // PM Clock In: Allow PM session without requiring AM session completion, or after AM completion
+    let canClockInPM = !pmTimeIn && !pmSessionCompleted && (!allSessionsCompleted || amSessionCompleted);
     // PM Clock Out: Only if PM time in exists but no PM time out
-    const canClockOutPM = !!pmTimeIn && !pmTimeOut && !allSessionsCompleted;
+    let canClockOutPM = !!pmTimeIn && !pmTimeOut && !allSessionsCompleted;
+
+    // If PM session is completed, disable all clock in/out actions
+    if (pmSessionCompleted) {
+      canClockInAM = false;
+      canClockOutAM = false;
+      canClockInPM = false;
+      canClockOutPM = false;
+    }
+
+    // If AM session is completed, disable AM clock in/out but allow PM
+    if (amSessionCompleted) {
+      canClockInAM = false;
+      canClockOutAM = false;
+      // Enable PM session buttons after AM completion
+      if (!pmSessionCompleted) {
+        canClockInPM = !pmTimeIn;
+        canClockOutPM = !!pmTimeIn && !pmTimeOut;
+      }
+    }
 
     const sessionStatus = {
       amSessionCompleted,

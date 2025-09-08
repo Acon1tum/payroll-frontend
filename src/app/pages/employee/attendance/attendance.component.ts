@@ -317,21 +317,21 @@ export class AttendanceComponent implements OnInit, OnDestroy {
         let breakEnd: Date | undefined;
         let calculatedHours = 0;
 
-        // Extract times from time logs
+        // Extract times from time logs - set to most recent occurrence
         sortedTimeLogs.forEach(log => {
           const timestamp = new Date(log.timestamp);
           switch (log.type) {
             case 'timeIn':
-              timeIn = timestamp;
+              timeIn = timestamp; // Keep the most recent timeIn
               break;
             case 'timeOut':
-              timeOut = timestamp;
+              timeOut = timestamp; // Keep the most recent timeOut
               break;
             case 'breakStart':
-              breakStart = timestamp;
+              breakStart = timestamp; // Keep the most recent breakStart
               break;
             case 'breakEnd':
-              breakEnd = timestamp;
+              breakEnd = timestamp; // Keep the most recent breakEnd
               break;
           }
         });
@@ -352,17 +352,71 @@ export class AttendanceComponent implements OnInit, OnDestroy {
           threshold: '8 hours for present, below 8 hours = undertime'
         });
 
-        // Calculate AM/PM times based on actual sessions
+        // Calculate AM/PM times based on session field from time logs
         let amArrival: Date | undefined;
         let amDeparture: Date | undefined;
         let pmArrival: Date | undefined;
         let pmDeparture: Date | undefined;
-        const sessions = this.pairSessions(sortedTimeLogs);
-        for (const s of sessions) {
-          if (!s.in) continue;
-          const isAM = this.getHourInSystemTimezone(s.in) < 12;
-          if (isAM && !amArrival) { amArrival = s.in; amDeparture = s.out; }
-          if (!isAM && !pmArrival) { pmArrival = s.in; pmDeparture = s.out; }
+        
+        // First try to use session field if available
+        const amTimeIn = sortedTimeLogs.find(log => log.type === 'timeIn' && log.session === 'AM');
+        const amTimeOut = sortedTimeLogs.find(log => log.type === 'timeOut' && log.session === 'AM');
+        const pmTimeIn = sortedTimeLogs.find(log => log.type === 'timeIn' && log.session === 'PM');
+        const pmTimeOut = sortedTimeLogs.find(log => log.type === 'timeOut' && log.session === 'PM');
+        
+        console.log('Session-based time log search:', {
+          amTimeIn: amTimeIn ? { id: amTimeIn.id, timestamp: amTimeIn.timestamp, session: amTimeIn.session } : null,
+          amTimeOut: amTimeOut ? { id: amTimeOut.id, timestamp: amTimeOut.timestamp, session: amTimeOut.session } : null,
+          pmTimeIn: pmTimeIn ? { id: pmTimeIn.id, timestamp: pmTimeIn.timestamp, session: pmTimeIn.session } : null,
+          pmTimeOut: pmTimeOut ? { id: pmTimeOut.id, timestamp: pmTimeOut.timestamp, session: pmTimeOut.session } : null
+        });
+        
+        if (amTimeIn) {
+          amArrival = new Date(amTimeIn.timestamp);
+          if (amTimeOut) {
+            amDeparture = new Date(amTimeOut.timestamp);
+          }
+        }
+        
+        if (pmTimeIn) {
+          pmArrival = new Date(pmTimeIn.timestamp);
+          if (pmTimeOut) {
+            pmDeparture = new Date(pmTimeOut.timestamp);
+          }
+        }
+        
+        // Fallback to time-based logic if session field is not available or no session-based times found
+        if (!amArrival && !pmArrival) {
+          console.log('Using fallback time-based logic for AM/PM times');
+          const sessions = this.pairSessions(sortedTimeLogs);
+          for (const s of sessions) {
+            if (!s.in) continue;
+            const isAM = this.getHourInSystemTimezone(s.in) < 12;
+            if (isAM && !amArrival) { 
+              amArrival = s.in; 
+              amDeparture = s.out; 
+              console.log('Set AM times via fallback:', { amArrival, amDeparture });
+            }
+            if (!isAM && !pmArrival) { 
+              pmArrival = s.in; 
+              pmDeparture = s.out; 
+              console.log('Set PM times via fallback:', { pmArrival, pmDeparture });
+            }
+          }
+        }
+        
+        // Additional fallback: if we still don't have AM/PM times but have generic timeIn/timeOut, use them
+        if (!amArrival && !pmArrival && timeIn) {
+          const isAM = this.getHourInSystemTimezone(timeIn) < 12;
+          if (isAM) {
+            amArrival = timeIn;
+            amDeparture = timeOut;
+            console.log('Set AM times from generic timeIn/timeOut:', { amArrival, amDeparture });
+          } else {
+            pmArrival = timeIn;
+            pmDeparture = timeOut;
+            console.log('Set PM times from generic timeIn/timeOut:', { pmArrival, pmDeparture });
+          }
         }
 
         this.currentDayAttendance = {
@@ -398,12 +452,22 @@ export class AttendanceComponent implements OnInit, OnDestroy {
           hasTimeOut: !!timeOut,
           hasBreakStart: !!breakStart,
           hasBreakEnd: !!breakEnd,
+          amArrival: !!amArrival,
+          amDeparture: !!amDeparture,
+          pmArrival: !!pmArrival,
+          pmDeparture: !!pmDeparture,
           calculatedHours,
           status,
           timeLogsCount: this.todayTimeLogs.length,
           amSessionCompleted: this.sessionStatus.amSessionCompleted,
           pmSessionCompleted: this.sessionStatus.pmSessionCompleted,
-          allSessionsCompleted: this.sessionStatus.allSessionsCompleted
+          allSessionsCompleted: this.sessionStatus.allSessionsCompleted,
+          timeLogs: this.todayTimeLogs.map(log => ({
+            id: log.id,
+            type: log.type,
+            session: log.session,
+            timestamp: log.timestamp
+          }))
         });
       } else {
         this.currentDayAttendance = null;
@@ -438,6 +502,17 @@ export class AttendanceComponent implements OnInit, OnDestroy {
       this.todayTimeLogs = response?.data || [];
       console.log('Today time logs loaded:', this.todayTimeLogs);
       console.log('Time logs count:', this.todayTimeLogs.length);
+      
+      // Debug: Check if time logs have session information
+      if (this.todayTimeLogs.length > 0) {
+        console.log('Time logs with session info:', this.todayTimeLogs.map(log => ({
+          id: log.id,
+          type: log.type,
+          session: log.session,
+          timestamp: log.timestamp,
+          date: log.date
+        })));
+      }
       
       // Debug each time log
       this.todayTimeLogs.forEach((log, index) => {
@@ -977,8 +1052,22 @@ export class AttendanceComponent implements OnInit, OnDestroy {
   hasTodayRow(): boolean {
     if (!this.shouldShowTodayRow()) return false;
     const c = this.currentDayAttendance;
-    const hasAnyTime = !!(c && (c.timeIn || c.timeOut || c.breakStart || c.breakEnd));
-    return !!(hasAnyTime && this.todayTimeLogs.length > 0);
+    // Check for any AM/PM times or break times, or any time logs
+    const hasAnyTime = !!(c && (c.amArrival || c.amDeparture || c.pmArrival || c.pmDeparture || c.breakStart || c.breakEnd));
+    const hasTimeLogs = this.todayTimeLogs.length > 0;
+    console.log('hasTodayRow check:', {
+      shouldShow: this.shouldShowTodayRow(),
+      hasAnyTime,
+      hasTimeLogs,
+      amArrival: !!c?.amArrival,
+      amDeparture: !!c?.amDeparture,
+      pmArrival: !!c?.pmArrival,
+      pmDeparture: !!c?.pmDeparture,
+      breakStart: !!c?.breakStart,
+      breakEnd: !!c?.breakEnd,
+      timeLogsCount: this.todayTimeLogs.length
+    });
+    return !!(hasAnyTime && hasTimeLogs);
   }
 
   // Whether to show the empty-state message for the current month view
@@ -1345,37 +1434,107 @@ export class AttendanceComponent implements OnInit, OnDestroy {
   }
 
   getClockInButtonText(): string {
-    if (this.sessionStatus.canClockInAM) {
-      return 'Clock In (AM)';
+    const currentSession = this.getCurrentSessionType();
+    
+    // If PM session is active (user clocked in for PM), don't show AM clock in
+    if (this.sessionStatus.canClockOutPM) {
+      return 'Clock In'; // Button will be disabled anyway
+    }
+    
+    // If AM session is active (user clocked in for AM), don't show PM clock in
+    if (this.sessionStatus.canClockOutAM) {
+      return 'Clock In'; // Button will be disabled anyway
+    }
+    
+    // If AM session is completed, only show PM clock in if available
+    if (this.sessionStatus.amSessionCompleted && this.sessionStatus.canClockInPM) {
+      return `Clock In (PM)`;
+    }
+    
+    // If user can clock in for current session, show current session
+    if (currentSession === 'AM' && this.sessionStatus.canClockInAM) {
+      return `Clock In (AM)`;
+    } else if (currentSession === 'PM' && this.sessionStatus.canClockInPM) {
+      return `Clock In (PM)`;
+    } else if (this.sessionStatus.canClockInAM) {
+      return `Clock In (AM)`;
     } else if (this.sessionStatus.canClockInPM) {
-      return 'Clock In (PM)';
+      return `Clock In (PM)`;
+    } else if (this.canClockIn()) {
+      return `Clock In (${currentSession})`;
     }
     return 'Clock In';
   }
 
   getClockOutButtonText(): string {
-    if (this.sessionStatus.canClockOutAM) {
-      return 'Clock Out (AM)';
+    const currentSession = this.getCurrentSessionType();
+    
+    // If user can clock out for current session, show current session
+    if (currentSession === 'AM' && this.sessionStatus.canClockOutAM) {
+      return `Clock Out (AM)`;
+    } else if (currentSession === 'PM' && this.sessionStatus.canClockOutPM) {
+      return `Clock Out (PM)`;
+    } else if (this.sessionStatus.canClockOutAM) {
+      return `Clock Out (AM)`;
     } else if (this.sessionStatus.canClockOutPM) {
-      return 'Clock Out (PM)';
+      return `Clock Out (PM)`;
+    } else if (this.canClockOut()) {
+      return `Clock Out (${currentSession})`;
     }
     return 'Clock Out';
   }
 
   // Helper method to get current active session for better UX
   getCurrentActiveSession(): string {
+    const currentSession = this.getCurrentSessionType();
+    
     if (this.sessionStatus.canClockOutAM) {
       return 'AM Session Active';
     } else if (this.sessionStatus.canClockOutPM) {
       return 'PM Session Active';
-    } else if (this.sessionStatus.canClockInAM) {
-      return 'Ready for AM Session';
-    } else if (this.sessionStatus.canClockInPM) {
-      return 'Ready for PM Session';
     } else if (this.sessionStatus.allSessionsCompleted) {
       return 'All Sessions Completed';
+    } else if (this.canClockIn()) {
+      // Show current session type when user can clock in
+      return `Ready for ${currentSession} Session`;
     }
-    return 'No Active Session';
+    return 'Ready to Start Session';
+  }
+
+  // Helper method to get AM session status for styling
+  getAMSessionStatus(): string {
+    if (this.sessionStatus.amSessionCompleted) {
+      return 'completed';
+    } else if (this.sessionStatus.canClockOutAM) {
+      return 'active';
+    } else if (this.sessionStatus.canClockInAM) {
+      return 'ready';
+    }
+    return 'waiting';
+  }
+
+  // Helper method to get PM session status for styling
+  getPMSessionStatus(): string {
+    if (this.sessionStatus.pmSessionCompleted) {
+      return 'completed';
+    } else if (this.sessionStatus.canClockOutPM) {
+      return 'active';
+    } else if (this.sessionStatus.canClockInPM) {
+      return 'ready';
+    }
+    return 'waiting';
+  }
+
+  // Helper method to check if AM session should be highlighted as current
+  isAMSessionCurrent(): boolean {
+    const currentSession = this.getCurrentSessionType();
+    return currentSession === 'AM' && (this.sessionStatus.canClockInAM || this.sessionStatus.canClockOutAM);
+  }
+
+  // Helper method to check if PM session should be highlighted as current
+  isPMSessionCurrent(): boolean {
+    const currentSession = this.getCurrentSessionType();
+    return currentSession === 'PM' && (this.sessionStatus.canClockInPM || this.sessionStatus.canClockOutPM);
   }
 
 }
