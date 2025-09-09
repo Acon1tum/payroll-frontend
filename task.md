@@ -98,7 +98,7 @@ Net Pay = Gross Pay – (SSS + PhilHealth + Pag-IBIG + Withholding Tax + Other D
 
 ### 6. **Payroll Review & Approval**
 
-* [ ] Review payroll computation (spreadsheet or system-generated).
+* [ ] Review payroll computation (system-generated).
 * [ ] Secure management approval (if required).
 * [ ] Generate payroll register for finance/HR.
 

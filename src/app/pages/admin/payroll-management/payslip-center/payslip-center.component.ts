@@ -4,6 +4,7 @@ import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } 
 import { Router } from '@angular/router';
 import { HeaderComponent } from '../../../../shared/header/header.component';
 import { SidebarComponent } from '../../../../shared/sidebar/sidebar.component';
+import { PayrollService, PayrollRun, PayrollReview, PayrollRegister, PayslipReviewItem, Payslip, PayslipItem } from '../../../../services/payroll.service';
 
 interface Breadcrumb {
   label: string;
@@ -11,49 +12,6 @@ interface Breadcrumb {
   active?: boolean;
 }
 
-interface Payslip {
-  id: number;
-  employeeId: string;
-  employeeName: string;
-  department: string;
-  position: string;
-  payrollPeriod: {
-    start: Date;
-    end: Date;
-  };
-  basicSalary: number;
-  grossPay: number;
-  netPay: number;
-  deductions: {
-    tax: number;
-    insurance: number;
-    retirement: number;
-    other: number;
-  };
-  allowances: {
-    transportation: number;
-    meal: number;
-    housing: number;
-    other: number;
-  };
-  overtime: {
-    hours: number;
-    rate: number;
-    amount: number;
-  };
-  leaveBalance: {
-    sick: number;
-    vacation: number;
-    personal: number;
-  };
-  status: 'generated' | 'sent' | 'downloaded' | 'failed';
-  generatedAt: Date;
-  sentAt?: Date;
-  downloadedAt?: Date;
-  emailSent: boolean;
-  emailSentAt?: Date;
-  doleCompliant: boolean;
-}
 
 interface PayslipFilter {
   payrollPeriod: string;
@@ -82,7 +40,12 @@ export class PayslipCenterComponent implements OnInit, OnDestroy {
   // Payslip data
   payslips: Payslip[] = [];
   filteredPayslips: Payslip[] = [];
-  selectedPayslips: number[] = [];
+  selectedPayslips: string[] = [];
+  
+  // Modal data
+  selectedPayslipForView: Payslip | null = null;
+  showPayslipModal = false;
+  
   
   // Filters
   filterForm: FormGroup;
@@ -94,13 +57,15 @@ export class PayslipCenterComponent implements OnInit, OnDestroy {
   selectedPayslipsForResend: Payslip[] = [];
   resendInProgress = false;
   
+  
   // Bulk actions
   showBulkActions = false;
   allSelected = false;
 
   constructor(
     private fb: FormBuilder,
-    private router: Router
+    private router: Router,
+    private payrollService: PayrollService
   ) {
     this.filterForm = this.fb.group({
       payrollPeriod: [''],
@@ -127,212 +92,112 @@ export class PayslipCenterComponent implements OnInit, OnDestroy {
   }
 
   loadPayslips(): void {
-    // Sample payslip data
+    this.payrollService.getPayslips({ limit: 100 }).subscribe({
+      next: (response) => {
+        if (response.success) {
+          this.payslips = response.data;
+          this.filteredPayslips = [...this.payslips];
+          this.extractFilterOptions();
+        }
+      },
+      error: (error) => {
+        console.error('Error loading payslips:', error);
+        this.showNotification('Error loading payslips', 'error');
+        // Fallback to sample data if API fails
+        this.loadSamplePayslips();
+      }
+    });
+  }
+
+  loadSamplePayslips(): void {
+    // Sample payslip data as fallback
     this.payslips = [
       {
-        id: 1,
+        id: '1',
+        payrollRunId: 'run1',
         employeeId: 'EMP001',
-        employeeName: 'John Smith',
-        department: 'Engineering',
-        position: 'Senior Developer',
-        payrollPeriod: {
-          start: new Date(2024, 0, 1),
-          end: new Date(2024, 0, 31)
-        },
-        basicSalary: 75000,
         grossPay: 4800,
+        totalDeductions: 1680,
         netPay: 3120,
-        deductions: {
-          tax: 960,
-          insurance: 240,
-          retirement: 360,
-          other: 120
+        createdAt: new Date(2024, 0, 31).toISOString(),
+        employee: {
+          id: 'emp1',
+          employeeNumber: 'EMP001',
+          firstName: 'John',
+          lastName: 'Smith',
+          position: 'Senior Developer',
+          baseSalary: 75000,
+          department: { name: 'Engineering' },
+          organization: { name: 'Tech Corp' }
         },
-        allowances: {
-          transportation: 500,
-          meal: 300,
-          housing: 0,
-          other: 100
-        },
-        overtime: {
-          hours: 8,
-          rate: 35.16,
-          amount: 281.28
-        },
-        leaveBalance: {
-          sick: 12,
-          vacation: 15,
-          personal: 3
-        },
-        status: 'generated',
-        generatedAt: new Date(2024, 0, 31),
-        emailSent: false,
-        doleCompliant: true
+        items: [
+          { id: '1', payslipId: '1', label: 'Basic Salary', amount: 3750, type: 'earning' },
+          { id: '2', payslipId: '1', label: 'Overtime Pay', amount: 281.28, type: 'earning' },
+          { id: '3', payslipId: '1', label: 'Transportation Allowance', amount: 500, type: 'earning' },
+          { id: '4', payslipId: '1', label: 'Meal Allowance', amount: 300, type: 'earning' },
+          { id: '5', payslipId: '1', label: 'SSS Contribution', amount: 450, type: 'deduction', contributionCode: 'SSS' },
+          { id: '6', payslipId: '1', label: 'PhilHealth Contribution', amount: 240, type: 'deduction', contributionCode: 'PHILHEALTH' },
+          { id: '7', payslipId: '1', label: 'Pag-IBIG Contribution', amount: 100, type: 'deduction', contributionCode: 'PAGIBIG' },
+          { id: '8', payslipId: '1', label: 'Withholding Tax', amount: 890, type: 'deduction', contributionCode: 'BIR' }
+        ]
       },
       {
-        id: 2,
+        id: '2',
+        payrollRunId: 'run1',
         employeeId: 'EMP002',
-        employeeName: 'Sarah Johnson',
-        department: 'Marketing',
-        position: 'Marketing Manager',
-        payrollPeriod: {
-          start: new Date(2024, 0, 1),
-          end: new Date(2024, 0, 31)
-        },
-        basicSalary: 65000,
         grossPay: 4200,
+        totalDeductions: 1470,
         netPay: 2730,
-        deductions: {
-          tax: 840,
-          insurance: 210,
-          retirement: 315,
-          other: 105
+        createdAt: new Date(2024, 0, 31).toISOString(),
+        employee: {
+          id: 'emp2',
+          employeeNumber: 'EMP002',
+          firstName: 'Sarah',
+          lastName: 'Johnson',
+          position: 'Marketing Manager',
+          baseSalary: 65000,
+          department: { name: 'Marketing' },
+          organization: { name: 'Tech Corp' }
         },
-        allowances: {
-          transportation: 500,
-          meal: 300,
-          housing: 0,
-          other: 100
-        },
-        overtime: {
-          hours: 4,
-          rate: 30.52,
-          amount: 122.08
-        },
-        leaveBalance: {
-          sick: 10,
-          vacation: 18,
-          personal: 2
-        },
-        status: 'sent',
-        generatedAt: new Date(2024, 0, 31),
-        sentAt: new Date(2024, 0, 31),
-        emailSent: true,
-        emailSentAt: new Date(2024, 0, 31),
-        doleCompliant: true
+        items: [
+          { id: '9', payslipId: '2', label: 'Basic Salary', amount: 3250, type: 'earning' },
+          { id: '10', payslipId: '2', label: 'Overtime Pay', amount: 122.08, type: 'earning' },
+          { id: '11', payslipId: '2', label: 'Transportation Allowance', amount: 500, type: 'earning' },
+          { id: '12', payslipId: '2', label: 'Meal Allowance', amount: 300, type: 'earning' },
+          { id: '13', payslipId: '2', label: 'SSS Contribution', amount: 390, type: 'deduction', contributionCode: 'SSS' },
+          { id: '14', payslipId: '2', label: 'PhilHealth Contribution', amount: 210, type: 'deduction', contributionCode: 'PHILHEALTH' },
+          { id: '15', payslipId: '2', label: 'Pag-IBIG Contribution', amount: 100, type: 'deduction', contributionCode: 'PAGIBIG' },
+          { id: '16', payslipId: '2', label: 'Withholding Tax', amount: 770, type: 'deduction', contributionCode: 'BIR' }
+        ]
       },
       {
-        id: 3,
+        id: '3',
+        payrollRunId: 'run1',
         employeeId: 'EMP003',
-        employeeName: 'Michael Brown',
-        department: 'Sales',
-        position: 'Sales Representative',
-        payrollPeriod: {
-          start: new Date(2024, 0, 1),
-          end: new Date(2024, 0, 31)
-        },
-        basicSalary: 55000,
         grossPay: 3800,
+        totalDeductions: 1330,
         netPay: 2470,
-        deductions: {
-          tax: 760,
-          insurance: 190,
-          retirement: 285,
-          other: 95
+        createdAt: new Date(2024, 0, 31).toISOString(),
+        employee: {
+          id: 'emp3',
+          employeeNumber: 'EMP003',
+          firstName: 'Michael',
+          lastName: 'Brown',
+          position: 'Sales Representative',
+          baseSalary: 55000,
+          department: { name: 'Sales' },
+          organization: { name: 'Tech Corp' }
         },
-        allowances: {
-          transportation: 500,
-          meal: 300,
-          housing: 0,
-          other: 100
-        },
-        overtime: {
-          hours: 12,
-          rate: 26.44,
-          amount: 317.28
-        },
-        leaveBalance: {
-          sick: 8,
-          vacation: 12,
-          personal: 1
-        },
-        status: 'downloaded',
-        generatedAt: new Date(2024, 0, 31),
-        downloadedAt: new Date(2024, 0, 31),
-        emailSent: false,
-        doleCompliant: true
-      },
-      {
-        id: 4,
-        employeeId: 'EMP004',
-        employeeName: 'Emily Davis',
-        department: 'HR',
-        position: 'HR Specialist',
-        payrollPeriod: {
-          start: new Date(2024, 0, 1),
-          end: new Date(2024, 0, 31)
-        },
-        basicSalary: 60000,
-        grossPay: 4000,
-        netPay: 2600,
-        deductions: {
-          tax: 800,
-          insurance: 200,
-          retirement: 300,
-          other: 100
-        },
-        allowances: {
-          transportation: 500,
-          meal: 300,
-          housing: 0,
-          other: 100
-        },
-        overtime: {
-          hours: 0,
-          rate: 28.85,
-          amount: 0
-        },
-        leaveBalance: {
-          sick: 15,
-          vacation: 20,
-          personal: 5
-        },
-        status: 'generated',
-        generatedAt: new Date(2024, 0, 31),
-        emailSent: false,
-        doleCompliant: true
-      },
-      {
-        id: 5,
-        employeeId: 'EMP005',
-        employeeName: 'David Wilson',
-        department: 'Finance',
-        position: 'Financial Analyst',
-        payrollPeriod: {
-          start: new Date(2024, 0, 1),
-          end: new Date(2024, 0, 31)
-        },
-        basicSalary: 70000,
-        grossPay: 4600,
-        netPay: 2990,
-        deductions: {
-          tax: 920,
-          insurance: 230,
-          retirement: 345,
-          other: 115
-        },
-        allowances: {
-          transportation: 500,
-          meal: 300,
-          housing: 0,
-          other: 100
-        },
-        overtime: {
-          hours: 6,
-          rate: 33.65,
-          amount: 201.90
-        },
-        leaveBalance: {
-          sick: 11,
-          vacation: 16,
-          personal: 4
-        },
-        status: 'sent',
-        generatedAt: new Date(2024, 0, 31),
-        sentAt: new Date(2024, 0, 31),
-        emailSent: true,
-        emailSentAt: new Date(2024, 0, 31),
-        doleCompliant: true
+        items: [
+          { id: '17', payslipId: '3', label: 'Basic Salary', amount: 2750, type: 'earning' },
+          { id: '18', payslipId: '3', label: 'Overtime Pay', amount: 317.28, type: 'earning' },
+          { id: '19', payslipId: '3', label: 'Transportation Allowance', amount: 500, type: 'earning' },
+          { id: '20', payslipId: '3', label: 'Meal Allowance', amount: 300, type: 'earning' },
+          { id: '21', payslipId: '3', label: 'SSS Contribution', amount: 330, type: 'deduction', contributionCode: 'SSS' },
+          { id: '22', payslipId: '3', label: 'PhilHealth Contribution', amount: 190, type: 'deduction', contributionCode: 'PHILHEALTH' },
+          { id: '23', payslipId: '3', label: 'Pag-IBIG Contribution', amount: 100, type: 'deduction', contributionCode: 'PAGIBIG' },
+          { id: '24', payslipId: '3', label: 'Withholding Tax', amount: 710, type: 'deduction', contributionCode: 'BIR' }
+        ]
       }
     ];
 
@@ -341,13 +206,15 @@ export class PayslipCenterComponent implements OnInit, OnDestroy {
   }
 
   extractFilterOptions(): void {
-    // Extract unique payroll periods
-    this.availablePayrollPeriods = [...new Set(this.payslips.map(p => 
-      `${this.formatDate(p.payrollPeriod.start)} - ${this.formatDate(p.payrollPeriod.end)}`
-    ))];
-
-    // Extract unique departments
-    this.availableDepartments = [...new Set(this.payslips.map(p => p.department))];
+    // Extract unique departments from payslips
+    this.availableDepartments = [...new Set(this.payslips.map(p => p.employee?.department?.name || 'N/A'))];
+    
+    // For now, we'll use sample payroll periods since we removed payroll runs
+    this.availablePayrollPeriods = [
+      'Jan 1, 2024 - Jan 31, 2024',
+      'Dec 1, 2023 - Dec 31, 2023',
+      'Feb 1, 2024 - Feb 29, 2024'
+    ];
   }
 
   setupFilterListeners(): void {
@@ -360,15 +227,22 @@ export class PayslipCenterComponent implements OnInit, OnDestroy {
     const filters = this.filterForm.value;
     
     this.filteredPayslips = this.payslips.filter(payslip => {
+      // Simple period matching since we removed payroll runs
       const periodMatch = !filters.payrollPeriod || 
-        `${this.formatDate(payslip.payrollPeriod.start)} - ${this.formatDate(payslip.payrollPeriod.end)}` === filters.payrollPeriod;
+        filters.payrollPeriod === 'Jan 1, 2024 - Jan 31, 2024'; // Default to January 2024
       
-      const departmentMatch = !filters.department || payslip.department === filters.department;
+      const departmentMatch = !filters.department || 
+        (payslip.employee?.department?.name || 'N/A') === filters.department;
       
-      const statusMatch = !filters.status || payslip.status === filters.status;
+      // For now, we'll use a simple status based on whether payslip is released
+      const statusMatch = !filters.status || 
+        (filters.status === 'generated' && !payslip.releasedAt) ||
+        (filters.status === 'sent' && payslip.releasedAt) ||
+        (filters.status === 'downloaded' && payslip.pdfUrl) ||
+        (filters.status === 'failed' && !payslip.pdfUrl && payslip.releasedAt);
       
       const nameMatch = !filters.employeeName || 
-        payslip.employeeName.toLowerCase().includes(filters.employeeName.toLowerCase());
+        `${payslip.employee?.firstName || ''} ${payslip.employee?.lastName || ''}`.toLowerCase().includes(filters.employeeName.toLowerCase());
       
       return periodMatch && departmentMatch && statusMatch && nameMatch;
     });
@@ -376,7 +250,7 @@ export class PayslipCenterComponent implements OnInit, OnDestroy {
     this.updateBulkSelection();
   }
 
-  togglePayslipSelection(payslipId: number): void {
+  togglePayslipSelection(payslipId: string): void {
     const index = this.selectedPayslips.indexOf(payslipId);
     if (index > -1) {
       this.selectedPayslips.splice(index, 1);
@@ -402,15 +276,19 @@ export class PayslipCenterComponent implements OnInit, OnDestroy {
   }
 
   downloadPayslip(payslip: Payslip): void {
-    // Simulate download
-    console.log(`Downloading payslip for ${payslip.employeeName}`);
+    const employeeName = `${payslip.employee?.firstName} ${payslip.employee?.lastName}`;
     
-    // Update status
-    payslip.status = 'downloaded';
-    payslip.downloadedAt = new Date();
-    
-    // In a real implementation, this would generate and download a PDF
-    this.showNotification(`Payslip for ${payslip.employeeName} downloaded successfully`, 'success');
+    this.payrollService.generatePayslipPDF(payslip.id).subscribe({
+      next: (blob) => {
+        const filename = `payslip-${payslip.employee?.employeeNumber}-${this.formatPayrollDate(new Date())}.pdf`;
+        this.payrollService.downloadFile(blob, filename);
+        this.showNotification(`Payslip for ${employeeName} downloaded successfully`, 'success');
+      },
+      error: (error) => {
+        console.error('Error downloading payslip:', error);
+        this.showNotification(`Error downloading payslip for ${employeeName}`, 'error');
+      }
+    });
   }
 
   downloadSelectedPayslips(): void {
@@ -432,7 +310,8 @@ export class PayslipCenterComponent implements OnInit, OnDestroy {
   }
 
   resendPayslip(payslip: Payslip): void {
-    this.selectedPayslipsForResend = [payslip];
+    // For now, just switch to resend tab with the payslip
+    this.selectedPayslipsForResend = [payslip as any];
     this.activeTab = 'resend';
   }
 
@@ -447,13 +326,6 @@ export class PayslipCenterComponent implements OnInit, OnDestroy {
       
       // Simulate email sending
       setTimeout(() => {
-        this.selectedPayslipsForResend.forEach(payslip => {
-          payslip.emailSent = true;
-          payslip.emailSentAt = new Date();
-          payslip.status = 'sent';
-          payslip.sentAt = new Date();
-        });
-        
         this.resendInProgress = false;
         this.selectedPayslipsForResend = [];
         this.activeTab = 'view-download';
@@ -464,9 +336,13 @@ export class PayslipCenterComponent implements OnInit, OnDestroy {
   }
 
   viewPayslip(payslip: Payslip): void {
-    // In a real implementation, this would open a modal or navigate to a payslip view
-    console.log(`Viewing payslip for ${payslip.employeeName}`);
-    this.showNotification(`Opening payslip for ${payslip.employeeName}`, 'info');
+    this.selectedPayslipForView = payslip;
+    this.showPayslipModal = true;
+  }
+
+  closePayslipModal(): void {
+    this.showPayslipModal = false;
+    this.selectedPayslipForView = null;
   }
 
   getStatusColor(status: string): string {
@@ -489,14 +365,6 @@ export class PayslipCenterComponent implements OnInit, OnDestroy {
     return icons[status] || 'help';
   }
 
-  formatCurrency(amount: number): string {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0
-    }).format(amount);
-  }
 
   formatDate(date: Date): string {
     return new Intl.DateTimeFormat('en-US', {
@@ -521,22 +389,72 @@ export class PayslipCenterComponent implements OnInit, OnDestroy {
     console.log(`${type.toUpperCase()}: ${message}`);
   }
 
-  getTotalDeductions(payslip: Payslip): number {
-    return payslip.deductions.tax + payslip.deductions.insurance + 
-           payslip.deductions.retirement + payslip.deductions.other;
-  }
-
-  getTotalAllowances(payslip: Payslip): number {
-    return payslip.allowances.transportation + payslip.allowances.meal + 
-           payslip.allowances.housing + payslip.allowances.other;
-  }
-
-  isDoleCompliant(payslip: Payslip): boolean {
-    // In a real implementation, this would check DOLE compliance rules
-    return payslip.doleCompliant;
-  }
 
   getCurrentDate(): Date {
     return new Date();
+  }
+
+
+  // ==================== PAYSLIP MODAL METHODS ====================
+
+  getPayslipStatus(payslip: Payslip): string {
+    if (payslip.pdfUrl) return 'downloaded';
+    if (payslip.releasedAt) return 'sent';
+    return 'generated';
+  }
+
+  getPayslipStatusColor(payslip: Payslip): string {
+    const status = this.getPayslipStatus(payslip);
+    return this.getStatusColor(status);
+  }
+
+  getPayslipStatusIcon(payslip: Payslip): string {
+    const status = this.getPayslipStatus(payslip);
+    return this.getStatusIcon(status);
+  }
+
+  getEarningsForPayslip(payslip: Payslip): PayslipItem[] {
+    return payslip.items?.filter(item => item.type === 'earning') || [];
+  }
+
+  getDeductionsForPayslip(payslip: Payslip): PayslipItem[] {
+    return payslip.items?.filter(item => item.type === 'deduction') || [];
+  }
+
+  getTotalEarnings(payslip: Payslip): number {
+    return this.getEarningsForPayslip(payslip).reduce((sum, item) => sum + item.amount, 0);
+  }
+
+  getTotalDeductions(payslip: Payslip): number {
+    return this.getDeductionsForPayslip(payslip).reduce((sum, item) => sum + item.amount, 0);
+  }
+
+
+  getContributionAmount(payslip: Payslip, code: string): number {
+    const item = payslip.items?.find(i => i.contributionCode === code);
+    return item ? item.amount : 0;
+  }
+
+  // ==================== HELPER METHODS FOR TEMPLATE ====================
+
+  getPayrollRunForPayslip(payslip: Payslip): any {
+    // Return a mock payroll run since we removed the payroll runs functionality
+    return {
+      id: payslip.payrollRunId,
+      periodStart: new Date(2024, 0, 1),
+      periodEnd: new Date(2024, 0, 31)
+    };
+  }
+
+  formatCurrency(amount: number): string {
+    return this.payrollService.formatCurrency(amount);
+  }
+
+  formatPayrollDate(date: string | Date): string {
+    return this.payrollService.formatDate(date);
+  }
+
+  formatPayrollDateTime(date: string | Date): string {
+    return this.payrollService.formatDateTime(date);
   }
 }

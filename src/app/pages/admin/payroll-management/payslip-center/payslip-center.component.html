@@ -215,23 +215,25 @@
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap">
                       <div>
-                        <div class="text-sm font-medium text-gray-900">{{ payslip.employeeName }}</div>
-                        <div class="text-sm text-gray-500">{{ payslip.employeeId }} • {{ payslip.department }}</div>
+                        <div class="text-sm font-medium text-gray-900">{{ payslip.employee?.firstName }} {{ payslip.employee?.lastName }}</div>
+                        <div class="text-sm text-gray-500">{{ payslip.employee?.employeeNumber }} • {{ payslip.employee?.department?.name }}</div>
                       </div>
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {{ formatDate(payslip.payrollPeriod.start) }} - {{ formatDate(payslip.payrollPeriod.end) }}
+                      <ng-container *ngIf="getPayrollRunForPayslip(payslip) as payrollRun">
+                        {{ formatPayrollDate(payrollRun.periodStart) }} - {{ formatPayrollDate(payrollRun.periodEnd) }}
+                      </ng-container>
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                       {{ formatCurrency(payslip.netPay) }}
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap">
                       <div class="flex items-center">
-                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ getStatusColor(payslip.status) }}">
-                          <span class="material-icons text-xs mr-1">{{ getStatusIcon(payslip.status) }}</span>
-                          {{ payslip.status }}
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ getPayslipStatusColor(payslip) }}">
+                          <span class="material-icons text-xs mr-1">{{ getPayslipStatusIcon(payslip) }}</span>
+                          {{ getPayslipStatus(payslip) }}
                         </span>
-                        <div *ngIf="payslip.doleCompliant" class="ml-2">
+                        <div class="ml-2">
                           <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
                             DOLE
                           </span>
@@ -239,7 +241,7 @@
                       </div>
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {{ formatDateTime(payslip.generatedAt) }}
+                      {{ formatPayrollDateTime(payslip.createdAt) }}
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                       <div class="flex items-center space-x-2">
@@ -289,8 +291,12 @@
                   <div class="bg-gray-50 rounded-lg p-4">
                     <div class="space-y-2">
                       <div *ngFor="let payslip of selectedPayslipsForResend" class="flex items-center justify-between text-sm">
-                        <span class="text-gray-900">{{ payslip.employeeName }} - {{ payslip.employeeId }}</span>
-                        <span class="text-gray-600">{{ formatDate(payslip.payrollPeriod.start) }} - {{ formatDate(payslip.payrollPeriod.end) }}</span>
+                        <span class="text-gray-900">{{ payslip.employee?.firstName }} {{ payslip.employee?.lastName }} - {{ payslip.employee?.employeeNumber }}</span>
+                        <span class="text-gray-600">
+                          <ng-container *ngIf="getPayrollRunForPayslip(payslip) as payrollRun">
+                            {{ formatPayrollDate(payrollRun.periodStart) }} - {{ formatPayrollDate(payrollRun.periodEnd) }}
+                          </ng-container>
+                        </span>
                       </div>
                     </div>
                   </div>
@@ -405,7 +411,180 @@
             </div>
           </div>
         </div>
+
       </div>
     </main>
+  </div>
+
+  <!-- Payslip Details Modal -->
+  <div *ngIf="showPayslipModal" class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+      <!-- Background overlay -->
+      <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" (click)="closePayslipModal()"></div>
+
+      <!-- Modal panel -->
+      <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-4xl sm:w-full">
+        <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+          <!-- Modal Header -->
+          <div class="flex items-center justify-between mb-6">
+            <div>
+              <h3 class="text-lg font-medium text-gray-900">Payslip Details</h3>
+              <p class="text-sm text-gray-600 mt-1" *ngIf="selectedPayslipForView">
+                {{ selectedPayslipForView.employee?.firstName }} {{ selectedPayslipForView.employee?.lastName }} - {{ selectedPayslipForView.employee?.employeeNumber }}
+              </p>
+            </div>
+            <button
+              (click)="closePayslipModal()"
+              class="text-gray-400 hover:text-gray-600 transition-colors duration-200"
+            >
+              <span class="material-icons text-2xl">close</span>
+            </button>
+          </div>
+
+          <!-- Payslip Content -->
+          <div *ngIf="selectedPayslipForView" class="space-y-6">
+            <!-- Employee Information -->
+            <div class="bg-gray-50 rounded-lg p-4">
+              <h4 class="text-sm font-medium text-gray-900 mb-3">Employee Information</h4>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <span class="text-sm text-gray-600">Name:</span>
+                  <span class="text-sm font-medium text-gray-900 ml-2">
+                    {{ selectedPayslipForView.employee?.firstName }} {{ selectedPayslipForView.employee?.lastName }}
+                  </span>
+                </div>
+                <div>
+                  <span class="text-sm text-gray-600">Employee Number:</span>
+                  <span class="text-sm font-medium text-gray-900 ml-2">{{ selectedPayslipForView.employee?.employeeNumber }}</span>
+                </div>
+                <div>
+                  <span class="text-sm text-gray-600">Position:</span>
+                  <span class="text-sm font-medium text-gray-900 ml-2">{{ selectedPayslipForView.employee?.position }}</span>
+                </div>
+                <div>
+                  <span class="text-sm text-gray-600">Department:</span>
+                  <span class="text-sm font-medium text-gray-900 ml-2">{{ selectedPayslipForView.employee?.department?.name }}</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Payroll Period -->
+            <div class="bg-gray-50 rounded-lg p-4">
+              <h4 class="text-sm font-medium text-gray-900 mb-3">Payroll Period</h4>
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <span class="text-sm text-gray-600">Period Start:</span>
+                  <span class="text-sm font-medium text-gray-900 ml-2">
+                    <ng-container *ngIf="getPayrollRunForPayslip(selectedPayslipForView) as payrollRun">
+                      {{ formatPayrollDate(payrollRun.periodStart) }}
+                    </ng-container>
+                  </span>
+                </div>
+                <div>
+                  <span class="text-sm text-gray-600">Period End:</span>
+                  <span class="text-sm font-medium text-gray-900 ml-2">
+                    <ng-container *ngIf="getPayrollRunForPayslip(selectedPayslipForView) as payrollRun">
+                      {{ formatPayrollDate(payrollRun.periodEnd) }}
+                    </ng-container>
+                  </span>
+                </div>
+                <div>
+                  <span class="text-sm text-gray-600">Status:</span>
+                  <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ml-2 {{ getPayslipStatusColor(selectedPayslipForView) }}">
+                    <span class="material-icons text-xs mr-1">{{ getPayslipStatusIcon(selectedPayslipForView) }}</span>
+                    {{ getPayslipStatus(selectedPayslipForView) }}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Earnings and Deductions -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <!-- Earnings -->
+              <div class="bg-green-50 rounded-lg p-4">
+                <h4 class="text-sm font-medium text-green-900 mb-3">Earnings</h4>
+                <div class="space-y-2">
+                  <div *ngFor="let earning of getEarningsForPayslip(selectedPayslipForView)" class="flex justify-between text-sm">
+                    <span class="text-green-700">{{ earning.label }}</span>
+                    <span class="font-medium text-green-900">{{ formatCurrency(earning.amount) }}</span>
+                  </div>
+                  <div class="border-t border-green-200 pt-2 flex justify-between text-sm font-medium">
+                    <span class="text-green-900">Total Earnings</span>
+                    <span class="text-green-900">{{ formatCurrency(getTotalEarnings(selectedPayslipForView)) }}</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Deductions -->
+              <div class="bg-red-50 rounded-lg p-4">
+                <h4 class="text-sm font-medium text-red-900 mb-3">Deductions</h4>
+                <div class="space-y-2">
+                  <div *ngFor="let deduction of getDeductionsForPayslip(selectedPayslipForView)" class="flex justify-between text-sm">
+                    <span class="text-red-700">{{ deduction.label }}</span>
+                    <span class="font-medium text-red-900">{{ formatCurrency(deduction.amount) }}</span>
+                  </div>
+                  <div class="border-t border-red-200 pt-2 flex justify-between text-sm font-medium">
+                    <span class="text-red-900">Total Deductions</span>
+                    <span class="text-red-900">{{ formatCurrency(getTotalDeductions(selectedPayslipForView)) }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Net Pay Summary -->
+            <div class="bg-blue-50 rounded-lg p-4">
+              <h4 class="text-sm font-medium text-blue-900 mb-3">Net Pay Summary</h4>
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="text-center">
+                  <div class="text-2xl font-bold text-blue-900">{{ formatCurrency(getTotalEarnings(selectedPayslipForView)) }}</div>
+                  <div class="text-sm text-blue-700">Gross Pay</div>
+                </div>
+                <div class="text-center">
+                  <div class="text-2xl font-bold text-red-600">{{ formatCurrency(getTotalDeductions(selectedPayslipForView)) }}</div>
+                  <div class="text-sm text-red-700">Total Deductions</div>
+                </div>
+                <div class="text-center">
+                  <div class="text-3xl font-bold text-green-600">{{ formatCurrency(selectedPayslipForView.netPay) }}</div>
+                  <div class="text-sm text-green-700">Net Pay</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Government Contributions Breakdown -->
+            <div class="bg-gray-50 rounded-lg p-4">
+              <h4 class="text-sm font-medium text-gray-900 mb-3">Government Contributions</h4>
+              <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div class="text-center">
+                  <div class="text-lg font-semibold text-gray-900">{{ formatCurrency(getContributionAmount(selectedPayslipForView, 'SSS')) }}</div>
+                  <div class="text-xs text-gray-600">SSS</div>
+                </div>
+                <div class="text-center">
+                  <div class="text-lg font-semibold text-gray-900">{{ formatCurrency(getContributionAmount(selectedPayslipForView, 'PHILHEALTH')) }}</div>
+                  <div class="text-xs text-gray-600">PhilHealth</div>
+                </div>
+                <div class="text-center">
+                  <div class="text-lg font-semibold text-gray-900">{{ formatCurrency(getContributionAmount(selectedPayslipForView, 'PAGIBIG')) }}</div>
+                  <div class="text-xs text-gray-600">Pag-IBIG</div>
+                </div>
+                <div class="text-center">
+                  <div class="text-lg font-semibold text-gray-900">{{ formatCurrency(getContributionAmount(selectedPayslipForView, 'BIR')) }}</div>
+                  <div class="text-xs text-gray-600">BIR Tax</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Modal Footer -->
+        <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+          <button
+            (click)="closePayslipModal()"
+            class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:ml-3 sm:w-auto sm:text-sm transition-colors duration-200"
+          >
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </div>

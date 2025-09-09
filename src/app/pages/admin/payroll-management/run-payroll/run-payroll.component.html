@@ -36,18 +36,18 @@
                 New Payroll Run
               </button>
               <button
-                (click)="activeTab = 'history'"
-                [class]="activeTab === 'history' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
-                class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors duration-200"
-              >
-                Payroll History
-              </button>
-              <button
                 (click)="activeTab = 'preview'"
                 [class]="activeTab === 'preview' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
                 class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors duration-200"
               >
                 Preview & Approval
+              </button>
+              <button
+              (click)="activeTab = 'history'"
+              [class]="activeTab === 'history' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
+                class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors duration-200"
+              >
+              Payroll History
               </button>
             </nav>
           </div>
@@ -179,16 +179,16 @@
                   </div>
                 </div>
 
-                <div class="bg-orange-50 rounded-lg p-4">
+                <div class="bg-red-50 rounded-lg p-4">
                   <div class="flex items-center">
                     <div class="flex-shrink-0">
-                      <div class="w-8 h-8 bg-orange-500 rounded-lg flex items-center justify-center">
-                        <span class="material-icons text-white text-lg">schedule</span>
+                      <div class="w-8 h-8 bg-red-500 rounded-lg flex items-center justify-center">
+                        <span class="material-icons text-white text-lg">remove_circle</span>
                       </div>
                     </div>
                     <div class="ml-4">
-                      <p class="text-sm font-medium text-orange-600">Overtime</p>
-                      <p class="text-2xl font-bold text-orange-900">{{ formatCurrency(payrollSummary.totalOvertime) }}</p>
+                      <p class="text-sm font-medium text-red-600">Total Deductions</p>
+                      <p class="text-2xl font-bold text-red-900">{{ formatCurrency(payrollSummary.totalDeductions) }}</p>
                     </div>
                   </div>
                 </div>
@@ -199,17 +199,33 @@
                 <div class="bg-gray-50 rounded-lg p-4">
                   <h4 class="text-sm font-medium text-gray-900 mb-3">Deductions Breakdown</h4>
                   <div class="space-y-2">
-                    <div class="flex justify-between text-sm">
-                      <span class="text-gray-600">Tax</span>
-                      <span class="font-medium">{{ formatCurrency(payrollSummary.totalTax) }}</span>
+                    <div class="flex justify-between items-center text-sm">
+                      <div class="flex items-center space-x-2">
+                        <img src="assets/images/logos/bir.png" alt="BIR" class="w-4 h-4 object-contain">
+                        <span class="text-gray-600">BIR Tax</span>
+                      </div>
+                      <span class="font-medium">{{ formatCurrency(payrollSummary.totalBIR || 0) }}</span>
                     </div>
-                    <div class="flex justify-between text-sm">
-                      <span class="text-gray-600">Insurance</span>
-                      <span class="font-medium">{{ formatCurrency(payrollSummary.totalInsurance) }}</span>
+                    <div class="flex justify-between items-center text-sm">
+                      <div class="flex items-center space-x-2">
+                        <img src="assets/images/logos/sss.png" alt="SSS" class="w-4 h-4 object-contain">
+                        <span class="text-gray-600">SSS</span>
+                      </div>
+                      <span class="font-medium">{{ formatCurrency(payrollSummary.totalSSS || 0) }}</span>
                     </div>
-                    <div class="flex justify-between text-sm">
-                      <span class="text-gray-600">Retirement</span>
-                      <span class="font-medium">{{ formatCurrency(payrollSummary.totalRetirement) }}</span>
+                    <div class="flex justify-between items-center text-sm">
+                      <div class="flex items-center space-x-2">
+                        <img src="assets/images/logos/ph_logo.png" alt="PhilHealth" class="w-4 h-4 object-contain">
+                        <span class="text-gray-600">PhilHealth</span>
+                      </div>
+                      <span class="font-medium">{{ formatCurrency(payrollSummary.totalPhilHealth || 0) }}</span>
+                    </div>
+                    <div class="flex justify-between items-center text-sm">
+                      <div class="flex items-center space-x-2">
+                        <img src="assets/images/logos/Pag-IBIG.svg.png" alt="Pag-IBIG" class="w-4 h-4 object-contain">
+                        <span class="text-gray-600">Pag-IBIG</span>
+                      </div>
+                      <span class="font-medium">{{ formatCurrency(payrollSummary.totalPagIBIG || 0) }}</span>
                     </div>
                   </div>
                 </div>
@@ -220,11 +236,57 @@
           <!-- Employee List -->
           <div class="bg-white rounded-lg shadow-sm border border-gray-200">
             <div class="px-6 py-4 border-b border-gray-200">
+              <div class="flex items-center justify-between">
+                <div>
               <h3 class="text-lg font-medium text-gray-900">Employee Payroll Details</h3>
               <p class="text-sm text-gray-600 mt-1">Review and adjust employee payroll calculations</p>
+                </div>
+                <div class="flex items-center space-x-4">
+                  <div class="flex items-center space-x-2">
+                    <span class="text-sm text-gray-500">{{ selectedEmployees.length }} employees</span>
+                    <span class="text-sm text-green-600">{{ includedEmployeesCount }} included</span>
+                  </div>
+                  <button
+                    (click)="loadEmployees()"
+                    [disabled]="employeesLoading"
+                    class="bg-gray-100 text-gray-700 px-3 py-1 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200 flex items-center text-sm"
+                  >
+                    <span *ngIf="employeesLoading" class="animate-spin rounded-full h-3 w-3 border-b-2 border-gray-600 mr-1"></span>
+                    <span *ngIf="!employeesLoading" class="material-icons text-sm mr-1">refresh</span>
+                    {{ employeesLoading ? 'Loading...' : 'Refresh' }}
+                  </button>
+                </div>
+              </div>
             </div>
             <div class="overflow-x-auto">
-              <table class="min-w-full divide-y divide-gray-200">
+              <!-- Loading State -->
+              <div *ngIf="employeesLoading" class="flex items-center justify-center py-12">
+                <div class="flex items-center space-x-2">
+                  <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+                  <span class="text-gray-600">Loading employee data...</span>
+                </div>
+              </div>
+
+              <!-- No Employees Message -->
+              <div *ngIf="!employeesLoading && selectedEmployees.length === 0" class="flex items-center justify-center py-12">
+                <div class="text-center">
+                  <div class="text-gray-400 mb-4">
+                    <span class="material-icons text-6xl">people_outline</span>
+                  </div>
+                  <h3 class="text-lg font-medium text-gray-900 mb-2">No Employees Found</h3>
+                  <p class="text-gray-600 mb-4">No employees were found in the database.</p>
+                  <button
+                    (click)="loadEmployees()"
+                    class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors duration-200"
+                  >
+                    <span class="material-icons text-sm mr-2">refresh</span>
+                    Retry Loading
+                  </button>
+                </div>
+              </div>
+
+              <!-- Employee Table -->
+              <table *ngIf="!employeesLoading && selectedEmployees.length > 0" class="min-w-full divide-y divide-gray-200">
                 <thead class="bg-gray-50">
                   <tr>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -286,6 +348,14 @@
                       </span>
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                      <div class="flex items-center space-x-2">
+                        <button
+                          (click)="openPayslipModal(employee)"
+                          class="text-blue-600 hover:text-blue-900 transition-colors duration-200 flex items-center"
+                          title="View Payslip Details"
+                        >
+                          <span class="material-icons text-sm">visibility</span>
+                        </button>
                       <button
                         (click)="toggleEmployeeStatus(employee)"
                         [class]="employee.status === 'included' ? 'text-red-600 hover:text-red-900' : 'text-green-600 hover:text-green-900'"
@@ -293,6 +363,7 @@
                       >
                         {{ employee.status === 'included' ? 'Exclude' : 'Include' }}
                       </button>
+                      </div>
                     </td>
                   </tr>
                 </tbody>
@@ -301,14 +372,26 @@
           </div>
 
           <!-- Action Buttons -->
-          <div class="flex justify-end space-x-4">
+          <div class="flex justify-between items-center">
+            <div class="text-sm text-gray-600">
+              <span *ngIf="!hasIncludedEmployees" class="text-red-600">
+                Please include at least one employee
+              </span>
+              <span *ngIf="hasIncludedEmployees" class="text-green-600">
+                Ready to create payroll run
+              </span>
+            </div>
+            <div class="flex space-x-4">
             <button
               (click)="createNewPayrollRun()"
-              [disabled]="!payrollForm.valid"
-              class="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+                [disabled]="!payrollForm.valid || !hasIncludedEmployees || payrollRunCreating"
+                class="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200 flex items-center"
             >
-              Create Payroll Run
+                <span *ngIf="payrollRunCreating" class="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></span>
+                <span *ngIf="!payrollRunCreating" class="material-icons text-sm mr-2">add_circle</span>
+                {{ payrollRunCreating ? 'Creating...' : 'Create Payroll Run' }}
             </button>
+            </div>
           </div>
         </div>
 
@@ -397,7 +480,17 @@
                       </div>
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {{ payroll.totalEmployees }}
+                      <div class="flex flex-col">
+                        <span class="font-medium">{{ payroll.totalEmployees }} employee(s)</span>
+                        <div class="text-xs text-gray-500 mt-1" *ngIf="payroll.employeeNames && payroll.employeeNames.length > 0">
+                          <div *ngFor="let name of payroll.employeeNames.slice(0, 3)" class="truncate">
+                            {{ name }}
+                          </div>
+                          <div *ngIf="payroll.employeeNames.length > 3" class="text-gray-400">
+                            +{{ payroll.employeeNames.length - 3 }} more
+                          </div>
+                        </div>
+                      </div>
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                       {{ formatCurrency(payroll.grossPay) }}
@@ -415,7 +508,7 @@
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                       <button
-                        (click)="currentPayrollRun = payroll; activeTab = 'preview'"
+                        (click)="openPayrollDetailsModal(payroll)"
                         class="text-blue-600 hover:text-blue-900 transition-colors duration-200"
                       >
                         View Details
@@ -429,131 +522,832 @@
         </div>
 
         <!-- Preview & Approval Tab -->
-        <div *ngIf="activeTab === 'preview' && currentPayrollRun" class="space-y-6">
-          <!-- Payroll Preview -->
+        <div *ngIf="activeTab === 'preview'" class="space-y-6">
+          <!-- Payroll Run Selection -->
           <div class="bg-white rounded-lg shadow-sm border border-gray-200">
             <div class="px-6 py-4 border-b border-gray-200">
-              <h3 class="text-lg font-medium text-gray-900">Payroll Preview</h3>
-              <p class="text-sm text-gray-600 mt-1">Review payroll details before approval</p>
+              <h3 class="text-lg font-medium text-gray-900">Select Payroll Run for Review</h3>
+              <p class="text-sm text-gray-600 mt-1">Choose a payroll run to review and approve</p>
             </div>
             <div class="p-6">
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+              <form [formGroup]="reviewForm" class="space-y-4">
                 <div>
-                  <h4 class="text-sm font-medium text-gray-900 mb-2">Payroll Period</h4>
-                  <p class="text-sm text-gray-600">
-                    {{ formatDate(currentPayrollRun.cutoffStart) }} - {{ formatDate(currentPayrollRun.cutoffEnd) }}
-                  </p>
+                  <label for="payrollRunId" class="block text-sm font-medium text-gray-700 mb-2">
+                    Payroll Run
+                  </label>
+                  <select
+                    id="payrollRunId"
+                    formControlName="payrollRunId"
+                    (change)="onPayrollRunChange($event)"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                  >
+                    <option value="">Select a payroll run...</option>
+                    <option *ngFor="let run of payrollHistory" [value]="run.id">
+                      {{ formatDate(run.cutoffStart) }} - {{ formatDate(run.cutoffEnd) }} 
+                      ({{ run.status | titlecase }})
+                    </option>
+                  </select>
                 </div>
-                <div>
-                  <h4 class="text-sm font-medium text-gray-900 mb-2">Status</h4>
-                  <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ getStatusColor(currentPayrollRun.status) }}">
-                    {{ currentPayrollRun.status }}
-                  </span>
-                </div>
-              </div>
-
-              <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-                <div class="bg-blue-50 rounded-lg p-4">
-                  <p class="text-sm font-medium text-blue-600">Total Employees</p>
-                  <p class="text-2xl font-bold text-blue-900">{{ currentPayrollRun.totalEmployees }}</p>
-                </div>
-                <div class="bg-green-50 rounded-lg p-4">
-                  <p class="text-sm font-medium text-green-600">Gross Pay</p>
-                  <p class="text-2xl font-bold text-green-900">{{ formatCurrency(currentPayrollRun.grossPay) }}</p>
-                </div>
-                <div class="bg-purple-50 rounded-lg p-4">
-                  <p class="text-sm font-medium text-purple-600">Net Pay</p>
-                  <p class="text-2xl font-bold text-purple-900">{{ formatCurrency(currentPayrollRun.netPay) }}</p>
-                </div>
-              </div>
-
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div class="bg-gray-50 rounded-lg p-4">
-                  <h4 class="text-sm font-medium text-gray-900 mb-3">Deductions Summary</h4>
-                  <div class="space-y-2">
-                    <div class="flex justify-between text-sm">
-                      <span class="text-gray-600">Total Deductions</span>
-                      <span class="font-medium">{{ formatCurrency(currentPayrollRun.totalDeductions) }}</span>
-                    </div>
-                    <div class="flex justify-between text-sm">
-                      <span class="text-gray-600">Overtime</span>
-                      <span class="font-medium">{{ formatCurrency(currentPayrollRun.totalOvertime) }}</span>
-                    </div>
-                  </div>
-                </div>
-                <div class="bg-gray-50 rounded-lg p-4">
-                  <h4 class="text-sm font-medium text-gray-900 mb-3">Timeline</h4>
-                  <div class="space-y-2">
-                    <div class="flex justify-between text-sm">
-                      <span class="text-gray-600">Created</span>
-                      <span class="font-medium">{{ formatDate(currentPayrollRun.createdAt) }}</span>
-                    </div>
-                    <div class="flex justify-between text-sm" *ngIf="currentPayrollRun.approvedAt">
-                      <span class="text-gray-600">Approved</span>
-                      <span class="font-medium">{{ formatDate(currentPayrollRun.approvedAt) }}</span>
-                    </div>
-                    <div class="flex justify-between text-sm" *ngIf="currentPayrollRun.releasedAt">
-                      <span class="text-gray-600">Released</span>
-                      <span class="font-medium">{{ formatDate(currentPayrollRun.releasedAt) }}</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div *ngIf="currentPayrollRun.notes" class="mt-6">
-                <h4 class="text-sm font-medium text-gray-900 mb-2">Notes</h4>
-                <p class="text-sm text-gray-600 bg-gray-50 rounded-lg p-3">{{ currentPayrollRun.notes }}</p>
-              </div>
+              </form>
             </div>
           </div>
 
-          <!-- Approval Actions -->
-          <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+          <!-- Payroll Review Summary -->
+          <div *ngIf="currentPayrollRun && payrollReview" class="bg-white rounded-lg shadow-sm border border-gray-200">
             <div class="px-6 py-4 border-b border-gray-200">
-              <h3 class="text-lg font-medium text-gray-900">Approval Actions</h3>
-              <p class="text-sm text-gray-600 mt-1">Review and approve the payroll run</p>
+              <div class="flex items-center justify-between">
+                <div>
+                  <h3 class="text-lg font-medium text-gray-900">Payroll Review Summary</h3>
+                  <p class="text-sm text-gray-600 mt-1">
+                    Period: {{ formatPayrollDate(payrollReview.periodStart) }} - {{ formatPayrollDate(payrollReview.periodEnd) }}
+                  </p>
+                </div>
+                <div class="flex items-center space-x-3">
+                  <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ getPayrollRunStatusColor(payrollReview.status) }}">
+                    <span class="material-icons text-xs mr-1">{{ getPayrollRunStatusIcon(payrollReview.status) }}</span>
+                    {{ payrollReview.status | titlecase }}
+                  </span>
+                </div>
+              </div>
             </div>
             <div class="p-6">
-              <div class="mb-6">
+              <!-- Summary Cards -->
+              <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+                <div class="bg-blue-50 rounded-lg p-4">
+                  <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                      <span class="material-icons text-blue-600">people</span>
+                    </div>
+                    <div class="ml-3">
+                  <p class="text-sm font-medium text-blue-600">Total Employees</p>
+                      <p class="text-2xl font-bold text-blue-900">{{ payrollReview.totalEmployees }}</p>
+                    </div>
+                  </div>
+                </div>
+                <div class="bg-green-50 rounded-lg p-4">
+                  <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                      <span class="material-icons text-green-600">account_balance_wallet</span>
+                    </div>
+                    <div class="ml-3">
+                      <p class="text-sm font-medium text-green-600">Total Gross Pay</p>
+                      <p class="text-2xl font-bold text-green-900">{{ formatCurrency(payrollReview.totalGrossPay) }}</p>
+                    </div>
+                  </div>
+                </div>
+                <div class="bg-red-50 rounded-lg p-4">
+                  <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                      <span class="material-icons text-red-600">remove_circle</span>
+                    </div>
+                    <div class="ml-3">
+                      <p class="text-sm font-medium text-red-600">Total Deductions</p>
+                      <p class="text-2xl font-bold text-red-900">{{ formatCurrency(payrollReview.totalDeductions) }}</p>
+                    </div>
+                  </div>
+                </div>
+                <div class="bg-purple-50 rounded-lg p-4">
+                  <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                      <span class="material-icons text-purple-600">payments</span>
+                    </div>
+                    <div class="ml-3">
+                  <p class="text-sm font-medium text-purple-600">Net Pay</p>
+                      <p class="text-2xl font-bold text-purple-900">{{ formatCurrency(payrollReview.totalNetPay) }}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Contribution Breakdown -->
+              <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                <div class="bg-gray-50 rounded-lg p-4">
+                  <div class="flex items-center space-x-2 mb-2">
+                    <img src="assets/images/logos/sss.png" alt="SSS" class="w-5 h-5 object-contain">
+                    <h4 class="text-sm font-medium text-gray-700">SSS Contributions</h4>
+                  </div>
+                  <p class="text-lg font-semibold text-gray-900">{{ formatCurrency(payrollReview.totalSSS) }}</p>
+                    </div>
+                <div class="bg-gray-50 rounded-lg p-4">
+                  <div class="flex items-center space-x-2 mb-2">
+                    <img src="assets/images/logos/ph_logo.png" alt="PhilHealth" class="w-5 h-5 object-contain">
+                    <h4 class="text-sm font-medium text-gray-700">PhilHealth</h4>
+                  </div>
+                  <p class="text-lg font-semibold text-gray-900">{{ formatCurrency(payrollReview.totalPhilHealth) }}</p>
+                    </div>
+                <div class="bg-gray-50 rounded-lg p-4">
+                  <div class="flex items-center space-x-2 mb-2">
+                    <img src="assets/images/logos/Pag-IBIG.svg.png" alt="Pag-IBIG" class="w-5 h-5 object-contain">
+                    <h4 class="text-sm font-medium text-gray-700">Pag-IBIG</h4>
+                  </div>
+                  <p class="text-lg font-semibold text-gray-900">{{ formatCurrency(payrollReview.totalPagIBIG) }}</p>
+                </div>
+                <div class="bg-gray-50 rounded-lg p-4">
+                  <div class="flex items-center space-x-2 mb-2">
+                    <img src="assets/images/logos/bir.png" alt="BIR" class="w-5 h-5 object-contain">
+                    <h4 class="text-sm font-medium text-gray-700">BIR Tax</h4>
+                  </div>
+                  <p class="text-lg font-semibold text-gray-900">{{ formatCurrency(payrollReview.totalBIR) }}</p>
+                </div>
+                    </div>
+
+              <!-- Action Buttons -->
+              <div class="flex items-center justify-between pt-4 border-t border-gray-200">
+                <div class="flex items-center space-x-3">
+                  <button
+                    (click)="generatePayrollRegister()"
+                    class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors duration-200"
+                  >
+                    <span class="material-icons text-sm mr-1">description</span>
+                    Generate Register
+                  </button>
+                  <button
+                    (click)="downloadPayrollRegister()"
+                    [disabled]="!payrollRegister"
+                    class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+                  >
+                    <span class="material-icons text-sm mr-1">download</span>
+                    Download Register
+                  </button>
+                    </div>
+                <div class="flex items-center space-x-3">
+                  <button
+                    *ngIf="canProcessPayrollRun()"
+                    (click)="openProcessConfirm()"
+                    class="bg-yellow-600 text-white px-4 py-2 rounded-md hover:bg-yellow-700 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2 transition-colors duration-200"
+                  >
+                    <span class="material-icons text-sm mr-1">play_circle</span>
+                    Process Payroll
+                  </button>
+                  <button
+                    *ngIf="canApprovePayrollRun()"
+                    (click)="openApproveConfirm()"
+                    [disabled]="approvalInProgress"
+                    class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+                  >
+                    <span *ngIf="approvalInProgress" class="material-icons text-sm mr-1 animate-spin">hourglass_empty</span>
+                    <span *ngIf="!approvalInProgress" class="material-icons text-sm mr-1">check_circle</span>
+                    {{ approvalInProgress ? 'Approving...' : 'Approve' }}
+                  </button>
+                  <button
+                    *ngIf="canReleasePayrollRun()"
+                    (click)="releasePayrollRun()"
+                    class="bg-purple-600 text-white px-4 py-2 rounded-md hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 transition-colors duration-200"
+                  >
+                    <span class="material-icons text-sm mr-1">send</span>
+                    Release Payroll
+                  </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+          <!-- Employee Payslip Details -->
+          <div *ngIf="payrollReview && payrollReview.payslips.length > 0" class="bg-white rounded-lg shadow-sm border border-gray-200">
+            <div class="px-6 py-4 border-b border-gray-200">
+              <h3 class="text-lg font-medium text-gray-900">Employee Payslip Details</h3>
+              <p class="text-sm text-gray-600 mt-1">{{ payrollReview.payslips.length }} employee(s) in this payroll run</p>
+            </div>
+            <div class="overflow-x-auto">
+              <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                  <tr>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Employee
+                    </th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Basic Salary
+                    </th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Overtime
+                    </th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Allowances
+                    </th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Gross Pay
+                    </th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Deductions
+                    </th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Net Pay
+                    </th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Status
+                    </th>
+                  </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                  <tr *ngFor="let employee of payrollReview.payslips" class="hover:bg-gray-50 transition-colors duration-200">
+                    <td class="px-6 py-4 whitespace-nowrap">
+                      <div>
+                        <div class="text-sm font-medium text-gray-900">{{ employee.employeeName }}</div>
+                        <div class="text-sm text-gray-500">{{ employee.employeeNumber }} • {{ employee.department }}</div>
+                        <div class="text-sm text-gray-500">{{ employee.position }}</div>
+                      </div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {{ formatCurrency(employee.baseSalary) }}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {{ formatCurrency(employee.overtime) }}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {{ formatCurrency(employee.allowances) }}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                      {{ formatCurrency(employee.grossPay) }}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      <div class="space-y-1">
+                        <div class="flex items-center space-x-1 text-xs">
+                          <img src="assets/images/logos/sss.png" alt="SSS" class="w-3 h-3 object-contain">
+                          <span>SSS: {{ formatCurrency(employee.sss) }}</span>
+                        </div>
+                        <div class="flex items-center space-x-1 text-xs">
+                          <img src="assets/images/logos/ph_logo.png" alt="PhilHealth" class="w-3 h-3 object-contain">
+                          <span>PhilHealth: {{ formatCurrency(employee.philHealth) }}</span>
+                        </div>
+                        <div class="flex items-center space-x-1 text-xs">
+                          <img src="assets/images/logos/Pag-IBIG.svg.png" alt="Pag-IBIG" class="w-3 h-3 object-contain">
+                          <span>Pag-IBIG: {{ formatCurrency(employee.pagIBIG) }}</span>
+                        </div>
+                        <div class="flex items-center space-x-1 text-xs">
+                          <img src="assets/images/logos/bir.png" alt="BIR" class="w-3 h-3 object-contain">
+                          <span>BIR: {{ formatCurrency(employee.bir) }}</span>
+                        </div>
+                        <div class="text-xs font-medium">Total: {{ formatCurrency(getTotalDeductionsForEmployee(employee)) }}</div>
+              </div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                      {{ formatCurrency(employee.netPay) }}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                      <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ employee.status === 'included' ? 'bg-green-100 text-green-800' : employee.status === 'excluded' ? 'bg-red-100 text-red-800' : 'bg-yellow-100 text-yellow-800' }}">
+                        {{ employee.status | titlecase }}
+                      </span>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Approval Form -->
+          <div *ngIf="currentPayrollRun && canApprovePayrollRun()" class="bg-white rounded-lg shadow-sm border border-gray-200">
+            <div class="px-6 py-4 border-b border-gray-200">
+              <h3 class="text-lg font-medium text-gray-900">Approval Form</h3>
+              <p class="text-sm text-gray-600 mt-1">Review and approve this payroll run</p>
+            </div>
+            <div class="p-6">
+              <form [formGroup]="approvalForm" class="space-y-4">
+                <div>
+                  <label for="approvalStatus" class="block text-sm font-medium text-gray-700 mb-2">
+                    Approval Status
+                  </label>
+                  <select
+                    id="approvalStatus"
+                    formControlName="status"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                  >
+                    <option value="approved">Approve</option>
+                    <option value="rejected">Reject</option>
+                  </select>
+                </div>
+                <div>
                 <label for="approvalNotes" class="block text-sm font-medium text-gray-700 mb-2">
-                  Approval Notes
+                    Notes (Optional)
                 </label>
                 <textarea
                   id="approvalNotes"
-                  [(ngModel)]="approvalNotes"
+                    formControlName="notes"
                   rows="3"
                   class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="Add notes for this approval..."
+                    placeholder="Add any notes about this approval..."
                 ></textarea>
               </div>
-
-              <div class="flex justify-end space-x-4">
-                <button
-                  (click)="cancelPayrollRun()"
-                  *ngIf="currentPayrollRun.status === 'draft' || currentPayrollRun.status === 'pending'"
-                  class="bg-red-600 text-white px-6 py-2 rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-colors duration-200"
-                >
-                  Cancel Payroll
-                </button>
+                <div class="flex justify-end">
                 <button
                   (click)="approvePayrollRun()"
-                  *ngIf="currentPayrollRun.status === 'draft' || currentPayrollRun.status === 'pending'"
-                  class="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors duration-200"
-                >
-                  Approve Payroll
-                </button>
-                <button
-                  (click)="releasePayrollRun()"
-                  *ngIf="currentPayrollRun.status === 'approved'"
-                  class="bg-green-600 text-white px-6 py-2 rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-colors duration-200"
-                >
-                  Release Payroll
+                    [disabled]="!approvalForm.valid || approvalInProgress"
+                    class="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+                  >
+                    <span *ngIf="approvalInProgress" class="material-icons text-sm mr-1 animate-spin">hourglass_empty</span>
+                    <span *ngIf="!approvalInProgress" class="material-icons text-sm mr-1">check_circle</span>
+                    {{ approvalInProgress ? 'Processing...' : 'Submit Approval' }}
                 </button>
               </div>
+              </form>
             </div>
           </div>
         </div>
       </div>
     </main>
-  </div>
 </div>
+
+  <!-- Process Payroll Confirmation Modal -->
+  <div *ngIf="showProcessConfirmModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50" (click)="closeProcessConfirm()">
+    <div class="relative top-24 mx-auto p-6 border w-11/12 max-w-md shadow-lg rounded-md bg-white" (click)="$event.stopPropagation()">
+      <div class="flex items-start space-x-3">
+        <div class="flex-shrink-0 w-10 h-10 rounded-full bg-yellow-100 flex items-center justify-center">
+          <span class="material-icons text-yellow-600">play_circle</span>
+        </div>
+        <div class="flex-1">
+          <h3 class="text-base font-semibold text-gray-900">Process Payroll?</h3>
+          <p class="mt-1 text-sm text-gray-600">This will process the selected payroll run and generate payslips for all included employees.</p>
+          <div class="mt-4 bg-yellow-50 border border-yellow-200 rounded p-3 text-xs text-yellow-800">
+            Period: <span class="font-medium">{{ formatPayrollDate(getReviewPeriodStart()) }}</span> -
+            <span class="font-medium">{{ formatPayrollDate(getReviewPeriodEnd()) }}</span>
+          </div>
+        </div>
+      </div>
+      <div class="mt-6 flex items-center justify-end space-x-2">
+        <button (click)="closeProcessConfirm()" class="px-4 py-2 text-sm bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200">Cancel</button>
+        <button (click)="confirmProcessPayroll()" [disabled]="payrollProcessing" class="px-4 py-2 text-sm bg-yellow-600 text-white rounded-md hover:bg-yellow-700 disabled:opacity-50 disabled:cursor-not-allowed">
+          <span *ngIf="payrollProcessing" class="animate-spin rounded-full h-4 w-4 border-b-2 border-white inline-block mr-2"></span>
+          <span>Confirm & Process</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Approve Payroll Confirmation Modal -->
+  <div *ngIf="showApproveConfirmModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50" (click)="closeApproveConfirm()">
+    <div class="relative top-24 mx-auto p-6 border w-11/12 max-w-md shadow-lg rounded-md bg-white" (click)="$event.stopPropagation()">
+      <div class="flex items-start space-x-3">
+        <div class="flex-shrink-0 w-10 h-10 rounded-full bg-green-100 flex items-center justify-center">
+          <span class="material-icons text-green-600">verified</span>
+        </div>
+        <div class="flex-1">
+          <h3 class="text-base font-semibold text-gray-900">Approve Payroll Run?</h3>
+          <p class="mt-1 text-sm text-gray-600">This will approve the processed payroll run and make payslips visible to employees.</p>
+          <div class="mt-4 bg-green-50 border border-green-200 rounded p-3 text-xs text-green-800">
+            Period: <span class="font-medium">{{ formatPayrollDate(getReviewPeriodStart()) }}</span> -
+            <span class="font-medium">{{ formatPayrollDate(getReviewPeriodEnd()) }}</span>
+          </div>
+        </div>
+      </div>
+      <div class="mt-6 flex items-center justify-end space-x-2">
+        <button (click)="closeApproveConfirm()" class="px-4 py-2 text-sm bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200">Cancel</button>
+        <button (click)="confirmApprovePayroll()" [disabled]="approvalInProgress" class="px-4 py-2 text-sm bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed">
+          <span *ngIf="approvalInProgress" class="animate-spin rounded-full h-4 w-4 border-b-2 border-white inline-block mr-2"></span>
+          <span>Confirm & Approve</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Global Processing Overlay -->
+  <div *ngIf="payrollProcessing" class="fixed inset-0 bg-gray-800 bg-opacity-40 flex items-center justify-center z-[60]">
+    <div class="bg-white rounded-lg shadow-lg p-6 flex items-center space-x-3">
+      <span class="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></span>
+      <div>
+        <p class="text-sm font-medium text-gray-900">Processing payroll...</p>
+        <p class="text-xs text-gray-500">Please wait while we process the payroll run.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Temporary Success Banner -->
+  <div *ngIf="processingSuccess && processingMessage" class="fixed top-6 right-6 z-[70]">
+    <div class="bg-green-600 text-white px-4 py-2 rounded shadow flex items-center space-x-2">
+      <span class="material-icons text-sm">check_circle</span>
+      <span class="text-sm">{{ processingMessage }}</span>
+    </div>
+  </div>
+
+  <!-- Payslip Details Modal -->
+  <div *ngIf="showPayslipModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50" (click)="closePayslipModal()">
+    <div class="relative top-16 mx-auto p-4 border w-11/12 max-w-2xl shadow-lg rounded-md bg-white" (click)="$event.stopPropagation()">
+      <!-- Modal Header -->
+      <div class="flex items-center justify-between pb-3 border-b border-gray-200">
+        <div class="flex items-center space-x-2">
+          <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+            <span class="material-icons text-blue-600 text-sm">receipt_long</span>
+            </div>
+          <div>
+            <h3 class="text-base font-semibold text-gray-900">Payslip Details</h3>
+            <p class="text-xs text-gray-600">{{ selectedEmployeeForModal?.name }} - {{ selectedEmployeeForModal?.employeeId }}</p>
+          </div>
+        </div>
+            <button
+          (click)="closePayslipModal()"
+          class="text-gray-400 hover:text-gray-600 transition-colors duration-200"
+        >
+          <span class="material-icons text-sm">close</span>
+            </button>
+          </div>
+
+      <!-- Modal Content -->
+      <div class="py-4">
+        <!-- Employee Information -->
+        <div class="bg-gray-50 rounded-lg p-3 mb-4">
+          <h4 class="text-xs font-medium text-gray-900 mb-2">Employee Information</h4>
+          <div class="grid grid-cols-3 gap-3">
+            <div>
+              <p class="text-xs text-gray-500">Department</p>
+              <p class="text-xs font-medium text-gray-900">{{ selectedEmployeeForModal?.department }}</p>
+        </div>
+            <div>
+              <p class="text-xs text-gray-500">Position</p>
+              <p class="text-xs font-medium text-gray-900">{{ selectedEmployeeForModal?.position }}</p>
+            </div>
+            <div>
+              <p class="text-xs text-gray-500">Hours Worked</p>
+              <p class="text-xs font-medium text-gray-900">{{ selectedEmployeeForModal?.hoursWorked || 0 }}h</p>
+              <p class="text-xs text-gray-500" *ngIf="selectedEmployeeForModal?.attendanceData">
+                Present: {{ selectedEmployeeForModal?.attendanceData?.presentDays }}/{{ selectedEmployeeForModal?.attendanceData?.totalDays }} days
+              </p>
+          </div>
+            </div>
+                      </div>
+
+        <!-- Attendance Summary Section -->
+        <div class="mb-4" *ngIf="selectedEmployeeForModal?.attendanceData">
+          <h4 class="text-xs font-medium text-gray-900 mb-2 flex items-center">
+            <span class="material-icons text-blue-600 text-xs mr-1">schedule</span>
+            Attendance Summary
+          </h4>
+          <div class="bg-blue-50 rounded-lg p-3">
+            <div class="grid grid-cols-2 gap-3">
+              <div class="flex justify-between items-center">
+                <span class="text-xs text-gray-700">Total Days</span>
+                <span class="text-xs font-medium text-gray-900">{{ selectedEmployeeForModal?.attendanceData?.totalDays || 0 }}</span>
+              </div>
+              <div class="flex justify-between items-center">
+                <span class="text-xs text-gray-700">Present Days</span>
+                <span class="text-xs font-medium text-green-600">{{ selectedEmployeeForModal?.attendanceData?.presentDays || 0 }}</span>
+              </div>
+              <div class="flex justify-between items-center">
+                <span class="text-xs text-gray-700">Absent Days</span>
+                <span class="text-xs font-medium text-red-600">{{ selectedEmployeeForModal?.attendanceData?.absentDays || 0 }}</span>
+              </div>
+              <div class="flex justify-between items-center">
+                <span class="text-xs text-gray-700">Late Days</span>
+                <span class="text-xs font-medium text-yellow-600">{{ selectedEmployeeForModal?.attendanceData?.lateDays || 0 }}</span>
+              </div>
+            </div>
+            <div class="border-t border-blue-200 mt-2 pt-2">
+              <div class="flex justify-between items-center">
+                <span class="text-xs text-gray-700">Regular Hours</span>
+                <span class="text-xs font-semibold text-gray-900">{{ selectedEmployeeForModal?.attendanceData?.totalRegularHours || 0 }}h</span>
+              </div>
+              <div class="flex justify-between items-center mt-1">
+                <span class="text-xs text-gray-700">Overtime Hours</span>
+                <span class="text-xs font-semibold text-orange-600">{{ selectedEmployeeForModal?.attendanceData?.totalOvertimeHours || 0 }}h</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Earnings Section -->
+        <div class="mb-4">
+          <h4 class="text-xs font-medium text-gray-900 mb-2 flex items-center">
+            <span class="material-icons text-green-600 text-xs mr-1">add_circle</span>
+            Earnings
+          </h4>
+          <div class="bg-green-50 rounded-lg p-3">
+            <div class="flex justify-between items-center">
+              <span class="text-xs text-gray-700">Basic Salary</span>
+              <span class="text-xs font-medium text-gray-900">{{ formatCurrency(selectedEmployeeForModal?.baseSalary || 0) }}</span>
+            </div>
+            <div class="flex justify-between items-center mt-1" *ngIf="selectedEmployeeForModal && ((selectedEmployeeForModal.overtimeHours || 0) > 0 || (selectedEmployeeForModal.attendanceData?.totalOvertimeHours || 0) > 0)">
+              <span class="text-xs text-gray-700">Overtime ({{ selectedEmployeeForModal.attendanceData?.totalOvertimeHours || selectedEmployeeForModal.overtimeHours || 0 }}h)</span>
+              <span class="text-xs font-medium text-gray-900">{{ formatCurrency(((selectedEmployeeForModal.attendanceData?.totalOvertimeHours || selectedEmployeeForModal.overtimeHours || 0) * ((selectedEmployeeForModal.baseSalary || 0) / 160 / 8) * 1.5)) }}</span>
+            </div>
+            <div class="border-t border-green-200 mt-2 pt-2">
+              <div class="flex justify-between items-center">
+                <span class="text-xs font-semibold text-gray-900">Total Earnings</span>
+                <span class="text-xs font-bold text-green-600">{{ formatCurrency(selectedEmployeeForModal?.grossPay || 0) }}</span>
+        </div>
+            </div>
+          </div>
+            </div>
+
+        <!-- Deductions Section -->
+        <div class="mb-4">
+          <h4 class="text-xs font-medium text-gray-900 mb-2 flex items-center">
+            <span class="material-icons text-red-600 text-xs mr-1">remove_circle</span>
+            Deductions
+          </h4>
+          <div class="space-y-2">
+            <!-- SSS -->
+            <div class="bg-blue-50 rounded-lg p-2">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-2">
+                  <img src="assets/images/logos/sss.png" alt="SSS" class="w-6 h-6 object-contain">
+                <div>
+                    <p class="text-xs font-medium text-gray-900">SSS</p>
+                    <p class="text-xs text-gray-600">Social Security</p>
+                  </div>
+                </div>
+                <span class="text-xs font-semibold text-gray-900">{{ formatCurrency(selectedEmployeeForModal?.deductions?.insurance || 0) }}</span>
+              </div>
+                </div>
+
+            <!-- PhilHealth -->
+            <div class="bg-green-50 rounded-lg p-2">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-2">
+                  <img src="assets/images/logos/ph_logo.png" alt="PhilHealth" class="w-6 h-6 object-contain">
+                <div>
+                    <p class="text-xs font-medium text-gray-900">PhilHealth</p>
+                    <p class="text-xs text-gray-600">Health Insurance</p>
+                </div>
+              </div>
+                <span class="text-xs font-semibold text-gray-900">{{ formatCurrency(selectedEmployeeForModal?.deductions?.retirement || 0) }}</span>
+                </div>
+                </div>
+
+            <!-- Pag-IBIG -->
+            <div class="bg-yellow-50 rounded-lg p-2">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-2">
+                  <img src="assets/images/logos/Pag-IBIG.svg.png" alt="Pag-IBIG" class="w-6 h-6 object-contain">
+                  <div>
+                    <p class="text-xs font-medium text-gray-900">Pag-IBIG</p>
+                    <p class="text-xs text-gray-600">Housing & Savings</p>
+                </div>
+              </div>
+                <span class="text-xs font-semibold text-gray-900">{{ formatCurrency(selectedEmployeeForModal?.deductions?.other || 0) }}</span>
+                    </div>
+                    </div>
+
+            <!-- BIR Tax -->
+            <div class="bg-red-50 rounded-lg p-2">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-2">
+                  <img src="assets/images/logos/bir.png" alt="BIR" class="w-6 h-6 object-contain">
+                  <div>
+                    <p class="text-xs font-medium text-gray-900">BIR Tax</p>
+                    <p class="text-xs text-gray-600">Withholding Tax</p>
+                  </div>
+                </div>
+                <span class="text-xs font-semibold text-gray-900">{{ formatCurrency(selectedEmployeeForModal?.deductions?.tax || 0) }}</span>
+                    </div>
+                    </div>
+
+            <!-- Total Deductions -->
+            <div class="bg-gray-50 rounded-lg p-2 border-t border-gray-200">
+              <div class="flex justify-between items-center">
+                <span class="text-xs font-semibold text-gray-900">Total Deductions</span>
+                <span class="text-xs font-bold text-red-600">{{ formatCurrency((selectedEmployeeForModal?.deductions?.tax || 0) + (selectedEmployeeForModal?.deductions?.insurance || 0) + (selectedEmployeeForModal?.deductions?.retirement || 0) + (selectedEmployeeForModal?.deductions?.other || 0)) }}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+        <!-- Net Pay Summary -->
+        <div class="bg-blue-50 rounded-lg p-3 border border-blue-200">
+          <div class="flex justify-between items-center">
+            <div>
+              <h4 class="text-sm font-semibold text-gray-900">Net Pay</h4>
+              <p class="text-xs text-gray-600">Amount to be received</p>
+              </div>
+            <div class="text-right">
+              <p class="text-lg font-bold text-blue-600">{{ formatCurrency(selectedEmployeeForModal?.netPay || 0) }}</p>
+              <p class="text-xs text-gray-500">After deductions</p>
+            </div>
+          </div>
+            </div>
+              </div>
+
+      <!-- Modal Footer -->
+      <div class="flex justify-end space-x-2 pt-3 border-t border-gray-200">
+                <button
+          (click)="closePayslipModal()"
+          class="px-3 py-1.5 text-xs font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-colors duration-200"
+        >
+          Close
+                </button>
+                <button
+          (click)="downloadPayslip(selectedEmployeeForModal)"
+          class="px-3 py-1.5 text-xs font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors duration-200 flex items-center"
+        >
+          <span class="material-icons text-xs mr-1">download</span>
+          Download
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+  <!-- Payroll Details Modal -->
+  <div *ngIf="showPayrollDetailsModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50" (click)="closePayrollDetailsModal()">
+    <div class="relative top-16 mx-auto p-3 border w-11/12 max-w-4xl shadow-lg rounded-md bg-white" (click)="$event.stopPropagation()">
+      <!-- Modal Header -->
+      <div class="flex items-center justify-between pb-3 border-b border-gray-200">
+        <div class="flex items-center space-x-2">
+          <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+            <span class="material-icons text-blue-600 text-sm">receipt_long</span>
+          </div>
+          <div>
+            <h3 class="text-base font-semibold text-gray-900">Payroll Run Details</h3>
+            <p class="text-xs text-gray-600" *ngIf="selectedPayrollForModal">
+              {{ formatDate(selectedPayrollForModal.cutoffStart) }} - {{ formatDate(selectedPayrollForModal.cutoffEnd) }}
+            </p>
+          </div>
+        </div>
+        <button
+          (click)="closePayrollDetailsModal()"
+          class="text-gray-400 hover:text-gray-600 transition-colors duration-200"
+        >
+          <span class="material-icons text-sm">close</span>
+        </button>
+      </div>
+
+      <!-- Modal Content -->
+      <div class="py-4" *ngIf="selectedPayrollForModal">
+        <!-- Payroll Summary Cards -->
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
+          <div class="bg-blue-50 rounded-lg p-3">
+            <div class="flex items-center">
+              <div class="flex-shrink-0">
+                <span class="material-icons text-blue-600 text-sm">people</span>
+              </div>
+              <div class="ml-2">
+                <p class="text-xs font-medium text-blue-600">Employees</p>
+                <p class="text-lg font-bold text-blue-900">{{ selectedPayrollForModal.totalEmployees }}</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="bg-green-50 rounded-lg p-3">
+            <div class="flex items-center">
+              <div class="flex-shrink-0">
+                <span class="material-icons text-green-600 text-sm">payments</span>
+              </div>
+              <div class="ml-2">
+                <p class="text-xs font-medium text-green-600">Gross Pay</p>
+                <p class="text-lg font-bold text-green-900">{{ formatCurrency(selectedPayrollForModal.grossPay) }}</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="bg-red-50 rounded-lg p-3">
+            <div class="flex items-center">
+              <div class="flex-shrink-0">
+                <span class="material-icons text-red-600 text-sm">remove_circle</span>
+              </div>
+              <div class="ml-2">
+                <p class="text-xs font-medium text-red-600">Deductions</p>
+                <p class="text-lg font-bold text-red-900">{{ formatCurrency(selectedPayrollForModal.totalDeductions) }}</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="bg-purple-50 rounded-lg p-3">
+            <div class="flex items-center">
+              <div class="flex-shrink-0">
+                <span class="material-icons text-purple-600 text-sm">account_balance_wallet</span>
+              </div>
+              <div class="ml-2">
+                <p class="text-xs font-medium text-purple-600">Net Pay</p>
+                <p class="text-lg font-bold text-purple-900">{{ formatCurrency(selectedPayrollForModal.netPay) }}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Payroll Information -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
+          <!-- Basic Information -->
+          <div class="bg-gray-50 rounded-lg p-3">
+            <h4 class="text-xs font-medium text-gray-900 mb-2 flex items-center">
+              <span class="material-icons text-blue-600 text-xs mr-1">info</span>
+              Basic Information
+            </h4>
+            <div class="space-y-1">
+              <div class="flex justify-between items-center">
+                <span class="text-xs text-gray-600">Pay Date</span>
+                <span class="text-xs font-medium text-gray-900">{{ formatDate(selectedPayrollForModal.payDate) }}</span>
+              </div>
+              <div class="flex justify-between items-center">
+                <span class="text-xs text-gray-600">Status</span>
+                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium {{ getStatusColor(selectedPayrollForModal.status) }}">
+                  {{ selectedPayrollForModal.status | titlecase }}
+                </span>
+              </div>
+              <div class="flex justify-between items-center">
+                <span class="text-xs text-gray-600">Created</span>
+                <span class="text-xs font-medium text-gray-900">{{ formatDate(selectedPayrollForModal.createdAt) }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Employee List -->
+          <div class="bg-gray-50 rounded-lg p-3">
+            <h4 class="text-xs font-medium text-gray-900 mb-2 flex items-center">
+              <span class="material-icons text-green-600 text-xs mr-1">people</span>
+              Employees ({{ selectedPayrollForModal.totalEmployees }})
+            </h4>
+            <div class="space-y-1 max-h-32 overflow-y-auto">
+              <div *ngFor="let employeeName of selectedPayrollForModal.employeeNames?.slice(0, 5)" class="text-xs text-gray-700">
+                {{ employeeName }}
+              </div>
+              <div *ngIf="selectedPayrollForModal.employeeNames && selectedPayrollForModal.employeeNames.length > 5" class="text-xs text-gray-500">
+                +{{ selectedPayrollForModal.employeeNames.length - 5 }} more
+              </div>
+              <div *ngIf="!selectedPayrollForModal.employeeNames || selectedPayrollForModal.employeeNames.length === 0" class="text-xs text-gray-500">
+                No employee names available
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Financial Breakdown -->
+        <div class="bg-gray-50 rounded-lg p-3 mb-4">
+          <h4 class="text-xs font-medium text-gray-900 mb-2 flex items-center">
+            <span class="material-icons text-purple-600 text-xs mr-1">account_balance</span>
+            Financial Summary
+          </h4>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div class="bg-white rounded-lg p-2">
+              <h5 class="text-xs font-medium text-gray-700 mb-1">Earnings</h5>
+              <div class="space-y-1">
+                <div class="flex justify-between items-center text-xs">
+                  <span class="text-gray-600">Basic Salary</span>
+                  <span class="font-medium">{{ formatCurrency(selectedPayrollForModal.grossPay - (selectedPayrollForModal.totalOvertime || 0)) }}</span>
+                </div>
+                <div class="flex justify-between items-center text-xs" *ngIf="selectedPayrollForModal.totalOvertime && selectedPayrollForModal.totalOvertime > 0">
+                  <span class="text-gray-600">Overtime</span>
+                  <span class="font-medium">{{ formatCurrency(selectedPayrollForModal.totalOvertime) }}</span>
+                </div>
+                <div class="border-t border-gray-200 pt-1 mt-1">
+                  <div class="flex justify-between items-center text-xs font-semibold">
+                    <span class="text-gray-900">Total</span>
+                    <span class="text-green-600">{{ formatCurrency(selectedPayrollForModal.grossPay) }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="bg-white rounded-lg p-2">
+              <h5 class="text-xs font-medium text-gray-700 mb-1">Deductions</h5>
+              <div class="space-y-1">
+                <div class="flex justify-between items-center text-xs">
+                  <span class="text-gray-600">Taxes & Contributions</span>
+                  <span class="font-medium">{{ formatCurrency(selectedPayrollForModal.totalDeductions) }}</span>
+                </div>
+                <div class="border-t border-gray-200 pt-1 mt-1">
+                  <div class="flex justify-between items-center text-xs font-semibold">
+                    <span class="text-gray-900">Total</span>
+                    <span class="text-red-600">{{ formatCurrency(selectedPayrollForModal.totalDeductions) }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="bg-white rounded-lg p-2">
+              <h5 class="text-xs font-medium text-gray-700 mb-1">Net Pay</h5>
+              <div class="space-y-1">
+                <div class="flex justify-between items-center text-xs">
+                  <span class="text-gray-600">Gross Pay</span>
+                  <span class="font-medium">{{ formatCurrency(selectedPayrollForModal.grossPay) }}</span>
+                </div>
+                <div class="flex justify-between items-center text-xs">
+                  <span class="text-gray-600">Less: Deductions</span>
+                  <span class="font-medium text-red-600">-{{ formatCurrency(selectedPayrollForModal.totalDeductions) }}</span>
+                </div>
+                <div class="border-t border-gray-200 pt-1 mt-1">
+                  <div class="flex justify-between items-center text-xs font-bold">
+                    <span class="text-gray-900">Net Pay</span>
+                    <span class="text-blue-600">{{ formatCurrency(selectedPayrollForModal.netPay) }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Notes Section -->
+        <div class="bg-gray-50 rounded-lg p-3" *ngIf="selectedPayrollForModal.notes">
+          <h4 class="text-xs font-medium text-gray-900 mb-2 flex items-center">
+            <span class="material-icons text-yellow-600 text-xs mr-1">note</span>
+            Notes
+          </h4>
+          <p class="text-xs text-gray-700">{{ selectedPayrollForModal.notes }}</p>
+        </div>
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="flex justify-end space-x-2 pt-3 border-t border-gray-200">
+        <button
+          (click)="closePayrollDetailsModal()"
+          class="px-3 py-1.5 text-xs font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-colors duration-200"
+        >
+          Close
+        </button>
+        <button
+          (click)="openFullReviewFromModal()"
+          class="px-3 py-1.5 text-xs font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors duration-200 flex items-center"
+        >
+          <span class="material-icons text-xs mr-1">visibility</span>
+          Full Review
+        </button>
+      </div>
+    </div>
+  </div>
+
+
