@@ -49,8 +49,10 @@ export class RequestLoanComponent implements OnInit {
     type: 'multiPurpose',
     principal: 0,
     installment: 0,
+    termMonths: 0,
     startDate: '',
     endDate: '',
+    paymentSchedule: 'monthly',
     remarks: ''
   };
 
@@ -70,8 +72,10 @@ export class RequestLoanComponent implements OnInit {
     this.errorMessage = '';
 
     try {
+      console.log('Loading loan data...');
       // Load loans
       const loansResponse = await this.loanService.getMyLoans().toPromise();
+      console.log('Loans response:', loansResponse);
       if (loansResponse) {
         this.activeLoans = loansResponse.loans;
       }
@@ -149,8 +153,10 @@ export class RequestLoanComponent implements OnInit {
       type: 'multiPurpose',
       principal: 0,
       installment: 0,
+      termMonths: 0,
       startDate: new Date().toISOString().split('T')[0], // Today's date
       endDate: '',
+      paymentSchedule: 'monthly',
       remarks: ''
     };
     this.showModal = true;
@@ -194,6 +200,12 @@ export class RequestLoanComponent implements OnInit {
     } else {
       // Estimate term based on principal and installment
       termMonths = Math.ceil(this.form.principal / this.form.installment);
+    }
+
+    // persist computed term and default schedule if missing
+    this.form.termMonths = termMonths;
+    if (!this.form.paymentSchedule) {
+      this.form.paymentSchedule = 'monthly';
     }
 
     this.confirmMessage = `Submit loan request for ${this.loanService.formatCurrency(this.form.principal)} over approximately ${termMonths} month(s)?`;

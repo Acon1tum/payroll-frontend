@@ -36,50 +36,122 @@
       <h2 class="text-lg font-semibold text-gray-900">Loans</h2>
       <button class="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 transition-colors" (click)="openAddLoan()">Add Loan</button>
     </div>
-    <div class="overflow-x-auto">
+
+    <!-- Error Message -->
+    <div *ngIf="errorMessage" class="mb-4 p-3 bg-red-50 border border-red-200 rounded-md">
+      <p class="text-sm text-red-800">{{ errorMessage }}</p>
+    </div>
+
+    <!-- Loading State -->
+    <div *ngIf="isLoading" class="flex items-center justify-center py-8">
+      <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      <span class="ml-2 text-gray-600">Loading loans...</span>
+    </div>
+
+    <div class="overflow-x-auto" *ngIf="!isLoading">
       <table class="min-w-full divide-y divide-gray-200">
         <thead class="bg-gray-100">
           <tr>
-            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Employee ID</th>
+            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Employee</th>
             <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Loan Type</th>
             <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Principal</th>
-            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Interest Rate (%)</th>
-            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Term (Months)</th>
+            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Balance</th>
+            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Installment</th>
             <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Start Date</th>
-            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Payment Schedule</th>
-            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Auto-Deduct</th>
-            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Remarks</th>
             <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-            <th class="px-4 py-2"></th>
+            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Remarks</th>
+            <th class="px-4 py-2 text-center text-xs font-medium text-gray-500 uppercase">Actions</th>
           </tr>
         </thead>
         <tbody class="bg-white divide-y divide-gray-200">
           <tr *ngFor="let loan of loans; let i = index">
-            <td class="px-4 py-2">{{ loan.employeeId }}</td>
-            <td class="px-4 py-2">{{ loan.loanType }}</td>
-            <td class="px-4 py-2">{{ loan.principal }}</td>
-            <td class="px-4 py-2">{{ loan.interestRate }}</td>
-            <td class="px-4 py-2">{{ loan.termMonths }}</td>
-            <td class="px-4 py-2">{{ loan.startDate | date:'shortDate' }}</td>
-            <td class="px-4 py-2">{{ loan.paymentSchedule }}</td>
-            <td class="px-4 py-2">{{ loan.autoDeduct ? 'Yes' : 'No' }}</td>
-            <td class="px-4 py-2">{{ loan.remarks }}</td>
             <td class="px-4 py-2">
-              <span [ngClass]="{
-                'text-yellow-600': loan.status === 'pending',
-                'text-green-600': loan.status === 'approved',
-                'text-red-600': loan.status === 'rejected'
-              }">{{ (loan.status || 'pending') | titlecase }}</span>
+              <div>
+                <div class="font-medium text-gray-900">{{ getEmployeeName(loan) }}</div>
+                <div class="text-sm text-gray-500">{{ getEmployeeNumber(loan) }}</div>
+              </div>
             </td>
-            <td class="px-4 py-2 text-right">
-              <button class="text-green-600 hover:underline mr-2" *ngIf="loan.status === 'pending'" (click)="approveLoan(i)">Approve</button>
-              <button class="text-red-600 hover:underline mr-2" *ngIf="loan.status === 'pending'" (click)="rejectLoan(i)">Reject</button>
-              <button class="text-blue-600 hover:underline mr-2" (click)="openEditLoan(i)">Edit</button>
-              <button class="text-red-600 hover:underline" (click)="confirmDeleteLoan(i)">Delete</button>
+            <td class="px-4 py-2">{{ getLoanTypeDisplayName(loan.type) }}</td>
+            <td class="px-4 py-2">{{ formatCurrency(loan.principal) }}</td>
+            <td class="px-4 py-2">{{ formatCurrency(loan.balance) }}</td>
+            <td class="px-4 py-2">{{ formatCurrency(loan.installment) }}</td>
+            <td class="px-4 py-2">{{ loan.startDate | date:'shortDate' }}</td>
+            <td class="px-4 py-2">
+              <span [ngClass]="getStatusColor(loan.status)" class="px-2 py-1 text-xs font-medium rounded-full">
+                {{ getStatusDisplayName(loan.status) }}
+              </span>
+            </td>
+            <td class="px-4 py-2 text-sm text-gray-600">{{ loan.remarks || '-' }}</td>
+            <td class="px-4 py-2 text-center">
+              <div class="relative inline-block text-left">
+                <button 
+                  type="button" 
+                  class="inline-flex items-center justify-center w-8 h-8 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors duration-200"
+                  (click)="toggleDropdown(i)"
+                  [class.bg-gray-100]="openDropdownIndex === i"
+                >
+                  <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z"></path>
+                  </svg>
+                </button>
+                
+                <!-- Dropdown menu -->
+                <div 
+                  *ngIf="openDropdownIndex === i" 
+                  class="absolute right-0 z-10 mt-2 w-48 bg-white rounded-md shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none"
+                  role="menu"
+                >
+                  <div class="py-1" role="none">
+                    <button 
+                      *ngIf="loan.status === 'pending'"
+                      class="flex items-center w-full px-4 py-2 text-sm text-green-700 hover:bg-green-50 transition-colors duration-200"
+                      (click)="approveLoan(i); closeDropdown()"
+                    >
+                      <svg class="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                      </svg>
+                      Approve
+                    </button>
+                    <button 
+                      *ngIf="loan.status === 'pending'"
+                      class="flex items-center w-full px-4 py-2 text-sm text-red-700 hover:bg-red-50 transition-colors duration-200"
+                      (click)="rejectLoan(i); closeDropdown()"
+                    >
+                      <svg class="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                      </svg>
+                      Reject
+                    </button>
+                    <button 
+                      class="flex items-center w-full px-4 py-2 text-sm text-blue-700 hover:bg-blue-50 transition-colors duration-200"
+                      (click)="openEditLoan(i); closeDropdown()"
+                    >
+                      <svg class="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                      </svg>
+                      Edit
+                    </button>
+                    <button 
+                      class="flex items-center w-full px-4 py-2 text-sm text-red-700 hover:bg-red-50 transition-colors duration-200"
+                      (click)="confirmDeleteLoan(i); closeDropdown()"
+                    >
+                      <svg class="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                      </svg>
+                      Delete
+                    </button>
+                  </div>
+                </div>
+              </div>
             </td>
           </tr>
         </tbody>
       </table>
+      
+      <!-- No loans message -->
+      <div *ngIf="loans.length === 0" class="text-center py-8 text-gray-500">
+        <p>No loans found.</p>
+      </div>
     </div>
   </div>
 

@@ -2,7 +2,8 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
-import { forkJoin } from 'rxjs';
+import { forkJoin, of } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 import { HeaderComponent } from '../../../../shared/header/header.component';
 import { SidebarComponent } from '../../../../shared/sidebar/sidebar.component';
 import { PayrollService, PayrollRun, PayrollReview, PayrollRegister, PayslipReviewItem, PayrollApproval, PayrollSummary } from '../../../../services/payroll.service';
@@ -723,10 +724,27 @@ export class RunPayrollComponent implements OnInit, OnDestroy {
   loadPayrollReview(payrollRunId: string): void {
     this.reviewInProgress = true;
     
-    // Fetch payroll summary and employee details in parallel
-    const summaryRequest = this.payrollService.getPayrollSummaryForRun(payrollRunId);
-    const employeeDetailsRequest = this.payrollService.getEmployeePayrollDetails(payrollRunId);
-    const payslipsRequest = this.payrollService.getPayslipsForPayrollRun(payrollRunId);
+    // Try to fetch payroll summary and employee details, but gracefully fallback if endpoints don't exist
+    const summaryRequest = this.payrollService.getPayrollSummaryForRun(payrollRunId).pipe(
+      catchError(error => {
+        console.warn('Payroll summary endpoint not available:', error);
+        return of({ success: false, data: null });
+      })
+    );
+    
+    const employeeDetailsRequest = this.payrollService.getEmployeePayrollDetails(payrollRunId).pipe(
+      catchError(error => {
+        console.warn('Employee details endpoint not available:', error);
+        return of({ success: false, data: [] });
+      })
+    );
+    
+    const payslipsRequest = this.payrollService.getPayslipsForPayrollRun(payrollRunId).pipe(
+      catchError(error => {
+        console.warn('Payslips endpoint not available:', error);
+        return of({ success: false, data: [] });
+      })
+    );
 
     // Combine all requests
     forkJoin({
@@ -735,7 +753,8 @@ export class RunPayrollComponent implements OnInit, OnDestroy {
       payslips: payslipsRequest
     }).subscribe({
       next: (responses) => {
-        if (responses.summary.success && responses.employeeDetails.success && responses.payslips.success) {
+        // Use API data if available, otherwise build from local data
+        if (responses.summary.success && responses.employeeDetails.success && responses.payslips.success && responses.summary.data) {
           // Create payroll review from the combined data
           this.payrollReview = {
             payrollRunId: payrollRunId,
@@ -754,17 +773,17 @@ export class RunPayrollComponent implements OnInit, OnDestroy {
             periodStart: this.currentPayrollRun?.periodStart || new Date(),
             periodEnd: this.currentPayrollRun?.periodEnd || new Date(),
             payDate: this.currentPayrollRun?.payDate || new Date(),
-            payslips: responses.employeeDetails.data
+            payslips: responses.employeeDetails.data || []
           };
-          this.reviewInProgress = false;
         } else {
+          // Fallback to local data
           this.buildLocalPayrollReview();
-          this.reviewInProgress = false;
         }
+        this.reviewInProgress = false;
       },
       error: (error) => {
         console.error('Error loading payroll review:', error);
-        this.showNotification('Error loading payroll review, showing local summary', 'warning');
+        this.showNotification('Using local payroll data (some features may be limited)', 'info');
         this.buildLocalPayrollReview();
         this.reviewInProgress = false;
       }

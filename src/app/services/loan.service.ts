@@ -1,8 +1,8 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, throwError, of } from 'rxjs';
 import { environment } from '../../environment/environment';
-import { map } from 'rxjs/operators';
+import { map, catchError } from 'rxjs/operators';
 
 export interface Loan {
   id: string;
@@ -10,10 +10,20 @@ export interface Loan {
   principal: number;
   balance: number;
   installment: number;
+  termMonths: number;
   startDate: string;
   endDate?: string;
-  status: 'active' | 'paid' | 'writtenOff';
+  paymentSchedule: 'monthly' | 'semiMonthly';
+  status: 'pending' | 'approved' | 'rejected' | 'active' | 'paid' | 'writtenOff';
   createdAt: string;
+  remarks?: string;
+  employeeId?: string;
+  employee?: {
+    id: string;
+    firstName: string;
+    lastName: string;
+    employeeNumber: string;
+  };
   payments?: LoanPayment[];
 }
 
@@ -49,13 +59,15 @@ export interface CreateLoanRequest {
   type: 'multiPurpose' | 'policy' | 'consolidated' | 'custom';
   principal: number;
   installment: number;
+  termMonths: number;
   startDate: string;
   endDate?: string;
+  paymentSchedule: 'monthly' | 'semiMonthly';
   remarks?: string;
 }
 
 export interface UpdateLoanStatus {
-  status: 'active' | 'paid' | 'writtenOff';
+  status: 'pending' | 'approved' | 'rejected' | 'active' | 'paid' | 'writtenOff';
   remarks?: string;
 }
 
@@ -79,8 +91,23 @@ export class LoanService {
 
   // Employee endpoints
   getMyLoans(): Observable<{ loans: Loan[]; totalActiveLoans: number; totalBalance: number }> {
-    return this.http.get<any>(`${this.API_URL}/loans/my-loans`).pipe(
-      map(response => response.success ? response.data : { loans: [], totalActiveLoans: 0, totalBalance: 0 })
+    console.log('Making request to:', `${this.API_URL}/employee/loans`);
+    return this.http.get<any>(`${this.API_URL}/employee/loans`).pipe(
+      map(response => {
+        console.log('Raw response from server:', response);
+        if (response.success && response.data) {
+          return {
+            loans: response.data,
+            totalActiveLoans: response.summary?.activeLoans || 0,
+            totalBalance: response.summary?.totalActiveBalance || 0
+          };
+        }
+        return { loans: [], totalActiveLoans: 0, totalBalance: 0 };
+      }),
+      catchError((error: any) => {
+        console.error('Error in getMyLoans:', error);
+        return throwError(() => error);
+      })
     );
   }
 
@@ -91,45 +118,109 @@ export class LoanService {
   }
 
   createLoanRequest(loanData: CreateLoanRequest): Observable<{ message: string; data: Loan }> {
-    return this.http.post<any>(`${this.API_URL}/loans/my-loans`, loanData).pipe(
-      map(response => response.success ? response : { message: 'Failed to create loan', data: null })
+    return this.http.post<any>(`${this.API_URL}/employee/loans/request`, loanData).pipe(
+      map(response => response.success ? response : { message: 'Failed to create loan request', data: null })
     );
   }
 
   getLoanPayments(loanId: string): Observable<{
-    loan: Loan;
+    loan: Loan | null;
     payments: LoanPayment[];
     totalPaid: number;
     remainingBalance: number;
   }> {
-    return this.http.get<any>(`${this.API_URL}/loans/my-loans/${loanId}/payments`).pipe(
-      map(response => response.success ? response.data : { loan: null, payments: [], totalPaid: 0, remainingBalance: 0 })
+    // Get all loans and find the specific one with payments
+    return this.http.get<any>(`${this.API_URL}/employee/loans`).pipe(
+      map(response => {
+        if (response.success && response.data) {
+          const loan = response.data.find((l: Loan) => l.id === loanId);
+          if (loan) {
+            const payments = loan.payments || [];
+            const totalPaid = payments.reduce((sum: number, payment: LoanPayment) => sum + Number(payment.amount), 0);
+            const remainingBalance = Number(loan.balance) || 0;
+            return { loan, payments, totalPaid, remainingBalance };
+          }
+        }
+        return { loan: null, payments: [], totalPaid: 0, remainingBalance: 0 };
+      }),
+      catchError(error => {
+        console.warn('Error loading loan payments:', error);
+        return of({ loan: null, payments: [], totalPaid: 0, remainingBalance: 0 });
+      })
     );
   }
 
   getLoanSchedule(loanId: string): Observable<{
-    loan: Loan;
+    loan: Loan | null;
     schedule: LoanSchedule[];
   }> {
-    return this.http.get<any>(`${this.API_URL}/loans/my-loans/${loanId}/schedule`).pipe(
-      map(response => response.success ? response.data : { loan: null, schedule: [] })
+    // Get all loans and find the specific one
+    return this.http.get<any>(`${this.API_URL}/employee/loans`).pipe(
+      map(response => {
+        if (response.success && response.data) {
+          const loan = response.data.find((l: Loan) => l.id === loanId);
+          if (loan) {
+            // Generate a basic schedule if not available
+            const schedule: LoanSchedule[] = loan.schedule || [];
+            return { loan, schedule };
+          }
+        }
+        return { loan: null, schedule: [] };
+      }),
+      catchError(error => {
+        console.warn('Error loading loan schedule:', error);
+        return of({ loan: null, schedule: [] });
+      })
     );
   }
 
   downloadLoanSummary(loanId: string): Observable<{
-    loan: Loan;
+    loan: Loan | null;
     payments: LoanPayment[];
     totalPaid: number;
     remainingBalance: number;
   }> {
-    return this.http.get<any>(`${this.API_URL}/loans/my-loans/${loanId}/summary`).pipe(
-      map(response => response.success ? response.data : { loan: null, payments: [], totalPaid: 0, remainingBalance: 0 })
+    // Use the same approach as getLoanPayments
+    return this.http.get<any>(`${this.API_URL}/employee/loans`).pipe(
+      map(response => {
+        if (response.success && response.data) {
+          const loan = response.data.find((l: Loan) => l.id === loanId);
+          if (loan) {
+            const payments = loan.payments || [];
+            const totalPaid = payments.reduce((sum: number, payment: LoanPayment) => sum + Number(payment.amount), 0);
+            const remainingBalance = Number(loan.balance) || 0;
+            return { loan, payments, totalPaid, remainingBalance };
+          }
+        }
+        return { loan: null, payments: [], totalPaid: 0, remainingBalance: 0 };
+      }),
+      catchError(error => {
+        console.warn('Error loading loan summary:', error);
+        return of({ loan: null, payments: [], totalPaid: 0, remainingBalance: 0 });
+      })
     );
   }
 
   getLoanStats(): Observable<LoanStats> {
-    return this.http.get<any>(`${this.API_URL}/loans/my-loans/stats`).pipe(
-      map(response => response.success ? response.data : { totalLoans: 0, activeLoans: 0, totalBalance: 0, totalPaid: 0, averageLoanAmount: 0 })
+    return this.http.get<any>(`${this.API_URL}/employee/loans/stats`).pipe(
+      map(response => {
+        if (response.success && response.summary) {
+          return {
+            totalLoans: response.summary.totalLoans || 0,
+            activeLoans: response.summary.activeLoans || 0,
+            totalBalance: response.summary.totalActiveBalance || 0,
+            totalPaid: (response.summary.totalPrincipal || 0) - (response.summary.totalBalance || 0),
+            averageLoanAmount: response.summary.totalLoans > 0 ? (response.summary.totalPrincipal || 0) / response.summary.totalLoans : 0
+          };
+        }
+        return {
+          totalLoans: 0,
+          activeLoans: 0,
+          totalBalance: 0,
+          totalPaid: 0,
+          averageLoanAmount: 0
+        };
+      })
     );
   }
 
@@ -146,9 +237,40 @@ export class LoanService {
     if (params?.status) queryParams.append('status', params.status);
     if (params?.employeeId) queryParams.append('employeeId', params.employeeId);
 
-    const url = `${this.API_URL}/loans/all${queryParams.toString() ? '?' + queryParams.toString() : ''}`;
+    const url = `${this.API_URL}/payroll/loans${queryParams.toString() ? '?' + queryParams.toString() : ''}`;
     return this.http.get<any>(url).pipe(
-      map(response => response.success ? response.data : { loans: [], pagination: { page: 1, limit: 10, total: 0, pages: 0 } })
+      map(response => {
+        if (response.success && response.data) {
+          return {
+            data: response.data,
+            pagination: {
+              page: params?.page || 1,
+              limit: params?.limit || 10,
+              total: response.data.length,
+              pages: Math.ceil(response.data.length / (params?.limit || 10))
+            }
+          };
+        }
+        return { data: [], pagination: { page: 1, limit: 10, total: 0, pages: 0 } };
+      })
+    );
+  }
+
+  createLoan(loanData: CreateLoanRequest & { employeeId: string }): Observable<{
+    message: string;
+    data: Loan;
+  }> {
+    return this.http.post<any>(`${this.API_URL}/payroll/loans`, loanData).pipe(
+      map(response => response.success ? response : { message: 'Failed to create loan', data: null })
+    );
+  }
+
+  updateLoan(loanId: string, loanData: Partial<CreateLoanRequest>): Observable<{
+    message: string;
+    data: Loan;
+  }> {
+    return this.http.put<any>(`${this.API_URL}/payroll/loans/${loanId}`, loanData).pipe(
+      map(response => response.success ? response : { message: 'Failed to update loan', data: null })
     );
   }
 
@@ -156,8 +278,16 @@ export class LoanService {
     message: string;
     data: { id: string; status: string };
   }> {
-    return this.http.patch<any>(`${this.API_URL}/loans/${loanId}/status`, statusData).pipe(
+    return this.http.put<any>(`${this.API_URL}/payroll/loans/${loanId}/status`, statusData).pipe(
       map(response => response.success ? response : { message: 'Failed to update status', data: { id: loanId, status: '' } })
+    );
+  }
+
+  deleteLoan(loanId: string): Observable<{
+    message: string;
+  }> {
+    return this.http.delete<any>(`${this.API_URL}/payroll/loans/${loanId}`).pipe(
+      map(response => response.success ? response : { message: 'Failed to delete loan' })
     );
   }
 
@@ -181,6 +311,9 @@ export class LoanService {
 
   getStatusDisplayName(status: string): string {
     const statusMap: { [key: string]: string } = {
+      pending: 'Pending',
+      approved: 'Approved',
+      rejected: 'Rejected',
       active: 'Active',
       paid: 'Paid',
       writtenOff: 'Written Off'
@@ -190,6 +323,9 @@ export class LoanService {
 
   getStatusColor(status: string): string {
     const colorMap: { [key: string]: string } = {
+      pending: 'bg-yellow-100 text-yellow-800',
+      approved: 'bg-green-100 text-green-800',
+      rejected: 'bg-red-100 text-red-800',
       active: 'bg-blue-100 text-blue-800',
       paid: 'bg-green-100 text-green-800',
       writtenOff: 'bg-red-100 text-red-800'

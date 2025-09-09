@@ -10,6 +10,8 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const router = inject(Router);
   
   const token = authService.token;
+  console.log('Auth interceptor - token:', token ? 'present' : 'missing');
+  console.log('Request URL:', req.url);
   
   if (token) {
     req = req.clone({
@@ -17,6 +19,9 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
         Authorization: `Bearer ${token}`
       }
     });
+    console.log('Authorization header added');
+  } else {
+    console.log('No token found, request will be sent without authorization');
   }
 
   return next(req).pipe(
