@@ -47,6 +47,11 @@ export class PayrollManagementComponent implements OnInit, OnDestroy {
   autoRefresh = true;
   refreshInterval = 30000; // 30 seconds
 
+  // Confirmation modal state
+  showConfirmModal = false;
+  confirming = false;
+  pendingAction: { type: 'approveTimekeeping' | 'completeComputation' | 'completeReview' | 'approveReviewer' | 'approveApprover' | 'generatePayslips'; run: PayrollRun } | null = null;
+
   constructor(
     private payrollService: PayrollService,
     private router: Router
@@ -109,6 +114,10 @@ export class PayrollManagementComponent implements OnInit, OnDestroy {
     this.router.navigate(['/admin/payroll-management/run-payroll']);
   }
 
+  navigateToAlphalist(): void {
+    this.router.navigate(['/alphalist']);
+  }
+
   viewPayslips(payrollRun: PayrollRun): void {
     this.router.navigate(['/admin/payroll-management/payslip-center'], {
       queryParams: { payrollRunId: payrollRun.id }
@@ -117,86 +126,174 @@ export class PayrollManagementComponent implements OnInit, OnDestroy {
 
   // ==================== WORKFLOW QUICK ACTIONS ====================
 
-  approveTimekeeping(payrollRun: PayrollRun): void {
+  // Open confirmation modal
+  openConfirm(actionType: 'approveTimekeeping' | 'completeComputation' | 'completeReview' | 'approveReviewer' | 'approveApprover' | 'generatePayslips', payrollRun: PayrollRun): void {
+    this.pendingAction = { type: actionType, run: payrollRun } as const;
+    this.showConfirmModal = true;
+  }
+
+  // Cancel confirmation
+  cancelConfirm(): void {
+    this.showConfirmModal = false;
+    this.confirming = false;
+    this.pendingAction = null;
+  }
+
+  // Map action label for modal text
+  getActionLabel(action?: string | null): string {
+    switch (action) {
+      case 'approveTimekeeping':
+        return 'approve timekeeping';
+      case 'completeComputation':
+        return 'complete computation';
+      case 'completeReview':
+        return 'complete review';
+      case 'approveReviewer':
+        return 'approve as Reviewer';
+      case 'approveApprover':
+        return 'approve as Approver';
+      case 'generatePayslips':
+        return 'generate payslips';
+      default:
+        return 'perform this action';
+    }
+  }
+
+  // Helper for modal period label to satisfy template type checking
+  getPendingPeriodLabel(): string {
+    const run = this.pendingAction?.run;
+    if (!run) return '';
+    return `${this.formatDate(run.periodStart)} - ${this.formatDate(run.periodEnd)}`;
+  }
+
+  // Execute pending action after confirmation
+  confirmAction(): void {
+    if (!this.pendingAction) return;
+    const { type, run } = this.pendingAction;
+
+    // Frontend guard to avoid invalid transitions
+    const allowed = this.canPerformAction(run, type);
+    if (!allowed) {
+      this.showErrorMessage(`Action not allowed. Current status is ${run.status}.`);
+      this.cancelConfirm();
+      return;
+    }
+    this.confirming = true;
+
+    switch (type) {
+      case 'approveTimekeeping':
+        this.approveTimekeeping(run, true);
+        break;
+      case 'completeComputation':
+        this.completeComputation(run, true);
+        break;
+      case 'completeReview':
+        this.completeReview(run, true);
+        break;
+      case 'approveReviewer':
+        this.approveByReviewer(run, true);
+        break;
+      case 'approveApprover':
+        this.approveByApprover(run, true);
+        break;
+      case 'generatePayslips':
+        this.generatePayslips(run, true);
+        break;
+    }
+  }
+
+  approveTimekeeping(payrollRun: PayrollRun, fromConfirm: boolean = false): void {
     this.payrollService.approveTimekeeping(payrollRun.id)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (response) => {
           this.showSuccessMessage(response.message);
           this.loadPayrollRuns();
+          if (fromConfirm) this.cancelConfirm();
         },
         error: (error) => {
-          this.showErrorMessage('Failed to approve timekeeping');
+          this.showErrorMessage(error?.error?.message || 'Failed to approve timekeeping');
+          if (fromConfirm) this.confirming = false;
         }
       });
   }
 
-  completeComputation(payrollRun: PayrollRun): void {
+  completeComputation(payrollRun: PayrollRun, fromConfirm: boolean = false): void {
     this.payrollService.completeWorkhourComputation(payrollRun.id, [])
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (response) => {
           this.showSuccessMessage(response.message);
           this.loadPayrollRuns();
+          if (fromConfirm) this.cancelConfirm();
         },
         error: (error) => {
-          this.showErrorMessage('Failed to complete computation');
+          this.showErrorMessage(error?.error?.message || 'Failed to complete computation');
+          if (fromConfirm) this.confirming = false;
         }
       });
   }
 
-  completeReview(payrollRun: PayrollRun): void {
+  completeReview(payrollRun: PayrollRun, fromConfirm: boolean = false): void {
     this.payrollService.completePayrollReview(payrollRun.id)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (response) => {
           this.showSuccessMessage(response.message);
           this.loadPayrollRuns();
+          if (fromConfirm) this.cancelConfirm();
         },
         error: (error) => {
-          this.showErrorMessage('Failed to complete review');
+          this.showErrorMessage(error?.error?.message || 'Failed to complete review');
+          if (fromConfirm) this.confirming = false;
         }
       });
   }
 
-  approveByReviewer(payrollRun: PayrollRun): void {
+  approveByReviewer(payrollRun: PayrollRun, fromConfirm: boolean = false): void {
     this.payrollService.approveByReviewer(payrollRun.id)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (response) => {
           this.showSuccessMessage(response.message);
           this.loadPayrollRuns();
+          if (fromConfirm) this.cancelConfirm();
         },
         error: (error) => {
-          this.showErrorMessage('Failed to approve by reviewer');
+          this.showErrorMessage(error?.error?.message || 'Failed to approve by reviewer');
+          if (fromConfirm) this.confirming = false;
         }
       });
   }
 
-  approveByApprover(payrollRun: PayrollRun): void {
+  approveByApprover(payrollRun: PayrollRun, fromConfirm: boolean = false): void {
     this.payrollService.approveByApprover(payrollRun.id)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (response) => {
           this.showSuccessMessage(response.message);
           this.loadPayrollRuns();
+          if (fromConfirm) this.cancelConfirm();
         },
         error: (error) => {
-          this.showErrorMessage('Failed to approve by approver');
+          this.showErrorMessage(error?.error?.message || 'Failed to approve by approver');
+          if (fromConfirm) this.confirming = false;
         }
       });
   }
 
-  generatePayslips(payrollRun: PayrollRun): void {
+  generatePayslips(payrollRun: PayrollRun, fromConfirm: boolean = false): void {
     this.payrollService.generatePayslips(payrollRun.id)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (response) => {
           this.showSuccessMessage(response.message);
           this.loadPayrollRuns();
+          if (fromConfirm) this.cancelConfirm();
         },
         error: (error) => {
-          this.showErrorMessage('Failed to generate payslips');
+          this.showErrorMessage(error?.error?.message || 'Failed to generate payslips');
+          if (fromConfirm) this.confirming = false;
         }
       });
   }
@@ -225,6 +322,35 @@ export class PayrollManagementComponent implements OnInit, OnDestroy {
 
   formatCurrency(amount: number): string {
     return this.payrollService.formatCurrency(amount);
+  }
+
+  // Safely resolve employee count and total pay for display
+  getEmployeeCount(run: PayrollRun): number {
+    // Prefer explicit field; fallback to workflow or payslips length if available
+    if (typeof run.totalEmployees === 'number' && !isNaN(run.totalEmployees)) {
+      return run.totalEmployees;
+    }
+    if (Array.isArray(run.payslips)) {
+      return run.payslips.length;
+    }
+    // Could also come from workflow review summary if API maps differently
+    // Return 0 as last resort
+    return 0;
+  }
+
+  getTotalPay(run: PayrollRun): number {
+    // Prefer netPay if present, otherwise grossPay; fallback to sum of payslips
+    if (typeof run.netPay === 'number' && !isNaN(run.netPay)) {
+      return run.netPay;
+    }
+    if (typeof run.grossPay === 'number' && !isNaN(run.grossPay)) {
+      return run.grossPay;
+    }
+    if (Array.isArray(run.payslips)) {
+      const sum = run.payslips.reduce((acc, p) => acc + (typeof p.netPay === 'number' ? p.netPay : (typeof p.grossPay === 'number' ? p.grossPay : 0)), 0);
+      return sum;
+    }
+    return 0;
   }
 
   showSuccessMessage(message: string): void {

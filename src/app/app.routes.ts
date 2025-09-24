@@ -13,7 +13,7 @@ import { PayslipCenterComponent } from './pages/admin/payroll-management/payslip
 import { RunPayrollComponent } from './pages/admin/payroll-management/run-payroll/run-payroll.component';
 import { ThirteenMonthPayComponent } from './pages/admin/payroll-management/thirteen-month-pay/thirteen-month-pay.component';
 import { PayrollManagementComponent } from './pages/admin/payroll-management/payroll-management.component';
-import { PayrollWorkflowComponent } from './pages/admin/payroll-management/payroll-workflow/payroll-workflow.component';
+import { AlphalistComponent } from './pages/admin/payroll-management/alphalist/alphalist.component';
 import { ContirbutionsDeductionsComponent } from './pages/admin/contirbutions-deductions/contirbutions-deductions.component';
 import { MandatoryContributionsComponent } from './pages/admin/contirbutions-deductions/mandatory-contributions/mandatory-contributions.component';
 import { DeductionsComponent } from './pages/admin/contirbutions-deductions/deductions/deductions.component';
@@ -129,8 +129,8 @@ export const routes: Routes = [
     data: { roles: ['admin', 'payrollManager'] }
   },
   { 
-    path: 'payroll-management/workflow/:id', 
-    component: PayrollWorkflowComponent,
+    path: 'alphalist', 
+    component: AlphalistComponent,
     canActivate: [AuthGuard, RoleGuard],
     data: { roles: ['admin', 'payrollManager'] }
   },
