@@ -10,7 +10,7 @@ export interface PayrollRun {
   periodEnd: string | Date;
   payDate: string | Date;
   frequency: 'weekly' | 'semiMonthly' | 'monthly';
-  status: 'draft' | 'pending' | 'processed' | 'approved' | 'released' | 'cancelled';
+  status: 'draft' | 'timekeepingPending' | 'timekeepingApproved' | 'computationPending' | 'computationCompleted' | 'reviewPending' | 'reviewCompleted' | 'reviewerApproved' | 'approverPending' | 'approverApproved' | 'payslipGenerated' | 'released' | 'cancelled';
   totalEmployees: number;
   grossPay: number;
   netPay: number;
@@ -27,6 +27,7 @@ export interface PayrollRun {
   updatedAt: string | Date;
   payslips?: Payslip[];
   notes?: string;
+  workflow?: PayrollWorkflow;
 }
 
 export interface Payslip {
@@ -86,7 +87,7 @@ export interface PayrollReview {
   totalOvertime: number;
   averageSalary: number;
   payslips: PayslipReviewItem[];
-  status: 'draft' | 'pending' | 'processed' | 'approved' | 'released' | 'cancelled';
+  status: 'draft' | 'timekeepingPending' | 'timekeepingApproved' | 'computationCompleted' | 'reviewCompleted' | 'reviewerApproved' | 'approverApproved' | 'payslipGenerated' | 'released' | 'cancelled';
   createdAt: string | Date;
   periodStart: string | Date;
   periodEnd: string | Date;
@@ -169,6 +170,151 @@ export interface PayrollFilters {
   departmentId?: string;
   employeeId?: string;
   search?: string;
+}
+
+// ==================== WORKFLOW INTERFACES ====================
+
+export interface PayrollWorkflow {
+  id: string;
+  payrollRunId: string;
+  // Timekeeping Phase
+  timekeepingApproved: boolean;
+  timekeepingApprovedBy?: string;
+  timekeepingApprovedAt?: string | Date;
+  timekeepingApprover?: {
+    id: string;
+    email: string;
+  };
+  // Computation Phase
+  computationCompleted: boolean;
+  computationCompletedBy?: string;
+  computationCompletedAt?: string | Date;
+  computationProcessor?: {
+    id: string;
+    email: string;
+  };
+  // Review Phase
+  reviewCompleted: boolean;
+  reviewCompletedBy?: string;
+  reviewCompletedAt?: string | Date;
+  reviewer?: {
+    id: string;
+    email: string;
+  };
+  reviewerApproved: boolean;
+  reviewerApprovedBy?: string;
+  reviewerApprovedAt?: string | Date;
+  reviewerApprover?: {
+    id: string;
+    email: string;
+  };
+  // Approval Phase
+  approverApproved: boolean;
+  approverApprovedBy?: string;
+  approverApprovedAt?: string | Date;
+  approver?: {
+    id: string;
+    email: string;
+  };
+  // Generation Phase
+  payslipGenerated: boolean;
+  payslipGeneratedBy?: string;
+  payslipGeneratedAt?: string | Date;
+  payslipGenerator?: {
+    id: string;
+    email: string;
+  };
+  // Metadata
+  notes?: string;
+  createdAt: string | Date;
+  updatedAt: string | Date;
+  workhourComputations?: WorkhourComputation[];
+}
+
+export interface WorkhourComputation {
+  id: string;
+  payrollWorkflowId: string;
+  employeeId: string;
+  // Regular Hours
+  regularHours: number;
+  // Overtime Hours
+  overtimeRegular: number;
+  overtimeRestDay: number;
+  overtimeHoliday: number;
+  overtimeSpecialHoliday: number;
+  overtimeDoubleHoliday: number;
+  // Night Differential
+  nightDiffRegular: number;
+  nightDiffRestDay: number;
+  nightDiffHoliday: number;
+  nightDiffSpecialHoliday: number;
+  nightDiffDoubleHoliday: number;
+  // Holiday Work
+  holidayWork: number;
+  specialHolidayWork: number;
+  doubleHolidayWork: number;
+  // Rest Day Work
+  restDayWork: number;
+  holidayRestDayWork: number;
+  specialHolidayRestDayWork: number;
+  doubleHolidayRestDayWork: number;
+  // Totals
+  totalHours: number;
+  totalRegularPay: number;
+  totalOvertimePay: number;
+  totalNightDiffPay: number;
+  totalHolidayPay: number;
+  totalRestDayPay: number;
+  totalPay: number;
+  // Metadata
+  computedAt: string | Date;
+  computedBy?: string;
+  notes?: string;
+  createdAt: string | Date;
+  updatedAt: string | Date;
+  employee?: {
+    id: string;
+    firstName: string;
+    lastName: string;
+    employeeNumber: string;
+  };
+}
+
+export interface WorkhourData {
+  employeeId: string;
+  regularHours?: number;
+  overtimeRegular?: number;
+  overtimeRestDay?: number;
+  overtimeHoliday?: number;
+  overtimeSpecialHoliday?: number;
+  overtimeDoubleHoliday?: number;
+  nightDiffRegular?: number;
+  nightDiffRestDay?: number;
+  nightDiffHoliday?: number;
+  nightDiffSpecialHoliday?: number;
+  nightDiffDoubleHoliday?: number;
+  holidayWork?: number;
+  specialHolidayWork?: number;
+  doubleHolidayWork?: number;
+  restDayWork?: number;
+  holidayRestDayWork?: number;
+  specialHolidayRestDayWork?: number;
+  doubleHolidayRestDayWork?: number;
+  totalHours?: number;
+  totalRegularPay?: number;
+  totalOvertimePay?: number;
+  totalNightDiffPay?: number;
+  totalHolidayPay?: number;
+  totalRestDayPay?: number;
+  totalPay?: number;
+}
+
+export interface WorkflowAction {
+  payrollRunId: string;
+  reason?: string;
+  changes?: string;
+  reviewerId?: string;
+  approverId?: string;
 }
 
 @Injectable({
@@ -476,5 +622,196 @@ export class PayrollService {
     link.download = filename;
     link.click();
     window.URL.revokeObjectURL(url);
+  }
+
+  // ==================== PAYROLL WORKFLOW ====================
+
+  // Step 1: Approve Timekeeping
+  approveTimekeeping(payrollRunId: string): Observable<{ success: boolean; data: { workflow: PayrollWorkflow }; message: string }> {
+    return this.http.put<{ success: boolean; data: { workflow: PayrollWorkflow }; message: string }>(
+      `${this.apiUrl}/workflow/${payrollRunId}/approve-timekeeping`,
+      {},
+      { headers: this.getHeaders() }
+    );
+  }
+
+  // Step 2: Complete Workhour Computation
+  completeWorkhourComputation(payrollRunId: string, workhourData: WorkhourData[]): Observable<{ success: boolean; data: { workflow: PayrollWorkflow }; message: string }> {
+    return this.http.put<{ success: boolean; data: { workflow: PayrollWorkflow }; message: string }>(
+      `${this.apiUrl}/workflow/${payrollRunId}/complete-computation`,
+      { workhourData },
+      { headers: this.getHeaders() }
+    );
+  }
+
+  // Step 3: Complete Payroll Review
+  completePayrollReview(payrollRunId: string, notes?: string): Observable<{ success: boolean; data: { workflow: PayrollWorkflow }; message: string }> {
+    return this.http.put<{ success: boolean; data: { workflow: PayrollWorkflow }; message: string }>(
+      `${this.apiUrl}/workflow/${payrollRunId}/complete-review`,
+      { notes },
+      { headers: this.getHeaders() }
+    );
+  }
+
+  // Step 4: Approve by Reviewer
+  approveByReviewer(payrollRunId: string): Observable<{ success: boolean; data: { workflow: PayrollWorkflow }; message: string }> {
+    return this.http.put<{ success: boolean; data: { workflow: PayrollWorkflow }; message: string }>(
+      `${this.apiUrl}/workflow/${payrollRunId}/approve-reviewer`,
+      {},
+      { headers: this.getHeaders() }
+    );
+  }
+
+  // Step 5: Approve by Approver
+  approveByApprover(payrollRunId: string): Observable<{ success: boolean; data: { workflow: PayrollWorkflow }; message: string }> {
+    return this.http.put<{ success: boolean; data: { workflow: PayrollWorkflow }; message: string }>(
+      `${this.apiUrl}/workflow/${payrollRunId}/approve-approver`,
+      {},
+      { headers: this.getHeaders() }
+    );
+  }
+
+  // Step 6: Generate Payslips
+  generatePayslips(payrollRunId: string): Observable<{ success: boolean; data: { workflow: PayrollWorkflow }; message: string }> {
+    return this.http.put<{ success: boolean; data: { workflow: PayrollWorkflow }; message: string }>(
+      `${this.apiUrl}/workflow/${payrollRunId}/generate-payslips`,
+      {},
+      { headers: this.getHeaders() }
+    );
+  }
+
+  // Get Payroll Workflow Status
+  getPayrollWorkflowStatus(payrollRunId: string): Observable<{ success: boolean; data: { payrollRun: PayrollRun; workflow: PayrollWorkflow } }> {
+    return this.http.get<{ success: boolean; data: { payrollRun: PayrollRun; workflow: PayrollWorkflow } }>(
+      `${this.apiUrl}/workflow/${payrollRunId}/status`,
+      { headers: this.getHeaders() }
+    );
+  }
+
+  // ==================== REJECTION HANDLING ====================
+
+  // Reject by Reviewer
+  rejectByReviewer(payrollRunId: string, reason?: string): Observable<{ success: boolean; data: { workflow: PayrollWorkflow }; message: string }> {
+    return this.http.put<{ success: boolean; data: { workflow: PayrollWorkflow }; message: string }>(
+      `${this.apiUrl}/workflow/${payrollRunId}/reject-reviewer`,
+      { reason },
+      { headers: this.getHeaders() }
+    );
+  }
+
+  // Reject by Approver
+  rejectByApprover(payrollRunId: string, reason?: string): Observable<{ success: boolean; data: { workflow: PayrollWorkflow }; message: string }> {
+    return this.http.put<{ success: boolean; data: { workflow: PayrollWorkflow }; message: string }>(
+      `${this.apiUrl}/workflow/${payrollRunId}/reject-approver`,
+      { reason },
+      { headers: this.getHeaders() }
+    );
+  }
+
+  // ==================== CHANGE HANDLING ====================
+
+  // Handle Changes (loops back to beginning)
+  handleChanges(payrollRunId: string, reason?: string, changes?: string): Observable<{ success: boolean; data: { workflow: PayrollWorkflow }; message: string }> {
+    return this.http.put<{ success: boolean; data: { workflow: PayrollWorkflow }; message: string }>(
+      `${this.apiUrl}/workflow/${payrollRunId}/handle-changes`,
+      { reason, changes },
+      { headers: this.getHeaders() }
+    );
+  }
+
+  // ==================== NOTIFICATION SYSTEM ====================
+
+  // Notify Payroll Reviewer
+  notifyPayrollReviewer(payrollRunId: string, reviewerId: string): Observable<{ success: boolean; data: any; message: string }> {
+    return this.http.put<{ success: boolean; data: any; message: string }>(
+      `${this.apiUrl}/workflow/${payrollRunId}/notify-reviewer`,
+      { reviewerId },
+      { headers: this.getHeaders() }
+    );
+  }
+
+  // Notify Payroll Approver
+  notifyPayrollApprover(payrollRunId: string, approverId: string): Observable<{ success: boolean; data: any; message: string }> {
+    return this.http.put<{ success: boolean; data: any; message: string }>(
+      `${this.apiUrl}/workflow/${payrollRunId}/notify-approver`,
+      { approverId },
+      { headers: this.getHeaders() }
+    );
+  }
+
+  // ==================== WORKFLOW UTILITY METHODS ====================
+
+  getWorkflowStatusColor(status: string): string {
+    const colors: { [key: string]: string } = {
+      draft: 'bg-gray-100 text-gray-800',
+      timekeepingPending: 'bg-yellow-100 text-yellow-800',
+      timekeepingApproved: 'bg-blue-100 text-blue-800',
+      computationPending: 'bg-indigo-100 text-indigo-800',
+      computationCompleted: 'bg-purple-100 text-purple-800',
+      reviewPending: 'bg-orange-100 text-orange-800',
+      reviewCompleted: 'bg-cyan-100 text-cyan-800',
+      reviewerApproved: 'bg-green-100 text-green-800',
+      approverPending: 'bg-teal-100 text-teal-800',
+      approverApproved: 'bg-emerald-100 text-emerald-800',
+      payslipGenerated: 'bg-violet-100 text-violet-800',
+      released: 'bg-pink-100 text-pink-800',
+      cancelled: 'bg-red-100 text-red-800'
+    };
+    return colors[status] || 'bg-gray-100 text-gray-800';
+  }
+
+  getWorkflowStatusIcon(status: string): string {
+    const icons: { [key: string]: string } = {
+      draft: 'edit',
+      timekeepingPending: 'schedule',
+      timekeepingApproved: 'check_circle',
+      computationPending: 'hourglass_empty',
+      computationCompleted: 'calculate',
+      reviewPending: 'rate_review',
+      reviewCompleted: 'assignment_turned_in',
+      reviewerApproved: 'verified',
+      approverPending: 'pending_actions',
+      approverApproved: 'verified_user',
+      payslipGenerated: 'description',
+      released: 'send',
+      cancelled: 'cancel'
+    };
+    return icons[status] || 'help';
+  }
+
+  getWorkflowStepName(status: string): string {
+    const steps: { [key: string]: string } = {
+      draft: 'Draft',
+      timekeepingPending: 'Timekeeping Approval',
+      timekeepingApproved: 'Timekeeping Approved',
+      computationPending: 'Computation Pending',
+      computationCompleted: 'Computation Completed',
+      reviewPending: 'Review Pending',
+      reviewCompleted: 'Review Completed',
+      reviewerApproved: 'Reviewer Approved',
+      approverPending: 'Approver Pending',
+      approverApproved: 'Approver Approved',
+      payslipGenerated: 'Payslips Generated',
+      released: 'Released',
+      cancelled: 'Cancelled'
+    };
+    return steps[status] || 'Unknown';
+  }
+
+  canPerformAction(currentStatus: string, action: string): boolean {
+    const permissions: { [key: string]: string[] } = {
+      approveTimekeeping: ['timekeepingPending'],
+      completeComputation: ['timekeepingApproved'],
+      completeReview: ['computationCompleted'],
+      approveReviewer: ['reviewCompleted'],
+      approveApprover: ['reviewerApproved'],
+      generatePayslips: ['approverApproved'],
+      rejectReviewer: ['reviewCompleted', 'reviewerApproved'],
+      rejectApprover: ['reviewerApproved', 'approverPending'],
+      handleChanges: ['reviewCompleted', 'reviewerApproved', 'approverPending'],
+      notifyReviewer: ['computationCompleted'],
+      notifyApprover: ['reviewerApproved']
+    };
+    return permissions[action]?.includes(currentStatus) || false;
   }
 }

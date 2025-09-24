@@ -45,7 +45,8 @@ export class SidebarComponent implements OnInit, OnDestroy, OnChanges {
         { name: 'Run Payroll', icon: 'assessment', path: '/run-payroll' },
         { name: 'Payslip Center', icon: 'assessment', path: '/payslip-center' },
         { name: 'Thirteen Month Pay', icon: 'assessment', path: '/thirteen-month-pay' },
-        { name: 'Final Pay Process', icon: 'calculate', path: '/final-pay-process' },
+        { name: 'Final Pay Process', icon: 'calculate', path: '/final-pay-process' }, 
+        { name: 'Payroll Workflow', icon: 'workflow', path: '/payroll-management' },
       ] },
       { name: 'Employee Self-Service', icon: 'person', children: [
         { name: 'My Profile', icon: 'account_circle', path: '/employee/profile' },

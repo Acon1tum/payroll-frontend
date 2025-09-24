@@ -31,7 +31,7 @@ interface LocalPayrollRun {
   netPay: number;
   totalDeductions: number;
   totalOvertime: number;
-  status: 'draft' | 'pending' | 'processed' | 'approved' | 'released' | 'cancelled';
+  status: 'draft' | 'timekeepingPending' | 'timekeepingApproved' | 'computationCompleted' | 'reviewCompleted' | 'reviewerApproved' | 'approverApproved' | 'payslipGenerated' | 'released' | 'cancelled';
   createdAt: Date;
   approvedBy?: string;
   approvedAt?: Date;
@@ -445,7 +445,7 @@ export class RunPayrollComponent implements OnInit, OnDestroy {
             netPay: run.totalNetPay || 0,
             totalDeductions: run.totalDeductions || 0,
             totalOvertime: 0, // This would need to be calculated from payslip items
-            status: run.status as 'draft' | 'pending' | 'processed' | 'approved' | 'released' | 'cancelled',
+            status: run.status as 'draft' | 'timekeepingPending' | 'timekeepingApproved' | 'computationCompleted' | 'reviewCompleted' | 'reviewerApproved' | 'approverApproved' | 'payslipGenerated' | 'released' | 'cancelled',
             createdAt: new Date(run.createdAt),
             approvedBy: run.processedBy ? run.processedBy.email : undefined,
             approvedAt: run.updatedAt ? new Date(run.updatedAt) : undefined,
@@ -522,7 +522,7 @@ export class RunPayrollComponent implements OnInit, OnDestroy {
         netPay: 2030000,
         totalDeductions: 490000,
         totalOvertime: 92000,
-        status: 'processed',
+        status: 'computationCompleted',
         createdAt: new Date(2024, 1, 29),
         notes: 'February 2024 payroll pending approval'
       }
@@ -582,7 +582,7 @@ export class RunPayrollComponent implements OnInit, OnDestroy {
         periodEnd: new Date(formValue.cutoffEnd),
         payDate: new Date(new Date(formValue.cutoffEnd).getTime() + 5 * 24 * 60 * 60 * 1000),
         frequency: 'monthly' as const,
-        status: 'draft' as const,
+        status: 'timekeepingPending' as const, // Start with workflow status
         notes: formValue.notes,
         employeeIds: includedEmployees.map(emp => String(emp.id))
       };
@@ -592,11 +592,8 @@ export class RunPayrollComponent implements OnInit, OnDestroy {
           if (response.success) {
             const createdRun = response.data;
             
-            // Generate payslips for the created payroll run
-            this.generatePayslipsForRun(createdRun.id);
-            
             // Convert the created PayrollRun to LocalPayrollRun format
-      this.currentPayrollRun = {
+            this.currentPayrollRun = {
               id: Number(createdRun.id) || Date.now(),
               sourceId: createdRun.id,
               cutoffStart: new Date(createdRun.periodStart),
@@ -605,17 +602,17 @@ export class RunPayrollComponent implements OnInit, OnDestroy {
               periodEnd: new Date(createdRun.periodEnd),
               payDate: new Date(createdRun.payDate),
               totalEmployees: this.selectedEmployees.filter(emp => emp.status === 'included').length,
-        grossPay: this.payrollSummary.totalGrossPay,
-        netPay: this.payrollSummary.totalNetPay,
-        totalDeductions: this.payrollSummary.totalDeductions,
+              grossPay: this.payrollSummary.totalGrossPay,
+              netPay: this.payrollSummary.totalNetPay,
+              totalDeductions: this.payrollSummary.totalDeductions,
               totalOvertime: this.payrollSummary.totalOvertime || 0,
-              status: createdRun.status as 'draft' | 'pending' | 'processed' | 'approved' | 'released' | 'cancelled',
+              status: createdRun.status as 'draft' | 'timekeepingPending' | 'timekeepingApproved' | 'computationCompleted' | 'reviewCompleted' | 'reviewerApproved' | 'approverApproved' | 'payslipGenerated' | 'released' | 'cancelled',
               createdAt: new Date(createdRun.createdAt),
               notes: createdRun.notes
             };
 
-            this.showNotification('Payroll run created successfully', 'success');
-      this.activeTab = 'preview';
+            this.showNotification('Payroll run created successfully. Workflow started with timekeeping pending status.', 'success');
+            this.activeTab = 'preview';
             this.reviewForm.patchValue({ payrollRunId: this.currentPayrollRun.sourceId });
             this.loadPayrollReview(String(this.currentPayrollRun.sourceId));
             this.loadPayrollHistory(); // Refresh the history
@@ -667,14 +664,7 @@ export class RunPayrollComponent implements OnInit, OnDestroy {
   }
 
   getStatusColor(status: string): string {
-    const colors: { [key: string]: string } = {
-      draft: 'bg-gray-100 text-gray-800',
-      pending: 'bg-yellow-100 text-yellow-800',
-      approved: 'bg-blue-100 text-blue-800',
-      released: 'bg-green-100 text-green-800',
-      cancelled: 'bg-red-100 text-red-800'
-    };
-    return colors[status] || 'bg-gray-100 text-gray-800';
+    return this.payrollService.getWorkflowStatusColor(status);
   }
 
 
@@ -945,34 +935,35 @@ export class RunPayrollComponent implements OnInit, OnDestroy {
     this.doProcessPayrollRun();
   }
 
-  // Actual processing implementation
+  // Actual processing implementation - now uses workflow
   private doProcessPayrollRun(): void {
     if (!this.currentPayrollRun) return;
     this.payrollProcessing = true;
-    this.payrollService.processPayrollRun(this.currentPayrollRun.sourceId).subscribe({
+    
+    // Use the new workflow method for workhour computation
+    this.payrollService.completeWorkhourComputation(this.currentPayrollRun.sourceId, []).subscribe({
       next: (response) => {
         if (response.success) {
-          this.showNotification('Payroll run processed successfully', 'success');
+          this.showNotification('Workhour computation completed successfully', 'success');
           // Optimistically update local status
           if (this.currentPayrollRun) {
-            this.currentPayrollRun.status = 'processed';
+            this.currentPayrollRun.status = 'computationCompleted';
           }
           // Show success banner
           this.processingSuccess = true;
-          this.processingMessage = 'Payroll run processed successfully';
+          this.processingMessage = 'Workhour computation completed successfully';
           setTimeout(() => {
             this.processingSuccess = false;
             this.processingMessage = null;
           }, 3000);
           this.loadPayrollHistory();
           this.loadPayrollReview(this.currentPayrollRun!.sourceId);
-          // Do not redirect; employees will see payslips on their side upon login
         }
         this.payrollProcessing = false;
       },
       error: (error) => {
-        console.error('Error processing payroll run:', error);
-        this.showNotification('Error processing payroll run', 'error');
+        console.error('Error completing workhour computation:', error);
+        this.showNotification('Error completing workhour computation', 'error');
         this.payrollProcessing = false;
       }
     });
@@ -997,25 +988,19 @@ export class RunPayrollComponent implements OnInit, OnDestroy {
   private doApprovePayrollRun(): void {
     if (!this.currentPayrollRun) return;
     this.approvalInProgress = true;
-    const approvalData: PayrollApproval = {
-      payrollRunId: this.currentPayrollRun.sourceId,
-      status: this.approvalForm.value.status,
-      notes: this.approvalForm.value.notes,
-      approvedBy: 'current-user-id',
-      approvedAt: new Date()
-    };
-
-    this.payrollService.approvePayrollRun(this.currentPayrollRun.sourceId, approvalData).subscribe({
+    
+    // Use the new workflow method for reviewer approval
+    this.payrollService.approveByReviewer(this.currentPayrollRun.sourceId).subscribe({
       next: (response) => {
         if (response.success) {
           // Update status locally
           if (this.currentPayrollRun) {
-            this.currentPayrollRun.status = 'approved';
+            this.currentPayrollRun.status = 'reviewerApproved';
           }
-          this.showNotification('Payroll run approved successfully', 'success');
+          this.showNotification('Payroll run approved by reviewer successfully', 'success');
           // Success banner
           this.processingSuccess = true;
-          this.processingMessage = 'Payroll run approved successfully';
+          this.processingMessage = 'Payroll run approved by reviewer successfully';
           setTimeout(() => {
             this.processingSuccess = false;
             this.processingMessage = null;
@@ -1067,15 +1052,15 @@ export class RunPayrollComponent implements OnInit, OnDestroy {
   }
 
   canApprovePayrollRun(): boolean {
-    return this.currentPayrollRun?.status === 'processed';
+    return this.currentPayrollRun?.status === 'computationCompleted';
   }
 
   canReleasePayrollRun(): boolean {
-    return this.currentPayrollRun?.status === 'approved';
+    return this.currentPayrollRun?.status === 'approverApproved';
   }
 
   canProcessPayrollRun(): boolean {
-    return this.currentPayrollRun?.status === 'draft' || this.currentPayrollRun?.status === 'pending';
+    return this.currentPayrollRun?.status === 'draft' || this.currentPayrollRun?.status === 'timekeepingPending';
   }
 
   getTotalDeductionsForEmployee(employee: PayslipReviewItem): number {

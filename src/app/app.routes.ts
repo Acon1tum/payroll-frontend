@@ -13,6 +13,7 @@ import { PayslipCenterComponent } from './pages/admin/payroll-management/payslip
 import { RunPayrollComponent } from './pages/admin/payroll-management/run-payroll/run-payroll.component';
 import { ThirteenMonthPayComponent } from './pages/admin/payroll-management/thirteen-month-pay/thirteen-month-pay.component';
 import { PayrollManagementComponent } from './pages/admin/payroll-management/payroll-management.component';
+import { PayrollWorkflowComponent } from './pages/admin/payroll-management/payroll-workflow/payroll-workflow.component';
 import { ContirbutionsDeductionsComponent } from './pages/admin/contirbutions-deductions/contirbutions-deductions.component';
 import { MandatoryContributionsComponent } from './pages/admin/contirbutions-deductions/mandatory-contributions/mandatory-contributions.component';
 import { DeductionsComponent } from './pages/admin/contirbutions-deductions/deductions/deductions.component';
@@ -124,6 +125,12 @@ export const routes: Routes = [
   { 
     path: 'payroll-management', 
     component: PayrollManagementComponent,
+    canActivate: [AuthGuard, RoleGuard],
+    data: { roles: ['admin', 'payrollManager'] }
+  },
+  { 
+    path: 'payroll-management/workflow/:id', 
+    component: PayrollWorkflowComponent,
     canActivate: [AuthGuard, RoleGuard],
     data: { roles: ['admin', 'payrollManager'] }
   },
